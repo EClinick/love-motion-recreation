@@ -1,0 +1,44 @@
+{
+  "id": "iter6",
+  "label": "v6",
+  "hash": "5821a0b",
+  "subject": "Iteration 6: final consolidated fixes from Sonnet judge round 5",
+  "commit_date": "2026-10-06T14:15:11-07:00",
+  "dirty": false,
+  "changelog": [
+    "vs v5: 3 source file(s) changed, +49/-36 lines (figures.js, sprites.js, scenes.js).",
+    "Re-rendered from this commit for the archive (original render was overwritten)."
+  ],
+  "note": "Re-rendered from this commit for the archive (original render was overwritten).",
+  "video": "media/versions/iter6/video.mp4",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 10799312,
+  "render_date": "2026-10-06T14:23:51-07:00",
+  "v": 1791321881,
+  "sheets": [
+    "media/versions/iter6/sheets/sheet_01.jpg",
+    "media/versions/iter6/sheets/sheet_02.jpg",
+    "media/versions/iter6/sheets/sheet_03.jpg",
+    "media/versions/iter6/sheets/sheet_04.jpg",
+    "media/versions/iter6/sheets/sheet_05.jpg",
+    "media/versions/iter6/sheets/sheet_06.jpg",
+    "media/versions/iter6/sheets/sheet_07.jpg",
+    "media/versions/iter6/sheets/sheet_08.jpg",
+    "media/versions/iter6/sheets/sheet_09.jpg"
+  ],
+  "published": "2026-10-06T14:33:13-07:00",
+  "scores": [
+    6.9,
+    7.5,
+    7.5
+  ],
+  "score_sections": [
+    "0 – 7.25 s",
+    "7.5 – 14.75 s",
+    "15 – 20.4 s"
+  ],
+  "sidebyside": "media/versions/iter6/sidebyside.mp4",
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 23996096
+}
