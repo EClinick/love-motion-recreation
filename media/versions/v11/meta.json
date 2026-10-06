@@ -1,0 +1,62 @@
+{
+  "id": "iter11",
+  "label": "v11",
+  "hash": "81a5932",
+  "subject": "Iteration 11: round-10 fixes; head IoU 0.823, hand IoU 0.797/0.833 (measured)",
+  "commit_date": "2026-10-06T14:53:28-07:00",
+  "dirty": false,
+  "changelog": [
+    "vs v10: 3 source file(s) changed, +71/-41 lines (figures.js, fx.js, scenes.js).",
+    "- signature moved below the line and enlarged; lighter typing-scene paper",
+    "- crimson rim/amber centre on the 4.0s head; forelock lift + back-crown tufts;",
+    "deeper crown tone; S-bend on the front of the neck; broader white shirt",
+    "- silver camera via screen pass; ring roll/shift toward 8.0s; 9.75s second slash fixed",
+    "- hand: pale thumb/index, red ring side, palm + forearm highlights, tapered fingers,",
+    "curl pose leans right, no knuckle marks on the fist, wider fist; changes the",
+    "shape measurement rejected (longer thumb, tighter fan) were reverted",
+    "- lighter dark-scene mottling; finale dot/loop/tail/cusp fixes",
+    "Round-10 fixes. Measured shape match vs original: head IoU 0.823, hand IoU 0.797 (14.6s) / 0.833 (15.0s)"
+  ],
+  "note": "Round-10 fixes. Measured shape match vs original: head IoU 0.823, hand IoU 0.797 (14.6s) / 0.833 (15.0s)",
+  "video": "media/versions/iter11/video.mp4",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 15562524,
+  "render_date": "2026-10-06T14:53:13-07:00",
+  "v": 1791323636,
+  "sidebyside": "media/versions/iter11/sidebyside.mp4",
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 29241462,
+  "sheets": [
+    "media/versions/iter11/sheets/sheet_01.jpg",
+    "media/versions/iter11/sheets/sheet_02.jpg",
+    "media/versions/iter11/sheets/sheet_03.jpg",
+    "media/versions/iter11/sheets/sheet_04.jpg",
+    "media/versions/iter11/sheets/sheet_05.jpg",
+    "media/versions/iter11/sheets/sheet_06.jpg",
+    "media/versions/iter11/sheets/sheet_07.jpg",
+    "media/versions/iter11/sheets/sheet_08.jpg",
+    "media/versions/iter11/sheets/sheet_09.jpg"
+  ],
+  "published": "2026-10-06T15:02:24-07:00",
+  "scores": [
+    7.0,
+    7.9,
+    8.1
+  ],
+  "score_sections": [
+    "0 – 7.25 s",
+    "7.5 – 14.75 s",
+    "15 – 20.4 s"
+  ],
+  "extras": [
+    {
+      "src": "media/versions/iter11/extras/overlay_5.png",
+      "caption": "Shape overlay at 5.0 s (cyan = original, red = ours)"
+    },
+    {
+      "src": "media/versions/iter11/extras/overlay_14.6.png",
+      "caption": "Shape overlay at 14.6 s (cyan = original, red = ours)"
+    }
+  ]
+}
