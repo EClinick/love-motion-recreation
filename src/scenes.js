@@ -846,9 +846,11 @@ function sceneRing(ctx, t, f) {
       const u = i / 50;
       arc.push([lerp(430, 1120, u), 330 - Math.sin(u * Math.PI) * 120]);
     }
+    const [ac, ax] = off(3);
+    fx.strokePartial(ax, arc, inv(7.65, 7.85, t), inv(7.42, 7.6, t), 30, 'rgba(30,28,28,0.6)', true);
     x.save();
-    x.filter = `blur(${5 * S}px)`;
-    fx.strokePartial(x, arc, inv(7.65, 7.85, t), inv(7.42, 7.6, t), 30, 'rgba(30,28,28,0.6)', true);
+    x.setTransform(S, 0, 0, S, 0, 0);
+    composite(x, ac, { blur: 5 });
     x.restore();
   }
   if (t > 7.48 && t < 7.6) {
@@ -1639,17 +1641,17 @@ function sceneFinale(ctx, t, f) {
     const q = inv(17.2, 17.44, t);
     const sh = ease.inOutCubic(inv(17.26, 17.32, t));
     const fade = 1 - inv(17.38, 17.44, t);
+    const [haloC, halo] = off(1);
+    const [coreC, core] = off(2);
     [[0, 160, 120, 324, 222, 640, 2.4], [1, 520, 560, 969, 507, 560, 1.6], [2, 900, 160, 1293, 822, 520, 2.0], [3, 980, 820, 1299, 72, 420, 1.8]].forEach(([k, ox, oy, tx2, ty2, len, curl]) => {
       const L = lerp(len, k === 3 ? 160 : 280, sh);
       const pts = fx.wanderPoints(500 + k, L, lerp(curl, 0.3, sh), 60).map(([a, b]) => [a + lerp(ox, tx2, sh), b + lerp(oy, ty2, sh)]);
-      ctx.save();
-      ctx.globalAlpha = fade * lerp(1, 0.7, sh);
-      ctx.filter = `blur(${lerp(16, 8, sh) * S}px)`;
-      fx.strokePartial(ctx, pts, q * 0.3, 0.7 + q * 0.3, lerp(70, 18, sh), 'rgba(60,58,58,0.45)');
-      ctx.filter = `blur(${lerp(5, 2, sh) * S}px)`;
-      fx.strokePartial(ctx, pts, q * 0.3 * (1 - sh), 0.7 + q * 0.3 + sh, lerp(32, 10, sh), '#1a1818', true);
-      ctx.restore();
+      // draw unfiltered into layers, then blur each layer once (per-segment filters are far too slow at 4K)
+      fx.strokePartial(halo, pts, q * 0.3, 0.7 + q * 0.3, lerp(70, 18, sh), 'rgba(60,58,58,0.45)');
+      fx.strokePartial(core, pts, q * 0.3 * (1 - sh), 0.7 + q * 0.3 + sh, lerp(32, 10, sh), '#1a1818', true);
     });
+    composite(ctx, haloC, { blur: lerp(16, 8, sh), alpha: fade * lerp(1, 0.7, sh) });
+    composite(ctx, coreC, { blur: lerp(5, 2, sh), alpha: fade * lerp(1, 0.7, sh) });
     if (sh > 0) {
       [[114, 717, 60, 40], [654, 732, 40, 75], [744, 957, 50, 30]].forEach(([a, b, rx, ry], k) => {
         const pts = fx.loopPoints(700 + k, rx, ry, 2.6, 200).map(([u, v], i) => [u + a + noise1(i * 0.2, k) * 14, v + b + noise1(i * 0.2, k + 5) * 14]);
