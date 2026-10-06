@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Love Motion Recreation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f2ea; --surface:#fffdf8; --ink:#2a1a16; --muted:#7a6a62; --line:#e2d9cc;
+  --accent:#e0243a; --cyan:#0aa5c2; --good:#1f8a5b;
+  --shadow:0 1px 2px rgba(60,30,20,.06),0 8px 24px rgba(60,30,20,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e0d12; --surface:#17161d; --ink:#f1ece4; --muted:#9a93a3; --line:#2a2833;
+    --accent:#ff4d62; --cyan:#35d4f0; --good:#4cd69b;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e0d12; --surface:#17161d; --ink:#f1ece4; --muted:#9a93a3; --line:#2a2833;
+  --accent:#ff4d62; --cyan:#35d4f0; --good:#4cd69b;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px 64px}
+header{padding:40px 0 8px;display:flex;gap:16px;justify-content:space-between;align-items:flex-start}
+h1{font-weight:900;font-size:clamp(2rem,7vw,3.4rem);line-height:1.05;margin:0 0 12px;letter-spacing:-.02em}
+h1 span{color:var(--accent)}
+h2{font-weight:800;font-size:1.35rem;margin:48px 0 12px;letter-spacing:-.01em}
+p{margin:0 0 12px} .lede{font-size:1.1rem;color:var(--muted);max-width:62ch}
+.mono,code{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.85em}
+#theme{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font:inherit;font-size:.85rem;white-space:nowrap}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.player{padding:0;overflow:hidden;margin-top:24px}
+video{display:block;width:100%;height:auto;aspect-ratio:4/3;background:#000}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);margin-top:16px;overflow:hidden}
+.meta div{background:var(--surface);padding:12px 16px}
+.meta dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.meta dd{margin:2px 0 0;font-weight:600;word-break:break-word}
+.meta{margin-bottom:0}
+dl{margin:0}
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:0;list-style:none;margin:16px 0 0;counter-reset:s}
+.shots li{counter-increment:s;padding:12px 14px;font-size:.92rem;color:var(--muted)}
+.shots li::before{content:counter(s,decimal-leading-zero);font-family:"JetBrains Mono",monospace;color:var(--accent);margin-right:8px;font-weight:600}
+.shots b{color:var(--ink);font-weight:600}
+.table-wrap{overflow-x:auto;padding:4px 0}
+table{border-collapse:collapse;width:100%;min-width:480px}
+th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+td.num{font-family:"JetBrains Mono",monospace}
+td.up{color:var(--good)} .bar{display:inline-block;height:6px;border-radius:3px;background:var(--cyan);vertical-align:middle;margin-left:8px}
+tr.pending td{color:var(--muted);font-style:italic}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:16px}
+.gallery button{padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);cursor:zoom-in;position:relative;display:block}
+.gallery img{display:block;width:100%;height:auto}
+.gallery span{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.65);color:#fff;border-radius:6px;padding:1px 8px;font-size:.75rem}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+.legend b{color:var(--ink)}
+#lb{position:fixed;inset:0;background:rgba(5,5,8,.92);display:none;align-items:center;justify-content:center;z-index:10;padding:12px}
+#lb.open{display:flex}
+#lb img{max-width:100%;max-height:calc(100vh - 80px);object-fit:contain;border-radius:6px}
+#lb .bar2{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:#ddd;font-size:.85rem}
+#lb button{position:absolute;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:999px;width:44px;height:44px;font-size:1.3rem;cursor:pointer}
+#lb .x{top:12px;right:12px} #lb .p{left:10px;top:50%} #lb .n{right:10px;top:50%}
+footer{margin-top:56px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px}
+a{color:var(--cyan)}
+.err{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Love <span>motion</span><br>recreation</h1>
+    <p class="lede">A 20.5-second kinetic-typography and pixel-icon motion piece, rebuilt from scratch in code and refined by a loop of AI judges.</p>
+  </div>
+  <button id="theme" type="button" aria-label="Toggle colour theme">Theme</button>
+</header>
+
+<section class="card player">
+  <video id="vid" controls playsinline preload="metadata" poster="">
+    Your browser does not support HTML5 video.
+  </video>
+</section>
+
+<dl class="card meta" id="meta" aria-label="Version info">
+  <div><dt>Commit</dt><dd class="mono" id="m-hash">…</dd></div>
+  <div><dt>Message</dt><dd id="m-msg">…</dd></div>
+  <div><dt>Commit date</dt><dd id="m-cdate">…</dd></div>
+  <div><dt>Rendered</dt><dd id="m-rdate">…</dd></div>
+  <div><dt>Video</dt><dd id="m-vid">…</dd></div>
+  <div><dt>Compare set</dt><dd id="m-iter">…</dd></div>
+</dl>
+
+<h2>What it is</h2>
+<p>The piece is a stack of 14 shots, each a pure function of time, so any frame can be rendered in any order. Everything on screen is drawn procedurally: the pixel-art icons, the thermal-camera head and hand, the handwriting scribbles and the type. No footage from the reference is used. The shots, in order:</p>
+<ol class="shots">
+  <li class="card"><b>how do you</b> kinetic type opener</li>
+  <li class="card"><b>Typing line</b> with handwritten scribbles</li>
+  <li class="card"><b>Giant cyan sparkle</b> with floating pixel icons</li>
+  <li class="card"><b>Thermal head profile</b> &ldquo;you dont.&rdquo; / &ldquo;you just show it.&rdquo;</li>
+  <li class="card"><b>3D ring</b> of 12 original pixel-art icons and a bouncing ink ball</li>
+  <li class="card"><b>Word cards</b> &ldquo;action.&rdquo; &ldquo;intention.&rdquo; &ldquo;curiosity.&rdquo;</li>
+  <li class="card"><b>Ink scatter</b></li>
+  <li class="card"><b>Thermal hand</b> &ldquo;through ones own ability to&rdquo;</li>
+  <li class="card"><b>L-O-V-E finale</b> with red pen loops</li>
+</ol>
+
+<h2>How it is made</h2>
+<p><b>Renderer.</b> Node with <code>@napi-rs/canvas</code> (Skia) draws each frame across worker threads. Segments are encoded with ffmpeg and muxed with the audio. Previews render at 1440&times;1080; the final render is 2880&times;2160 with 4-sample motion blur.</p>
+<p><b>Judge loop.</b> After each render, a script builds contact sheets of the reference next to the render at 4 fps. Several Sonnet &ldquo;judge&rdquo; agents compare them, score sections out of 10 and list the biggest differences. Those notes become the next iteration&rsquo;s fixes, and the cycle repeats.</p>
+
+<h2>Iteration history</h2>
+<p>Judge scores out of 10, per section of the timeline.</p>
+<section class="card table-wrap"><table id="scores"></table></section>
+
+<h2>Latest comparison sheets</h2>
+<div class="legend"><span><b>Left</b> = reference</span><span><b>Right</b> = this render</span><span>4 fps, 10 frames per sheet. Tap to enlarge.</span></div>
+<div class="gallery" id="gallery"></div>
+
+<footer>Private project served over Tailscale. No trackers, no analytics. <span id="gen"></span></footer>
+</div>
+
+<div id="lb" role="dialog" aria-modal="true" aria-label="Comparison sheet">
+  <button class="x" type="button" aria-label="Close">&times;</button>
+  <button class="p" type="button" aria-label="Previous">&lsaquo;</button>
+  <img alt="">
+  <button class="n" type="button" aria-label="Next">&rsaquo;</button>
+  <div class="bar2"></div>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){return document.getElementById(id)};
+  // theme toggle (per-viewer convenience only)
+  var root = document.documentElement;
+  try{ var t = localStorage.getItem('theme'); if(t) root.setAttribute('data-theme', t); }catch(e){}
+  $('theme').onclick = function(){
+    var dark = root.getAttribute('data-theme') ? root.getAttribute('data-theme')==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    var n = dark ? 'light' : 'dark'; root.setAttribute('data-theme', n);
+    try{ localStorage.setItem('theme', n); }catch(e){}
+  };
+  function fmt(d){ var x = new Date(d); return isNaN(x) ? d : x.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}); }
+  function esc(s){ var e=document.createElement('span'); e.textContent=s; return e.innerHTML; }
+
+  fetch('data.json?_=' + Date.now(), {cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(d){
+    var v = d.render.v;
+    $('vid').src = 'media/current.mp4?v=' + v;
+    $('m-hash').textContent = d.version.hash + (d.version.dirty ? ' (+ uncommitted changes)' : '');
+    $('m-msg').textContent = d.version.subject;
+    $('m-cdate').textContent = fmt(d.version.date);
+    $('m-rdate').textContent = fmt(d.render.date);
+    $('m-vid').textContent = (d.render.resolution||'') + (d.render.duration ? ' · ' + d.render.duration.toFixed(1) + ' s' : '');
+    $('m-iter').textContent = d.iteration;
+    $('gen').textContent = 'Site data refreshed ' + fmt(d.generated) + '.';
+
+    // scores table
+    var s = d.scores, h = '<thead><tr><th>Round</th>' + s.sections.map(function(x){return '<th>'+esc(x)+'</th>'}).join('') + '<th>Mean</th></tr></thead><tbody>';
+    s.rounds.forEach(function(r, i){
+      var mean = r.scores.reduce(function(a,b){return a+b},0) / r.scores.length;
+      h += '<tr><td>Round ' + r.round + '</td>' + r.scores.map(function(x, j){
+        var prev = i ? s.rounds[i-1].scores[j] : null;
+        return '<td class="num' + (prev!==null && x>prev ? ' up' : '') + '">' + x.toFixed(1) + '<span class="bar" style="width:' + (x*5) + 'px"></span></td>';
+      }).join('') + '<td class="num">' + mean.toFixed(1) + '</td></tr>';
+    });
+    if(s.pending) h += '<tr class="pending"><td colspan="' + (s.sections.length+2) + '">' + esc(s.pending) + '</td></tr>';
+    $('scores').innerHTML = h + '</tbody>';
+
+    // gallery + lightbox
+    var g = $('gallery'), srcs = d.sheets.map(function(n){return 'media/compare/' + n + '?v=' + v});
+    srcs.forEach(function(src, i){
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label','Open sheet ' + (i+1));
+      b.innerHTML = '<img loading="lazy" src="' + src + '" alt="Comparison sheet ' + (i+1) + ': reference on the left, render on the right"><span>' + (i+1) + ' / ' + srcs.length + '</span>';
+      b.onclick = function(){ open(i); }; g.appendChild(b);
+    });
+    var lb = $('lb'), im = lb.querySelector('img'), cur = 0;
+    function show(i){ cur = (i + srcs.length) % srcs.length; im.src = srcs[cur]; lb.querySelector('.bar2').textContent = 'Sheet ' + (cur+1) + ' / ' + srcs.length + '  ·  left: reference, right: render'; }
+    function open(i){ show(i); lb.classList.add('open'); document.body.style.overflow='hidden'; }
+    function close(){ lb.classList.remove('open'); document.body.style.overflow=''; }
+    lb.querySelector('.x').onclick = close;
+    lb.querySelector('.p').onclick = function(e){ e.stopPropagation(); show(cur-1); };
+    lb.querySelector('.n').onclick = function(e){ e.stopPropagation(); show(cur+1); };
+    lb.onclick = function(e){ if(e.target === lb) close(); };
+    im.onclick = function(){ close(); };
+    document.addEventListener('keydown', function(e){
+      if(!lb.classList.contains('open')) return;
+      if(e.key==='Escape') close(); else if(e.key==='ArrowLeft') show(cur-1); else if(e.key==='ArrowRight') show(cur+1);
+    });
+  }).catch(function(e){
+    $('m-msg').innerHTML = '<span class="err">Could not load data.json (' + esc(String(e)) + '). Run scripts/publish-site.sh.</span>';
+  });
+})();
+</script>
+</body>
+</html>
