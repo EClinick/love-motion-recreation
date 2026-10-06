@@ -1,0 +1,62 @@
+{
+  "id": "iter12",
+  "label": "v12",
+  "hash": "265bc53",
+  "subject": "Iteration 12: rebuilt hand rendering; colour-matched head hue path",
+  "commit_date": "2026-10-06T15:01:34-07:00",
+  "dirty": false,
+  "changelog": [
+    "vs v11: 2 source file(s) changed, +223/-73 lines (figures.js, scenes.js).",
+    "- hand: fingers are tapered jointed digits (knuckle bulges, rounded tips) rooted into",
+    "the palm with faded joins, per-finger cylinder shading + lit-side highlight, knuckle",
+    "creases, back-to-front occlusion shading, thumb-base bulge, raised knuckle line,",
+    "shaded palm edge; finger-base seam artefacts removed",
+    "- head: 3.8-4.5s hue path matched to measured mean colour of the original",
+    "(dark purple -> crimson -> red-orange), scripts/region-color.js",
+    "- round-11 fixes: signature blur under-copy + weight, cat blob ears only, thicker",
+    "crescent, 9.75 book glow, 11.0 blobs, ring roll, finale loops, heart shadow",
+    "Rebuilt hand rendering (tapered jointed fingers, cylinder shading, knuckle line, thumb-base bulge, seamless joins); head hue path matched to measured colour of the original"
+  ],
+  "note": "Rebuilt hand rendering (tapered jointed fingers, cylinder shading, knuckle line, thumb-base bulge, seamless joins); head hue path matched to measured colour of the original",
+  "video": "media/versions/iter12/video.mp4",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 15411638,
+  "render_date": "2026-10-06T15:01:13-07:00",
+  "v": 1791324132,
+  "sidebyside": "media/versions/iter12/sidebyside.mp4",
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 29152009,
+  "sheets": [
+    "media/versions/iter12/sheets/sheet_01.jpg",
+    "media/versions/iter12/sheets/sheet_02.jpg",
+    "media/versions/iter12/sheets/sheet_03.jpg",
+    "media/versions/iter12/sheets/sheet_04.jpg",
+    "media/versions/iter12/sheets/sheet_05.jpg",
+    "media/versions/iter12/sheets/sheet_06.jpg",
+    "media/versions/iter12/sheets/sheet_07.jpg",
+    "media/versions/iter12/sheets/sheet_08.jpg",
+    "media/versions/iter12/sheets/sheet_09.jpg"
+  ],
+  "published": "2026-10-06T15:15:22-07:00",
+  "scores": [
+    7.0,
+    8.0,
+    8.2
+  ],
+  "score_sections": [
+    "0 – 7.25 s",
+    "7.5 – 14.75 s",
+    "15 – 20.4 s"
+  ],
+  "extras": [
+    {
+      "src": "media/versions/iter12/extras/overlay_5.png",
+      "caption": "Shape overlay at 5.0 s (cyan = original, red = ours)"
+    },
+    {
+      "src": "media/versions/iter12/extras/overlay_14.6.png",
+      "caption": "Shape overlay at 14.6 s (cyan = original, red = ours)"
+    }
+  ]
+}
