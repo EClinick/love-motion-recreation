@@ -42,10 +42,10 @@ function headPath(ctx, seed = 3) {
 const POSES = {
   // thumb out left, four fingers bunched up and to the right
   open: {
-    palm: [[445, 860], [432, 720], [405, 520], [440, 330], [520, 285], [650, 295], [715, 350], [700, 520], [628, 720], [620, 860]],
+    palm: [[445, 860], [432, 720], [420, 520], [440, 330], [520, 285], [650, 295], [715, 350], [690, 520], [628, 720], [620, 860]],
     f: [
       [[[460, 370], [385, 330], [320, 300]], 84, 56],
-      [[[520, 320], [470, 200], [455, 85]], 62, 42],
+      [[[520, 320], [508, 200], [500, 82]], 62, 42],
       [[[585, 300], [618, 175], [655, 65]], 64, 42],
       [[[620, 315], [645, 225], [662, 140]], 54, 37],
       [[[650, 350], [680, 295], [698, 240]], 44, 32],
@@ -127,7 +127,8 @@ function thermalHand(pose) {
   // lit left side (cream-yellow) vs deep red shadow side on the right
   const r = x.createLinearGradient(240, 0, 720, 0);
   r.addColorStop(0, 'rgba(255,236,190,0.9)');
-  r.addColorStop(0.35, 'rgba(255,214,140,0.45)');
+  r.addColorStop(0.2, 'rgba(255,240,192,0.85)');
+  r.addColorStop(0.38, 'rgba(255,214,140,0.45)');
   r.addColorStop(0.65, 'rgba(255,110,30,0.15)');
   r.addColorStop(0.8, 'rgba(200,36,14,0.65)');
   r.addColorStop(1, 'rgba(138,26,16,0.95)');
