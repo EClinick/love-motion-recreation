@@ -1,0 +1,50 @@
+{
+  "id": "iter8",
+  "label": "v8",
+  "hash": "1b54415",
+  "subject": "Iteration 8: rebuilt head profile, natural hand poses, coarse film grain; round-7 judge fixes",
+  "commit_date": "2026-10-06T14:39:02-07:00",
+  "dirty": false,
+  "changelog": [
+    "vs v7: 4 source file(s) changed, +218/-140 lines (figures.js, fx.js, sprites.js, scenes.js).",
+    "- head: slimmer forward-angled neck, lower shoulders, defined brow/nose/lips/chin,",
+    "yellow crown fading to a red-orange face edge, sharper outline",
+    "- hand: poses defined in screen space with a natural spread (low thumb, diagonal",
+    "index, upright middle, ring up-right), thicker tapering fingers, palm highlight",
+    "- grain: clumpy upscaled noise + soft mottling + fine specks (was per-pixel noise)",
+    "- plus round-7 fixes: 2.0s slashes, 11.0s streaks, wing slash, hand hue, dots, loops",
+    "Rebuilt head profile (slim neck, defined face, yellow crown to red edge), natural hand poses, coarse film grain; plus round-7 judge fixes"
+  ],
+  "note": "Rebuilt head profile (slim neck, defined face, yellow crown to red edge), natural hand poses, coarse film grain; plus round-7 judge fixes",
+  "video": "media/versions/iter8/video.mp4",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 23844808,
+  "render_date": "2026-10-06T14:38:52-07:00",
+  "v": 1791322771,
+  "sidebyside": "media/versions/iter8/sidebyside.mp4",
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 37475422,
+  "sheets": [
+    "media/versions/iter8/sheets/sheet_01.jpg",
+    "media/versions/iter8/sheets/sheet_02.jpg",
+    "media/versions/iter8/sheets/sheet_03.jpg",
+    "media/versions/iter8/sheets/sheet_04.jpg",
+    "media/versions/iter8/sheets/sheet_05.jpg",
+    "media/versions/iter8/sheets/sheet_06.jpg",
+    "media/versions/iter8/sheets/sheet_07.jpg",
+    "media/versions/iter8/sheets/sheet_08.jpg",
+    "media/versions/iter8/sheets/sheet_09.jpg"
+  ],
+  "published": "2026-10-06T14:43:38-07:00",
+  "scores": [
+    6.8,
+    7.8,
+    7.6
+  ],
+  "score_sections": [
+    "0 – 7.25 s",
+    "7.5 – 14.75 s",
+    "15 – 20.4 s"
+  ]
+}
