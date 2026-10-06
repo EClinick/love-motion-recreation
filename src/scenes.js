@@ -540,6 +540,39 @@ function sceneProfile(ctx, t, f) {
     else if (t > 5.55) x.filter = `sepia(${0.45 * inv(5.55, 5.84, t)}) saturate(${lerp(1, 1.25, inv(5.55, 5.84, t))}) brightness(${lerp(1, 0.82, inv(5.55, 5.84, t))})`;
     x.drawImage(heat, 0, 0);
     x.filter = 'none';
+    if (settle < 0.45) {
+      // 3.75: lit crimson core fading to purple, blue patch toward the lower right
+      const e = 1 - settle / 0.45;
+      x.save();
+      x.globalCompositeOperation = 'source-atop';
+      const core = x.createRadialGradient(330, 360, 20, 330, 380, 380);
+      core.addColorStop(0, `rgba(170,24,96,${0.75 * e})`);
+      core.addColorStop(0.45, `rgba(120,18,90,${0.5 * e})`);
+      core.addColorStop(1, `rgba(58,26,106,${0.6 * e})`);
+      x.fillStyle = core;
+      x.fillRect(-100, -100, 1000, 1100);
+      const blue = x.createRadialGradient(620, 820, 10, 620, 820, 260);
+      blue.addColorStop(0, `rgba(42,42,138,${0.7 * e})`);
+      blue.addColorStop(1, 'rgba(42,42,138,0)');
+      x.fillStyle = blue;
+      x.fillRect(-100, -100, 1000, 1100);
+      x.restore();
+    }
+    if (settle > 0.25 && settle < 0.9) {
+      // 4.0: soft orange contour bands inside a crimson rim
+      const k = Math.sin(Math.PI * inv(0.25, 0.9, settle));
+      x.save();
+      x.globalCompositeOperation = 'source-atop';
+      x.filter = `blur(${8 * S}px)`;
+      x.strokeStyle = `rgba(236,96,32,${0.8 * k})`;
+      x.lineWidth = 14;
+      [0.55, 0.78].forEach((m) => {
+        x.beginPath();
+        x.ellipse(340, 380, 260 * m, 300 * m, 0.15, 0, 7);
+        x.stroke();
+      });
+      x.restore();
+    }
     if (settle < 1) {
       x.save();
       x.globalCompositeOperation = 'source-atop';
@@ -586,7 +619,7 @@ function sceneProfile(ctx, t, f) {
     x.drawImage(thermal('head', 'shadow'), 0, 0);
   }
   x.restore();
-  composite(ctx, c, { blur: (1 - settle) * 40 });
+  composite(ctx, c, { blur: (1 - settle) * 16 });
 
   if (settle < 0.6) {
     const cg = ctx.createRadialGradient(hx + 330, hy + 380, 0, hx + 330, hy + 380, 260);
@@ -722,7 +755,7 @@ const ringPhi = (t) =>
     [8.0, 0.45, 'inQuad'],
     [8.3, 1.3, 'inQuad'],
   ]);
-const ringAt = (t) => ringLayout(ringPhi(t), { xs: 0.8, R: 470, cy: kf(t, [[7.5, 490], [8.0, 470]]), cx: kf(t, [[7.5, 770], [8.0, 700]]), roll: kf(t, [[7.5, -0.06], [8.0, -0.16]]) });
+const ringAt = (t) => ringLayout(ringPhi(t), { xs: 0.8, R: 470, tilt: kf(t, [[7.5, 0.96], [8.0, 1.11]]), cy: kf(t, [[7.5, 490], [8.0, 530]]), cx: kf(t, [[7.5, 770], [8.0, 700]]), roll: kf(t, [[7.5, -0.06], [8.0, -0.16]]) });
 const iconPos = (t, name) => {
   const it = ringAt(t).find((o) => o.name === name);
   return [it.x, it.y];
@@ -1485,7 +1518,7 @@ function sceneHand(ctx, t, f) {
   x.rotate(sway + (1 - settle) * -0.3 + fall * -0.25);
   x.scale(lerp(0.65, 1, settle), 1);
   x.translate(-710 + (1 - settle) * 15 + fall * -290, -1110 + (1 - settle) * 140 + fall * 30);
-  if (settle < 1) x.filter = `hue-rotate(${-20 * (1 - settle)}deg) saturate(${1 + (1 - settle) * 0.5}) brightness(${lerp(0.62, 0.9, settle)})`;
+  if (settle < 1) x.filter = `hue-rotate(${-30 * (1 - settle)}deg) saturate(${1 + (1 - settle) * 0.6}) brightness(${lerp(0.55, 0.88, settle)})`;
   else if (fall > 0) x.filter = `saturate(${1 - fall * 0.85}) brightness(${1 - fall * 0.08})`;
   if (fall > 0) {
     // wider fist with an orange rim on its right edge
@@ -1687,7 +1720,7 @@ const LOOPS = [
   ['E', 19.5, 0.25, 34, 26, 11, 1.3, 0, 0],
   ['V', 19.7, 0.25, 44, 52, 12, 2.2, 0, -20],
   ['O', 19.7, 0.25, 12, 52, 13, 1.1, 2, -50],
-  ['L', 19.72, 0.25, 30, 18, -35, 1.05, -30, 25],
+  ['L', 19.6, 0.15, 30, 18, -35, 1.05, -30, 25],
   ['E', 19.74, 0.25, 34, 30, 15, 1.3, 0, 0],
 ];
 const FINAL_LOOPS = [
@@ -1740,7 +1773,7 @@ function sceneFinale(ctx, t, f) {
           // '?' hook: a curl that drops into a short tail
           const a = Math.PI * (1.1 - u * 1.6);
           sxp = u < 0.65 ? Math.cos(a) * L2 * 0.35 : (u - 0.65) * L2 * 0.2;
-          syp = u < 0.65 ? -Math.sin(a) * L2 * 0.35 : (u - 0.65) * L2 * 1.4;
+          syp = u < 0.65 ? -Math.sin(a) * L2 * 0.35 : (u - 0.65) * L2 * 2.0;
         }
         const tx3 = tx2 + sxp * Math.cos(rot2) - syp * Math.sin(rot2);
         const ty3 = ty2 + sxp * Math.sin(rot2) + syp * Math.cos(rot2);

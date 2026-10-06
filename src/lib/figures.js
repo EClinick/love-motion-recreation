@@ -21,7 +21,7 @@ function headPath(ctx, seed = 3) {
     const u = i / n;
     const a = Math.PI * (1.2 + u * 0.9);
     const tuft = Math.abs(noise1(u * 9, seed)) * 0.09 + Math.abs(noise1(u * 26, seed + 4)) * 0.04 + (r() - 0.5) * 0.02;
-    const quiff = u < 0.25 ? Math.sin((u / 0.25) * Math.PI) * 0.15 + Math.abs(noise1(u * 60, seed + 9)) * 0.06 : 0;
+    const quiff = u < 0.22 ? Math.pow(Math.sin((u / 0.22) * Math.PI), 0.7) * 0.24 + Math.abs(noise1(u * 60, seed + 9)) * 0.06 : 0;
     const backTuft = u > 0.55 && u < 0.92 ? Math.max(0, Math.sin(u * Math.PI * 14)) * 0.07 : 0;
     const rx = u > 0.45 ? lerp(250, 228, Math.min(1, (u - 0.45) / 0.3)) : 250; // rounder, smaller back crown
     hair.push([330 + Math.cos(a) * rx * (1 + tuft + quiff + backTuft), 222 + Math.sin(a) * 210 * (1 + tuft + quiff * 0.4 + backTuft)]);
@@ -44,7 +44,7 @@ function headPath(ctx, seed = 3) {
 }
 
 // Hand poses (local = screen - (250,250)). Each finger: [base, ctrl, tip], w0, w1.
-const PALM = [[380, 830], [384, 700], [372, 600], [404, 500], [410, 410], [440, 335], [515, 300], [584, 308], [620, 360], [612, 460], [580, 540], [560, 600], [552, 700], [556, 830]];
+const PALM = [[372, 970], [370, 820], [372, 700], [368, 600], [400, 500], [406, 410], [440, 335], [515, 300], [584, 308], [622, 360], [618, 460], [588, 540], [568, 600], [560, 700], [570, 820], [576, 970]];
 const POSES = {
   // natural spread: thumb low and left, index diagonal up-left, middle up, ring up-right
   open: {
@@ -72,11 +72,11 @@ const POSES = {
   fist: {
     palm: PALM,
     f: [
-      [[[430, 460], [402, 432], [382, 420]], 70, 54],
-      [[[455, 360], [410, 336], [370, 326]], 56, 42],
-      [[[525, 340], [500, 300], [470, 330]], 70, 57],
-      [[[580, 350], [560, 300], [530, 330]], 66, 54],
-      [[[595, 400], [580, 360], [555, 380]], 54, 44],
+      [[[440, 420], [420, 398], [404, 392]], 60, 50],
+      [[[455, 360], [370, 345], [290, 338]], 50, 38],
+      [[[520, 345], [512, 336], [505, 342]], 50, 44],
+      [[[570, 352], [560, 344], [552, 350]], 48, 42],
+      [[[598, 400], [590, 390], [582, 394]], 42, 38],
     ],
   },
 };
@@ -206,7 +206,7 @@ function paintThermal(x, w, h) {
 // Per-frame thermal hand (pose changes every frame, so no cache).
 function thermalHand(pose) {
   const w = 800;
-  const h = 860;
+  const h = 980;
   const c = createCanvas(w, h);
   const x = c.getContext('2d');
   const layer = createCanvas(w, h);
@@ -217,7 +217,7 @@ function thermalHand(pose) {
   palmPath(lx, pose.palm);
   lx.fill();
   lx.beginPath();
-  lx.ellipse(455, 480, 70, 58, -0.5, 0, Math.PI * 2);
+  lx.ellipse(448, 475, 86, 70, -0.5, 0, Math.PI * 2);
   lx.fill();
   paintThermal(lx, w, h);
   lx.globalCompositeOperation = 'source-atop';
@@ -227,11 +227,18 @@ function thermalHand(pose) {
   lx.fillStyle = ph;
   lx.fillRect(0, 0, w, h);
   // darker right edge of the palm / forearm (turning away from the light)
-  lx.filter = 'blur(10px)';
-  lx.strokeStyle = 'rgba(150,30,12,0.45)';
-  lx.lineWidth = 46;
-  palmPath(lx, pose.palm.map(([a, b]) => [a + 24, b]));
-  lx.stroke();
+  lx.filter = 'blur(12px)';
+  const edge = (pts, col, lw) => {
+    lx.strokeStyle = col;
+    lx.lineWidth = lw;
+    lx.beginPath();
+    pts.forEach(([a, b], i) => (i ? lx.lineTo(a, b) : lx.moveTo(a, b)));
+    lx.stroke();
+  };
+  const P = pose.palm;
+  const half = Math.floor(P.length / 2);
+  edge(P.slice(half).map(([a, b]) => [a + 6, b]), 'rgba(196,52,16,0.6)', 50);
+  edge(P.slice(0, half).map(([a, b]) => [a - 6, b]), 'rgba(220,90,30,0.35)', 36);
   lx.filter = 'none';
   lx.globalCompositeOperation = 'source-over';
   x.drawImage(layer, 0, 0);
@@ -241,8 +248,8 @@ function thermalHand(pose) {
   order.forEach((fi) => {
     const [pts0, w0, w1] = pose.f[fi];
     const pts = rooted(pts0);
-    const { poly } = fingerOutline(pts, w0 * 1.08, w1);
-    const free = fingerOutline(pts, w0 * 1.08, w1, 0.3); // visible part beyond the knuckle
+    const { poly } = fingerOutline(pts, w0 * 1.2, w1 * 1.1);
+    const free = fingerOutline(pts, w0 * 1.2, w1 * 1.1, 0.3); // visible part beyond the knuckle
     lx.setTransform(1, 0, 0, 1, 0, 0);
     lx.globalCompositeOperation = 'source-over';
     lx.filter = 'none';
@@ -256,11 +263,11 @@ function thermalHand(pose) {
     smoothPoly(lx, free.poly);
     lx.clip();
     lx.filter = 'blur(7px)';
-    lx.strokeStyle = 'rgba(140,28,10,0.26)';
-    lx.lineWidth = w0 * 0.4;
+    lx.strokeStyle = 'rgba(150,34,12,0.2)';
+    lx.lineWidth = w0 * 0.5;
     smoothPoly(lx, free.poly);
     lx.stroke();
-    lx.strokeStyle = 'rgba(255,238,200,0.22)';
+    lx.strokeStyle = 'rgba(255,238,200,0.0)';
     lx.lineWidth = w0 * 0.22;
     lx.lineCap = 'round';
     lx.beginPath();
@@ -306,7 +313,11 @@ function thermalHand(pose) {
 
   const s = createCanvas(w, h);
   const sx = s.getContext('2d');
-  sx.filter = 'blur(1.4px)';
+  sx.filter = 'blur(8px)';
+  sx.globalAlpha = 0.2;
+  sx.drawImage(c, 0, 0);
+  sx.globalAlpha = 1;
+  sx.filter = 'blur(2.6px)';
   sx.drawImage(c, 0, 0);
   return s;
 }
@@ -360,7 +371,7 @@ function thermal(kind, palette = 'heat') {
       x.fillStyle = f;
       x.fillRect(0, 0, w, h);
       const crown = x.createRadialGradient(200, 80, 10, 200, 80, 240);
-      crown.addColorStop(0, 'rgba(255,206,96,0.7)');
+      crown.addColorStop(0, 'rgba(250,180,70,0.45)');
       crown.addColorStop(1, 'rgba(255,196,80,0)');
       x.fillStyle = crown;
       x.fillRect(0, 0, w, 360);
@@ -388,12 +399,24 @@ function thermal(kind, palette = 'heat') {
       x.fillRect(0, 0, w, h);
       // red edge burn around the outline
       x.globalCompositeOperation = 'source-atop';
-      x.strokeStyle = 'rgba(196,40,16,0.85)';
-      x.lineWidth = 46;
+      x.save();
       x.filter = 'blur(8px)';
+      x.strokeStyle = 'rgba(196,40,16,0.8)';
+      x.lineWidth = 48;
+      x.beginPath();
+      x.rect(0, 250, 300, 700); // face, chin, front of neck
+      x.rect(440, 380, 360, 560); // back of neck
+      x.clip();
       headPath(x);
       x.stroke();
-      x.filter = 'none';
+      x.restore();
+      x.save();
+      x.filter = 'blur(6px)';
+      x.strokeStyle = 'rgba(210,60,20,0.35)';
+      x.lineWidth = 14;
+      headPath(x);
+      x.stroke();
+      x.restore();
     } else {
       // lit left side (cream) vs. deep orange-red right side
       const r = x.createLinearGradient(150, 0, 750, 0);
