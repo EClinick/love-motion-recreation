@@ -6,11 +6,12 @@ const { rng, noise1, lerp } = require('./core');
 // Profile facing left, in a 760x900 local box (top of hair at y≈0).
 function headPath(ctx, seed = 3) {
   // face: forehead, brow, nose, lips, chin, then a slender neck angled forward
+  // profile tuned to measured proportions (local px; nose tip ~ (59,312), chin ~ (65,480))
   const face = [
-    [150, 905], [176, 800], [192, 700], [200, 620], [202, 560], [196, 512], [180, 486],
-    [148, 470], [108, 458], [86, 444], [76, 424], [80, 404], [68, 392], [74, 380], [64, 368],
-    [70, 356], [58, 346], [40, 334], [44, 318], [62, 296], [70, 268], [68, 246], [80, 222],
-    [88, 192], [96, 162],
+    [128, 905], [168, 800], [190, 700], [205, 630], [200, 585], [189, 555], [150, 540],
+    [100, 528], [77, 512], [66, 492], [65, 472], [72, 452], [75, 432], [68, 412], [70, 392],
+    [74, 372], [76, 352], [66, 335], [59, 312], [80, 290], [100, 268], [111, 232], [117, 200],
+    [105, 175], [91, 152], [81, 120], [96, 100],
   ];
   // soft tousled hair: low-frequency irregular edge, with a quiff over the forehead
   const r = rng(seed);
@@ -18,15 +19,16 @@ function headPath(ctx, seed = 3) {
   const n = 48;
   for (let i = 0; i <= n; i++) {
     const u = i / n;
-    const a = Math.PI * (1.1 + u * 0.98);
+    const a = Math.PI * (1.2 + u * 0.9);
     const tuft = Math.abs(noise1(u * 9, seed)) * 0.09 + Math.abs(noise1(u * 26, seed + 4)) * 0.04 + (r() - 0.5) * 0.02;
-    const quiff = u < 0.25 ? Math.sin((u / 0.25) * Math.PI) * 0.12 : 0;
-    hair.push([330 + Math.cos(a) * 250 * (1 + tuft + quiff), 215 + Math.sin(a) * 205 * (1 + tuft + quiff * 0.4)]);
+    const quiff = u < 0.25 ? Math.sin((u / 0.25) * Math.PI) * 0.1 + Math.abs(noise1(u * 60, seed + 9)) * 0.06 : 0;
+    const rx = u > 0.45 ? lerp(250, 228, Math.min(1, (u - 0.45) / 0.3)) : 250; // rounder, smaller back crown
+    hair.push([330 + Math.cos(a) * rx * (1 + tuft + quiff), 222 + Math.sin(a) * 210 * (1 + tuft + quiff * 0.4)]);
   }
-  // back of skull, nape, a thicker neck leaning back, broad sloping shoulder
+  // back of skull, nape, neck, then a shorter sloping shoulder
   const back = [
-    [585, 300], [576, 372], [552, 430], [530, 474], [522, 530], [532, 590], [566, 650],
-    [624, 712], [690, 780], [724, 905],
+    [586, 310], [578, 372], [556, 430], [520, 482], [478, 540], [478, 590], [490, 640],
+    [522, 690], [556, 740], [592, 800], [612, 905],
   ];
   const pts = [...face, ...hair, ...back];
   ctx.beginPath();
@@ -41,17 +43,17 @@ function headPath(ctx, seed = 3) {
 }
 
 // Hand poses (local = screen - (250,250)). Each finger: [base, ctrl, tip], w0, w1.
-const PALM = [[388, 830], [384, 650], [384, 510], [398, 390], [445, 325], [510, 305], [578, 300], [612, 345], [604, 450], [572, 530], [540, 650], [522, 830]];
+const PALM = [[380, 830], [388, 700], [392, 600], [396, 500], [415, 410], [455, 365], [515, 352], [580, 355], [612, 385], [608, 460], [575, 540], [556, 600], [552, 700], [560, 830]];
 const POSES = {
   // natural spread: thumb low and left, index diagonal up-left, middle up, ring up-right
   open: {
     palm: PALM,
     f: [
-      [[[430, 450], [380, 446], [338, 468]], 68, 49],
+      [[[440, 470], [360, 455], [282, 440]], 66, 50],
       [[[455, 350], [370, 290], [295, 240]], 64, 44],
-      [[[525, 325], [530, 220], [522, 122]], 66, 47],
-      [[[580, 330], [640, 230], [690, 152]], 59, 43],
-      [[[595, 390], [640, 350], [665, 310]], 47, 35],
+      [[[525, 325], [526, 220], [512, 118]], 66, 47],
+      [[[580, 335], [650, 245], [705, 165]], 59, 43],
+      [[[592, 395], [615, 372], [628, 350]], 40, 30],
     ],
   },
   // fingers curling in
@@ -70,7 +72,7 @@ const POSES = {
     palm: PALM,
     f: [
       [[[430, 460], [402, 432], [382, 420]], 70, 54],
-      [[[455, 360], [390, 336], [330, 326]], 56, 42],
+      [[[455, 360], [410, 336], [370, 326]], 56, 42],
       [[[525, 340], [500, 300], [470, 330]], 70, 57],
       [[[580, 350], [560, 300], [530, 330]], 66, 54],
       [[[595, 400], [580, 360], [555, 380]], 54, 44],
@@ -137,6 +139,24 @@ function thermalHand(pose) {
   r.addColorStop(1, 'rgba(170,36,16,0.85)');
   x.fillStyle = r;
   x.fillRect(0, 0, w, h);
+  // dark separations between adjacent finger bases
+  x.save();
+  x.globalCompositeOperation = 'source-atop';
+  x.strokeStyle = 'rgba(130,24,10,0.55)';
+  x.lineCap = 'round';
+  x.lineWidth = 12;
+  x.filter = 'blur(3px)';
+  for (let i = 1; i < pose.f.length - 1; i++) {
+    const a0 = pose.f[i][0][0];
+    const b0 = pose.f[i + 1][0][0];
+    const mx = (a0[0] + b0[0]) / 2;
+    const my = (a0[1] + b0[1]) / 2;
+    x.beginPath();
+    x.moveTo(mx, my + 25);
+    x.lineTo(mx, my - 30);
+    x.stroke();
+  }
+  x.restore();
   // warm palm highlight
   const ph = x.createRadialGradient(430, 560, 0, 430, 560, 130);
   ph.addColorStop(0, 'rgba(255,240,192,0.5)');
@@ -205,13 +225,17 @@ function thermal(kind, palette = 'heat') {
       x.fillStyle = crown;
       x.fillRect(0, 0, w, 300);
       // white/pink shirt on the shoulders
-      x.fillStyle = 'rgba(255,246,222,0.97)';
+      const shirt = x.createLinearGradient(0, 700, 0, 940);
+      shirt.addColorStop(0, 'rgba(255,216,96,0.0)');
+      shirt.addColorStop(0.3, 'rgba(255,232,170,0.8)');
+      shirt.addColorStop(1, 'rgba(252,250,246,1)');
+      x.fillStyle = shirt;
       x.beginPath();
       x.moveTo(200, 940);
       x.bezierCurveTo(250, 780, 360, 720, 480, 712);
       x.bezierCurveTo(580, 712, 650, 790, 700, 940);
       x.closePath();
-      x.filter = 'blur(10px)';
+      x.filter = 'blur(40px)';
       x.fill();
       x.filter = 'none';
       // bright glow rising from the shoulders into the neck
@@ -224,8 +248,8 @@ function thermal(kind, palette = 'heat') {
       x.fillRect(0, 0, w, h);
       // red edge burn around the outline
       x.globalCompositeOperation = 'source-atop';
-      x.strokeStyle = 'rgba(216,58,24,0.6)';
-      x.lineWidth = 36;
+      x.strokeStyle = 'rgba(196,40,16,0.85)';
+      x.lineWidth = 46;
       x.filter = 'blur(8px)';
       headPath(x);
       x.stroke();

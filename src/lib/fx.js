@@ -80,6 +80,35 @@ function grain(ctx, frame, amount = 0.14) {
   ctx.restore();
 }
 
+// Low-frequency blotchy mottling + a few dust specks for dark frames.
+function mottle(ctx, frame, k = 1) {
+  const r = rng(frame * 13 + 7);
+  const m = createCanvas(36, 27);
+  const mx = m.getContext('2d');
+  const img = mx.createImageData(36, 27);
+  for (let i = 0; i < 36 * 27; i++) {
+    const g = Math.round(128 + (r() - 0.5) * 60);
+    img.data[i * 4] = g;
+    img.data[i * 4 + 1] = g;
+    img.data[i * 4 + 2] = g;
+    img.data[i * 4 + 3] = 255;
+  }
+  mx.putImageData(img, 0, 0);
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.globalCompositeOperation = 'soft-light';
+  ctx.globalAlpha = 0.5 * k;
+  ctx.drawImage(m, 0, 0, W, H);
+  ctx.globalCompositeOperation = 'source-over';
+  for (let i = 0; i < 7; i++) {
+    ctx.fillStyle = `rgba(235,230,224,${0.18 + r() * 0.25})`;
+    ctx.beginPath();
+    ctx.arc(r() * W, r() * H, 1 + r() * 1.6, 0, 7);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 // ---------------------------------------------------------------- vignette
 function vignette(ctx, strength = 0.35, color = '0,0,0', inner = 0.45, cx = W / 2, cy = H / 2, outer = 0.85) {
   const g = ctx.createRadialGradient(cx, cy, W * inner * 0.5, cx, cy, W * outer);
@@ -286,6 +315,7 @@ function layer(ctx, draw, opts = {}) {
 
 module.exports = {
   grain,
+  mottle,
   vignette,
   paper,
   dark,
