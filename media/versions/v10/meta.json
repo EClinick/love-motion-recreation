@@ -1,0 +1,61 @@
+{
+  "id": "iter10",
+  "label": "v10",
+  "hash": "47d780e",
+  "subject": "Iteration 10: measured silhouette matching for head and hand (IoU head 0.745->0.82, hand 0.45->0.80)",
+  "commit_date": "2026-10-06T14:48:54-07:00",
+  "dirty": false,
+  "changelog": [
+    "vs v9: 3 source file(s) changed, +102/-40 lines (figures.js, fx.js, scenes.js).",
+    "- scripts/shape-compare.js: thresholds the thermal figure in ref and render at the",
+    "same timestamp; reports IoU, bounding boxes, per-row width profile, outline overlay",
+    "- head: longer face (nose up, chin down), set-back brow, rounder smaller back crown,",
+    "narrower back of neck, shorter shoulder, white shirt",
+    "- hand: straight 165-185px forearm, shifted right, lower ring fingertip, small pinky",
+    "- round-9 judge fixes: silver camera, crimson hand intro, horizontal thumb, dark-scene",
+    "mottling + dust, tapered 11.0s streaks fix, finale dots/loops/strokes",
+    "Measured silhouette matching via scripts/shape-compare.js: head IoU 0.745->0.82, hand IoU 0.45->0.80 vs the original; plus round-9 judge fixes"
+  ],
+  "note": "Measured silhouette matching via scripts/shape-compare.js: head IoU 0.745->0.82, hand IoU 0.45->0.80 vs the original; plus round-9 judge fixes",
+  "video": "media/versions/iter10/video.mp4",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 16260935,
+  "render_date": "2026-10-06T14:48:36-07:00",
+  "v": 1791323364,
+  "sidebyside": "media/versions/iter10/sidebyside.mp4",
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 29939764,
+  "sheets": [
+    "media/versions/iter10/sheets/sheet_01.jpg",
+    "media/versions/iter10/sheets/sheet_02.jpg",
+    "media/versions/iter10/sheets/sheet_03.jpg",
+    "media/versions/iter10/sheets/sheet_04.jpg",
+    "media/versions/iter10/sheets/sheet_05.jpg",
+    "media/versions/iter10/sheets/sheet_06.jpg",
+    "media/versions/iter10/sheets/sheet_07.jpg",
+    "media/versions/iter10/sheets/sheet_08.jpg",
+    "media/versions/iter10/sheets/sheet_09.jpg"
+  ],
+  "published": "2026-10-06T14:54:08-07:00",
+  "scores": [
+    7.0,
+    7.9,
+    8.0
+  ],
+  "score_sections": [
+    "0 – 7.25 s",
+    "7.5 – 14.75 s",
+    "15 – 20.4 s"
+  ],
+  "extras": [
+    {
+      "src": "media/versions/iter10/extras/overlay_5.png",
+      "caption": "Shape overlay at 5.0 s (cyan = original, red = ours)"
+    },
+    {
+      "src": "media/versions/iter10/extras/overlay_14.6.png",
+      "caption": "Shape overlay at 14.6 s (cyan = original, red = ours)"
+    }
+  ]
+}
