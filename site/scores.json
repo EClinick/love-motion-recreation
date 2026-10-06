@@ -36,7 +36,15 @@
         7.0,
         7.0
       ]
+    },
+    {
+      "round": 5,
+      "scores": [
+        6.7,
+        7.0,
+        7.5
+      ]
     }
   ],
-  "pending": "Round 5 (final check on iteration 5) in progress"
+  "pending": "Iteration 6 (final consolidated fixes) applied after round 5; 4K final render in progress"
 }
