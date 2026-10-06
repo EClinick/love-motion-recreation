@@ -9,34 +9,74 @@ GlobalFonts.registerFromPath(path.join(FONT_DIR, 'Satoshi-700.woff2'), 'Satoshi'
 GlobalFonts.registerFromPath(path.join(FONT_DIR, 'Satoshi-900.woff2'), 'Satoshi');
 
 // ---------------------------------------------------------------- grain
+// Coarse film grain: low-res noise upscaled (clumpy 2-3px grain) plus sparse specks.
 const GRAIN = [];
+const SPECKS = [];
 for (let k = 0; k < 6; k++) {
-  const c = createCanvas(512, 512);
-  const x = c.getContext('2d');
-  const img = x.createImageData(512, 512);
+  const small = createCanvas(256, 256);
+  const sx = small.getContext('2d');
+  const img = sx.createImageData(256, 256);
   const r = rng(1000 + k);
-  for (let i = 0; i < 512 * 512; i++) {
-    // roughly gaussian luminance noise
-    const v = (r() + r() + r()) / 3;
-    const g = Math.round(v * 255);
+  for (let i = 0; i < 256 * 256; i++) {
+    const g = Math.round(((r() + r() + r()) / 3) * 255);
     img.data[i * 4] = g;
     img.data[i * 4 + 1] = g;
     img.data[i * 4 + 2] = g;
     img.data[i * 4 + 3] = 255;
   }
-  x.putImageData(img, 0, 0);
+  sx.putImageData(img, 0, 0);
+  const c = createCanvas(640, 640);
+  const x = c.getContext('2d');
+  x.imageSmoothingEnabled = true;
+  x.drawImage(small, 0, 0, 640, 640);
+  // large soft mottling on top
+  const m = createCanvas(32, 32);
+  const mx = m.getContext('2d');
+  const mi = mx.createImageData(32, 32);
+  for (let i = 0; i < 32 * 32; i++) {
+    const g = Math.round(110 + r() * 36);
+    mi.data[i * 4] = g;
+    mi.data[i * 4 + 1] = g;
+    mi.data[i * 4 + 2] = g;
+    mi.data[i * 4 + 3] = 255;
+  }
+  mx.putImageData(mi, 0, 0);
+  x.globalAlpha = 0.35;
+  x.globalCompositeOperation = 'overlay';
+  x.drawImage(m, 0, 0, 640, 640);
   GRAIN.push(c);
+  // speck layer: small soft dots, mostly dark
+  const sp = createCanvas(640, 640);
+  const spx = sp.getContext('2d');
+  for (let i = 0; i < 1600; i++) {
+    const rad = 0.6 + r() * 1.3;
+    spx.fillStyle = `rgba(40,34,34,${0.05 + r() * 0.12})`;
+    spx.beginPath();
+    spx.arc(r() * 640, r() * 640, rad, 0, 7);
+    spx.fill();
+  }
+  SPECKS.push(sp);
 }
 
 function grain(ctx, frame, amount = 0.14) {
-  const g = GRAIN[frame % GRAIN.length];
   const r = rng(frame * 7 + 3);
-  const ox = -Math.floor(r() * 512);
-  const oy = -Math.floor(r() * 512);
+  const ox = -Math.floor(r() * 640);
+  const oy = -Math.floor(r() * 640);
+  const g = GRAIN[frame % GRAIN.length];
   ctx.save();
   ctx.globalCompositeOperation = 'overlay';
-  ctx.globalAlpha = amount;
-  for (let y = oy; y < H; y += 512) for (let x = ox; x < W; x += 512) ctx.drawImage(g, x, y);
+  ctx.globalAlpha = Math.min(1, amount * 1.9);
+  for (let y = oy; y < H; y += 640) for (let x = ox; x < W; x += 640) ctx.drawImage(g, x, y);
+  // specks: darken on light frames, lift on dark frames (soft-light handles both)
+  const sp = SPECKS[(frame * 5 + 1) % SPECKS.length];
+  ctx.globalCompositeOperation = 'soft-light';
+  ctx.globalAlpha = Math.min(1, amount * 4);
+  const ox2 = -Math.floor(r() * 640);
+  const oy2 = -Math.floor(r() * 640);
+  for (let y = oy2; y < H; y += 640) for (let x = ox2; x < W; x += 640) ctx.drawImage(sp, x, y);
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.globalAlpha = Math.min(1, amount * 1.1);
+  for (let y = oy2; y < H; y += 640) for (let x = ox2; x < W; x += 640) ctx.drawImage(sp, x, y);
   ctx.restore();
 }
 

@@ -233,23 +233,27 @@ const builders = {
     return g;
   },
   vinyl() {
-    const g = new Grid(28, 28);
-    g.circle(14, 14, 13, '#1a1c2a');
-    g.circle(14, 14, 12, '#272a3e');
-    // sheen wedges
-    g.tint((x, y) => {
-      const a = Math.atan2(y - 14, x - 14);
-      const r = Math.hypot(x - 14, y - 14);
-      return r > 5.5 && r < 11.5 && (Math.abs(a + 2.2) < 0.45 || Math.abs(a - 0.94) < 0.45);
-    }, '#8a83a6');
-    g.tint((x, y) => {
-      const a = Math.atan2(y - 14, x - 14);
-      const r = Math.hypot(x - 14, y - 14);
-      return r > 6.5 && r < 10.5 && (Math.abs(a + 2.2) < 0.2 || Math.abs(a - 0.94) < 0.2);
-    }, '#a9a2c4');
-    g.circle(14, 14, 4.6, '#e0303c');
-    g.circle(14, 14, 3.2, '#cc2430');
-    g.px(14, 14, '#f6e8ea');
+    const g = new Grid(40, 40);
+    const c = 20;
+    g.circle(c, c, 18.6, '#1a1c2a');
+    g.circle(c, c, 17.2, '#272a3e');
+    // smooth curved sheen wedges, upper-left and lower-right
+    const wedge = (lo, hi, a0, half, col) =>
+      g.tint((x, y) => {
+        const a = Math.atan2(y - c, x - c);
+        const r = Math.hypot(x - c, y - c);
+        const d = Math.abs(Math.atan2(Math.sin(a - a0), Math.cos(a - a0)));
+        return r > lo && r < hi && d < half;
+      }, col);
+    [-2.3, 0.84].forEach((a0) => {
+      wedge(7.5, 16.5, a0, 0.36, '#7f7a9c');
+      wedge(9, 15, a0, 0.2, '#a29cc0');
+    });
+    g.circle(c, c, 6.4, '#e0303c');
+    g.circle(c, c, 4.4, '#cc2430');
+    g.px(c, c, '#f6e8ea');
+    g.px(c - 1, c, '#f6e8ea');
+    g.px(c, c - 1, '#f6e8ea');
     return g;
   },
   skateboard() {
