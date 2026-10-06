@@ -58,7 +58,7 @@ The full table, with every version's files, is in [`media/README.md`](media/READ
 | `scripts/sidebyside.sh` | Reference vs render side-by-side video |
 | `scripts/trace-hand.js` | Rotoscopes hand silhouettes from the source video into `ref/derived/hand/` |
 | `scripts/shape-compare.js`, `scripts/region-color.js` | Silhouette IoU and region-colour measurements |
-| `site/`, `scripts/publish-site.sh` | Versioned showcase site (served privately over Tailscale) |
+| `site/`, `scripts/publish-site.sh` | Versioned showcase page with the complete media archive |
 | `media/` | Web-encoded videos, sheets and overlays for every version, the original, and the final |
 
 ## Rebuilding
@@ -73,3 +73,16 @@ npm run compare                      # contact sheets in out/compare/latest
 npm run render                       # 2880x2160 with 4-sample motion blur
 node src/render.js --stills 2.5,8.7  # single frames to out/stills
 ```
+
+## Showcase at /site
+
+Run `npm run site`, then open http://127.0.0.1:8787/site/. The page includes
+the original video and soundtrack, all 14 renders and their side-by-side videos,
+the final 2880×2160 render, synchronized version comparison, scores, contact sheets,
+and shape overlays. It preserves the original showcase styling and interactions.
+
+`npm run site:build` creates a portable static website in `dist/` using the
+committed `media/` archive. Deploy that directory to static hosting; the showcase
+lives at `/site/`, and the homepage links to it. No reference downloads or
+rendering steps are needed. Generated manifests in `site/` also let the page
+work when the repository root is served directly.

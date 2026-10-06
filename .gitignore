@@ -4,6 +4,5 @@ ref/*.mp4
 ref/*.mp3
 fonts/*.woff2
 site/media/
-site/data.json
-site/versions.json
 ref/derived/
+dist/

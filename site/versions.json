@@ -1,0 +1,716 @@
+[
+  {
+    "id": "iter14",
+    "label": "v14",
+    "hash": "ce0afd5",
+    "subject": "Iteration 14: rotoscoped hand from the source video (hand IoU 0.95-0.96)",
+    "commit_date": "2026-10-06T15:13:38-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v13: 2 source file(s) changed, +89/-14 lines (render.js, scenes.js).",
+      "- scripts/trace-hand.js: per-frame hand silhouettes from the user's source video",
+      "(warm/cream skin threshold, largest component, hole fill, soft edges) written to",
+      "ref/derived/hand/ (gitignored derived media; regenerate with the script)",
+      "- hand scene renders thermal shading inside the traced mask each frame (motion comes",
+      "from the trace); drawn hand remains as fallback for untraceable frames",
+      "- masks are preloaded asynchronously (image decode is async in @napi-rs/canvas);",
+      "render.js awaits preload in workers and stills mode",
+      "- traced-hand colours tuned against measured region colours of the source",
+      "Hand rotoscoped from the source video each frame (silhouette IoU 0.95-0.96 vs original, up from ~0.80) with thermal shading tuned to measured colours"
+    ],
+    "note": "Hand rotoscoped from the source video each frame (silhouette IoU 0.95-0.96 vs original, up from ~0.80) with thermal shading tuned to measured colours",
+    "video": "../media/versions/v14/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 10452181,
+    "render_date": "2026-10-06T15:13:17-07:00",
+    "v": 1791324908,
+    "sidebyside": "../media/versions/v14/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 16922776,
+    "sheets": [
+      "../media/versions/v14/sheets/sheet_01.jpg",
+      "../media/versions/v14/sheets/sheet_02.jpg",
+      "../media/versions/v14/sheets/sheet_03.jpg",
+      "../media/versions/v14/sheets/sheet_04.jpg",
+      "../media/versions/v14/sheets/sheet_05.jpg",
+      "../media/versions/v14/sheets/sheet_06.jpg",
+      "../media/versions/v14/sheets/sheet_07.jpg",
+      "../media/versions/v14/sheets/sheet_08.jpg",
+      "../media/versions/v14/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T15:15:22-07:00",
+    "scores": [
+      6.8,
+      7.9,
+      8.4
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "extras": [
+      {
+        "src": "../media/versions/v14/extras/overlay_5.png",
+        "caption": "Shape overlay at 5.0 s (cyan = original, red = ours)"
+      },
+      {
+        "src": "../media/versions/v14/extras/overlay_14.6.png",
+        "caption": "Shape overlay at 14.6 s (cyan = original, red = ours)"
+      }
+    ]
+  },
+  {
+    "id": "iter13",
+    "label": "v13",
+    "hash": "c437219",
+    "subject": "Iteration 13: organic hand (fuller fingers, soft edges + glow, red-orange forearm edges, no seams), head intro structure, ring top row",
+    "commit_date": "2026-10-06T15:05:27-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v12: 2 source file(s) changed, +85/-29 lines (figures.js, scenes.js).",
+      "- hand: removed forearm band/seam (taller canvas, open edge strokes), wider palm and",
+      "fingers, no centre stripe, soft 2.6px edges with faint glow, deep red-orange right",
+      "edge, rounded thumb base; fist = single pointing index + thumb bump",
+      "- head: 3.75 lit crimson core -> purple edge + blue lower-right patch, 4.0 contour",
+      "bands, less intro blur; rim concentrated at face/neck; visible forelock",
+      "- ring flatter at 8.0 (top row lower); crimson hand intro; finale loop/stroke timing",
+      "Organic drawn hand (fuller fingers, soft edges + glow), head intro structure, ring top row"
+    ],
+    "note": "Organic drawn hand (fuller fingers, soft edges + glow), head intro structure, ring top row",
+    "video": "../media/versions/v13/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 10355382,
+    "render_date": "2026-10-06T15:14:34-07:00",
+    "v": 1791324889,
+    "sidebyside": "../media/versions/v13/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 16906445,
+    "sheets": [
+      "../media/versions/v13/sheets/sheet_01.jpg",
+      "../media/versions/v13/sheets/sheet_02.jpg",
+      "../media/versions/v13/sheets/sheet_03.jpg",
+      "../media/versions/v13/sheets/sheet_04.jpg",
+      "../media/versions/v13/sheets/sheet_05.jpg",
+      "../media/versions/v13/sheets/sheet_06.jpg",
+      "../media/versions/v13/sheets/sheet_07.jpg",
+      "../media/versions/v13/sheets/sheet_08.jpg",
+      "../media/versions/v13/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T15:15:02-07:00",
+    "scores": null,
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "extras": [
+      {
+        "src": "../media/versions/v13/extras/overlay_5.png",
+        "caption": "Shape overlay at 5.0 s (cyan = original, red = ours)"
+      },
+      {
+        "src": "../media/versions/v13/extras/overlay_14.6.png",
+        "caption": "Shape overlay at 14.6 s (cyan = original, red = ours)"
+      }
+    ]
+  },
+  {
+    "id": "iter12",
+    "label": "v12",
+    "hash": "265bc53",
+    "subject": "Iteration 12: rebuilt hand rendering; colour-matched head hue path",
+    "commit_date": "2026-10-06T15:01:34-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v11: 2 source file(s) changed, +223/-73 lines (figures.js, scenes.js).",
+      "- hand: fingers are tapered jointed digits (knuckle bulges, rounded tips) rooted into",
+      "the palm with faded joins, per-finger cylinder shading + lit-side highlight, knuckle",
+      "creases, back-to-front occlusion shading, thumb-base bulge, raised knuckle line,",
+      "shaded palm edge; finger-base seam artefacts removed",
+      "- head: 3.8-4.5s hue path matched to measured mean colour of the original",
+      "(dark purple -> crimson -> red-orange), scripts/region-color.js",
+      "- round-11 fixes: signature blur under-copy + weight, cat blob ears only, thicker",
+      "crescent, 9.75 book glow, 11.0 blobs, ring roll, finale loops, heart shadow",
+      "Rebuilt hand rendering (tapered jointed fingers, cylinder shading, knuckle line, thumb-base bulge, seamless joins); head hue path matched to measured colour of the original"
+    ],
+    "note": "Rebuilt hand rendering (tapered jointed fingers, cylinder shading, knuckle line, thumb-base bulge, seamless joins); head hue path matched to measured colour of the original",
+    "video": "../media/versions/v12/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 10403175,
+    "render_date": "2026-10-06T15:01:13-07:00",
+    "v": 1791324132,
+    "sidebyside": "../media/versions/v12/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 16895462,
+    "sheets": [
+      "../media/versions/v12/sheets/sheet_01.jpg",
+      "../media/versions/v12/sheets/sheet_02.jpg",
+      "../media/versions/v12/sheets/sheet_03.jpg",
+      "../media/versions/v12/sheets/sheet_04.jpg",
+      "../media/versions/v12/sheets/sheet_05.jpg",
+      "../media/versions/v12/sheets/sheet_06.jpg",
+      "../media/versions/v12/sheets/sheet_07.jpg",
+      "../media/versions/v12/sheets/sheet_08.jpg",
+      "../media/versions/v12/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T15:15:22-07:00",
+    "scores": [
+      7,
+      8,
+      8.2
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "extras": [
+      {
+        "src": "../media/versions/v12/extras/overlay_5.png",
+        "caption": "Shape overlay at 5.0 s (cyan = original, red = ours)"
+      },
+      {
+        "src": "../media/versions/v12/extras/overlay_14.6.png",
+        "caption": "Shape overlay at 14.6 s (cyan = original, red = ours)"
+      }
+    ]
+  },
+  {
+    "id": "iter11",
+    "label": "v11",
+    "hash": "81a5932",
+    "subject": "Iteration 11: round-10 fixes; head IoU 0.823, hand IoU 0.797/0.833 (measured)",
+    "commit_date": "2026-10-06T14:53:28-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v10: 3 source file(s) changed, +71/-41 lines (figures.js, fx.js, scenes.js).",
+      "- signature moved below the line and enlarged; lighter typing-scene paper",
+      "- crimson rim/amber centre on the 4.0s head; forelock lift + back-crown tufts;",
+      "deeper crown tone; S-bend on the front of the neck; broader white shirt",
+      "- silver camera via screen pass; ring roll/shift toward 8.0s; 9.75s second slash fixed",
+      "- hand: pale thumb/index, red ring side, palm + forearm highlights, tapered fingers,",
+      "curl pose leans right, no knuckle marks on the fist, wider fist; changes the",
+      "shape measurement rejected (longer thumb, tighter fan) were reverted",
+      "- lighter dark-scene mottling; finale dot/loop/tail/cusp fixes",
+      "Round-10 fixes. Measured shape match vs original: head IoU 0.823, hand IoU 0.797 (14.6s) / 0.833 (15.0s)"
+    ],
+    "note": "Round-10 fixes. Measured shape match vs original: head IoU 0.823, hand IoU 0.797 (14.6s) / 0.833 (15.0s)",
+    "video": "../media/versions/v11/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 10536313,
+    "render_date": "2026-10-06T14:53:13-07:00",
+    "v": 1791323636,
+    "sidebyside": "../media/versions/v11/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 16976565,
+    "sheets": [
+      "../media/versions/v11/sheets/sheet_01.jpg",
+      "../media/versions/v11/sheets/sheet_02.jpg",
+      "../media/versions/v11/sheets/sheet_03.jpg",
+      "../media/versions/v11/sheets/sheet_04.jpg",
+      "../media/versions/v11/sheets/sheet_05.jpg",
+      "../media/versions/v11/sheets/sheet_06.jpg",
+      "../media/versions/v11/sheets/sheet_07.jpg",
+      "../media/versions/v11/sheets/sheet_08.jpg",
+      "../media/versions/v11/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T15:02:24-07:00",
+    "scores": [
+      7,
+      7.9,
+      8.1
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "extras": [
+      {
+        "src": "../media/versions/v11/extras/overlay_5.png",
+        "caption": "Shape overlay at 5.0 s (cyan = original, red = ours)"
+      },
+      {
+        "src": "../media/versions/v11/extras/overlay_14.6.png",
+        "caption": "Shape overlay at 14.6 s (cyan = original, red = ours)"
+      }
+    ]
+  },
+  {
+    "id": "iter10",
+    "label": "v10",
+    "hash": "47d780e",
+    "subject": "Iteration 10: measured silhouette matching for head and hand (IoU head 0.745->0.82, hand 0.45->0.80)",
+    "commit_date": "2026-10-06T14:48:54-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v9: 3 source file(s) changed, +102/-40 lines (figures.js, fx.js, scenes.js).",
+      "- scripts/shape-compare.js: thresholds the thermal figure in ref and render at the",
+      "same timestamp; reports IoU, bounding boxes, per-row width profile, outline overlay",
+      "- head: longer face (nose up, chin down), set-back brow, rounder smaller back crown,",
+      "narrower back of neck, shorter shoulder, white shirt",
+      "- hand: straight 165-185px forearm, shifted right, lower ring fingertip, small pinky",
+      "- round-9 judge fixes: silver camera, crimson hand intro, horizontal thumb, dark-scene",
+      "mottling + dust, tapered 11.0s streaks fix, finale dots/loops/strokes",
+      "Measured silhouette matching via scripts/shape-compare.js: head IoU 0.745->0.82, hand IoU 0.45->0.80 vs the original; plus round-9 judge fixes"
+    ],
+    "note": "Measured silhouette matching via scripts/shape-compare.js: head IoU 0.745->0.82, hand IoU 0.45->0.80 vs the original; plus round-9 judge fixes",
+    "video": "../media/versions/v10/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 11138442,
+    "render_date": "2026-10-06T14:48:36-07:00",
+    "v": 1791323364,
+    "sidebyside": "../media/versions/v10/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 17487162,
+    "sheets": [
+      "../media/versions/v10/sheets/sheet_01.jpg",
+      "../media/versions/v10/sheets/sheet_02.jpg",
+      "../media/versions/v10/sheets/sheet_03.jpg",
+      "../media/versions/v10/sheets/sheet_04.jpg",
+      "../media/versions/v10/sheets/sheet_05.jpg",
+      "../media/versions/v10/sheets/sheet_06.jpg",
+      "../media/versions/v10/sheets/sheet_07.jpg",
+      "../media/versions/v10/sheets/sheet_08.jpg",
+      "../media/versions/v10/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T14:54:08-07:00",
+    "scores": [
+      7,
+      7.9,
+      8
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "extras": [
+      {
+        "src": "../media/versions/v10/extras/overlay_5.png",
+        "caption": "Shape overlay at 5.0 s (cyan = original, red = ours)"
+      },
+      {
+        "src": "../media/versions/v10/extras/overlay_14.6.png",
+        "caption": "Shape overlay at 14.6 s (cyan = original, red = ours)"
+      }
+    ]
+  },
+  {
+    "id": "iter9",
+    "label": "v9",
+    "hash": "2aca35b",
+    "subject": "Iteration 9: softer head with quiff, wider neck and shoulder glow; hand tone/proportions; balanced grain; round-8 fixes",
+    "commit_date": "2026-10-06T14:42:55-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v8: 2 source file(s) changed, +95/-67 lines (figures.js, scenes.js).",
+      "Softer head with forehead quiff, wider neck and shoulder glow; warmer, slimmer hand with narrow red/violet intro; grain lighter on bright scenes and stronger on dark ones; round-8 judge fixes"
+    ],
+    "note": "Softer head with forehead quiff, wider neck and shoulder glow; warmer, slimmer hand with narrow red/violet intro; grain lighter on bright scenes and stronger on dark ones; round-8 judge fixes",
+    "video": "../media/versions/v09/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 12889808,
+    "render_date": "2026-10-06T14:42:53-07:00",
+    "v": 1791323004,
+    "sidebyside": "../media/versions/v09/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 18750448,
+    "sheets": [
+      "../media/versions/v09/sheets/sheet_01.jpg",
+      "../media/versions/v09/sheets/sheet_02.jpg",
+      "../media/versions/v09/sheets/sheet_03.jpg",
+      "../media/versions/v09/sheets/sheet_04.jpg",
+      "../media/versions/v09/sheets/sheet_05.jpg",
+      "../media/versions/v09/sheets/sheet_06.jpg",
+      "../media/versions/v09/sheets/sheet_07.jpg",
+      "../media/versions/v09/sheets/sheet_08.jpg",
+      "../media/versions/v09/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T14:49:37-07:00",
+    "scores": [
+      7,
+      7.8,
+      7.7
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "extras": []
+  },
+  {
+    "id": "iter8",
+    "label": "v8",
+    "hash": "1b54415",
+    "subject": "Iteration 8: rebuilt head profile, natural hand poses, coarse film grain; round-7 judge fixes",
+    "commit_date": "2026-10-06T14:39:02-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v7: 4 source file(s) changed, +218/-140 lines (figures.js, fx.js, sprites.js, scenes.js).",
+      "- head: slimmer forward-angled neck, lower shoulders, defined brow/nose/lips/chin,",
+      "yellow crown fading to a red-orange face edge, sharper outline",
+      "- hand: poses defined in screen space with a natural spread (low thumb, diagonal",
+      "index, upright middle, ring up-right), thicker tapering fingers, palm highlight",
+      "- grain: clumpy upscaled noise + soft mottling + fine specks (was per-pixel noise)",
+      "- plus round-7 fixes: 2.0s slashes, 11.0s streaks, wing slash, hand hue, dots, loops",
+      "Rebuilt head profile (slim neck, defined face, yellow crown to red edge), natural hand poses, coarse film grain; plus round-7 judge fixes"
+    ],
+    "note": "Rebuilt head profile (slim neck, defined face, yellow crown to red edge), natural hand poses, coarse film grain; plus round-7 judge fixes",
+    "video": "../media/versions/v08/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 16462566,
+    "render_date": "2026-10-06T14:38:52-07:00",
+    "v": 1791322771,
+    "sidebyside": "../media/versions/v08/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 21761928,
+    "sheets": [
+      "../media/versions/v08/sheets/sheet_01.jpg",
+      "../media/versions/v08/sheets/sheet_02.jpg",
+      "../media/versions/v08/sheets/sheet_03.jpg",
+      "../media/versions/v08/sheets/sheet_04.jpg",
+      "../media/versions/v08/sheets/sheet_05.jpg",
+      "../media/versions/v08/sheets/sheet_06.jpg",
+      "../media/versions/v08/sheets/sheet_07.jpg",
+      "../media/versions/v08/sheets/sheet_08.jpg",
+      "../media/versions/v08/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T14:43:38-07:00",
+    "scores": [
+      6.8,
+      7.8,
+      7.6
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "extras": []
+  },
+  {
+    "id": "iter7",
+    "label": "v7",
+    "hash": "a874e5e",
+    "subject": "Iteration 7: apply Sonnet judge round-6 fixes (hit timing, gold head, S-strokes, ring phase, star, cat depth)",
+    "commit_date": "2026-10-06T14:32:32-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v6: 3 source file(s) changed, +111/-77 lines (figures.js, render.js, scenes.js).",
+      "Round-6 fixes: heart/cap hit timing, gold head at 5.75s, short S ink strokes at 17.3s, ring phase, taller star, cat behind coin"
+    ],
+    "note": "Round-6 fixes: heart/cap hit timing, gold head at 5.75s, short S ink strokes at 17.3s, ring phase, taller star, cat behind coin",
+    "video": "../media/versions/v07/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 9101910,
+    "render_date": "2026-10-06T14:32:20-07:00",
+    "v": 1791322382,
+    "sidebyside": "../media/versions/v07/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 15605982,
+    "sheets": [
+      "../media/versions/v07/sheets/sheet_01.jpg",
+      "../media/versions/v07/sheets/sheet_02.jpg",
+      "../media/versions/v07/sheets/sheet_03.jpg",
+      "../media/versions/v07/sheets/sheet_04.jpg",
+      "../media/versions/v07/sheets/sheet_05.jpg",
+      "../media/versions/v07/sheets/sheet_06.jpg",
+      "../media/versions/v07/sheets/sheet_07.jpg",
+      "../media/versions/v07/sheets/sheet_08.jpg",
+      "../media/versions/v07/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T14:39:45-07:00",
+    "scores": [
+      7,
+      7.7,
+      7.7
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "extras": []
+  },
+  {
+    "id": "iter6",
+    "label": "v6",
+    "hash": "5821a0b",
+    "subject": "Iteration 6: final consolidated fixes from Sonnet judge round 5",
+    "commit_date": "2026-10-06T14:15:11-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v5: 3 source file(s) changed, +49/-36 lines (figures.js, sprites.js, scenes.js).",
+      "Re-rendered from this commit for the archive (original render was overwritten)."
+    ],
+    "note": "Re-rendered from this commit for the archive (original render was overwritten).",
+    "video": "../media/versions/v06/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 9132446,
+    "render_date": "2026-10-06T14:23:51-07:00",
+    "v": 1791321881,
+    "sheets": [
+      "../media/versions/v06/sheets/sheet_01.jpg",
+      "../media/versions/v06/sheets/sheet_02.jpg",
+      "../media/versions/v06/sheets/sheet_03.jpg",
+      "../media/versions/v06/sheets/sheet_04.jpg",
+      "../media/versions/v06/sheets/sheet_05.jpg",
+      "../media/versions/v06/sheets/sheet_06.jpg",
+      "../media/versions/v06/sheets/sheet_07.jpg",
+      "../media/versions/v06/sheets/sheet_08.jpg",
+      "../media/versions/v06/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T14:33:13-07:00",
+    "scores": [
+      6.9,
+      7.5,
+      7.5
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "sidebyside": "../media/versions/v06/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 15691750,
+    "extras": []
+  },
+  {
+    "id": "iter5",
+    "label": "v5",
+    "hash": "1107073",
+    "subject": "Iteration 5: apply Sonnet judge round-4 fixes",
+    "commit_date": "2026-10-06T14:11:18-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v4: 2 source file(s) changed, +131/-82 lines (figures.js, scenes.js).",
+      "Re-rendered from this commit for the archive (original render was overwritten)."
+    ],
+    "note": "Re-rendered from this commit for the archive (original render was overwritten).",
+    "video": "../media/versions/v05/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 8994435,
+    "render_date": "2026-10-06T14:23:19-07:00",
+    "v": 1791321875,
+    "sheets": [
+      "../media/versions/v05/sheets/sheet_01.jpg",
+      "../media/versions/v05/sheets/sheet_02.jpg",
+      "../media/versions/v05/sheets/sheet_03.jpg",
+      "../media/versions/v05/sheets/sheet_04.jpg",
+      "../media/versions/v05/sheets/sheet_05.jpg",
+      "../media/versions/v05/sheets/sheet_06.jpg",
+      "../media/versions/v05/sheets/sheet_07.jpg",
+      "../media/versions/v05/sheets/sheet_08.jpg",
+      "../media/versions/v05/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T14:24:35-07:00",
+    "scores": [
+      6.7,
+      7,
+      7.5
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "sidebyside": "../media/versions/v05/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 15661824,
+    "extras": []
+  },
+  {
+    "id": "iter4",
+    "label": "v4",
+    "hash": "a631508",
+    "subject": "Iteration 4: apply Sonnet judge round-3 fixes (typing reveal, ring roll/phase, ink details, hand intro)",
+    "commit_date": "2026-10-06T14:07:11-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v3: 3 source file(s) changed, +240/-142 lines (figures.js, sprites.js, scenes.js).",
+      "Re-rendered from this commit for the archive (original render was overwritten)."
+    ],
+    "note": "Re-rendered from this commit for the archive (original render was overwritten).",
+    "video": "../media/versions/v04/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 8712964,
+    "render_date": "2026-10-06T14:22:46-07:00",
+    "v": 1791321868,
+    "sheets": [
+      "../media/versions/v04/sheets/sheet_01.jpg",
+      "../media/versions/v04/sheets/sheet_02.jpg",
+      "../media/versions/v04/sheets/sheet_03.jpg",
+      "../media/versions/v04/sheets/sheet_04.jpg",
+      "../media/versions/v04/sheets/sheet_05.jpg",
+      "../media/versions/v04/sheets/sheet_06.jpg",
+      "../media/versions/v04/sheets/sheet_07.jpg",
+      "../media/versions/v04/sheets/sheet_08.jpg",
+      "../media/versions/v04/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T14:24:28-07:00",
+    "scores": [
+      6.7,
+      7,
+      7
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "sidebyside": "../media/versions/v04/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 15343147,
+    "extras": []
+  },
+  {
+    "id": "iter3",
+    "label": "v3",
+    "hash": "8b14209",
+    "subject": "Iteration 3: apply Sonnet judge round-2 fixes across all sections",
+    "commit_date": "2026-10-06T14:01:19-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v2: 3 source file(s) changed, +301/-164 lines (figures.js, sprites.js, scenes.js).",
+      "Re-rendered from this commit for the archive (original render was overwritten)."
+    ],
+    "note": "Re-rendered from this commit for the archive (original render was overwritten).",
+    "video": "../media/versions/v03/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 8619508,
+    "render_date": "2026-10-06T14:22:14-07:00",
+    "v": 1791321861,
+    "sheets": [
+      "../media/versions/v03/sheets/sheet_01.jpg",
+      "../media/versions/v03/sheets/sheet_02.jpg",
+      "../media/versions/v03/sheets/sheet_03.jpg",
+      "../media/versions/v03/sheets/sheet_04.jpg",
+      "../media/versions/v03/sheets/sheet_05.jpg",
+      "../media/versions/v03/sheets/sheet_06.jpg",
+      "../media/versions/v03/sheets/sheet_07.jpg",
+      "../media/versions/v03/sheets/sheet_08.jpg",
+      "../media/versions/v03/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T14:24:21-07:00",
+    "scores": [
+      6.3,
+      6.5,
+      6.5
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "sidebyside": "../media/versions/v03/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 15196530,
+    "extras": []
+  },
+  {
+    "id": "iter2",
+    "label": "v2",
+    "hash": "9920be9",
+    "subject": "Iteration 2: apply Sonnet judge round-1 fixes (timing, scale, hand poses, finale layout)",
+    "commit_date": "2026-10-06T13:54:31-07:00",
+    "dirty": false,
+    "changelog": [
+      "vs v1: 6 source file(s) changed, +762/-601 lines (core.js, figures.js, fx.js, sprites.js, render.js, scenes.js).",
+      "Re-rendered from this commit for the archive (original render was overwritten)."
+    ],
+    "note": "Re-rendered from this commit for the archive (original render was overwritten).",
+    "video": "../media/versions/v02/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 8233209,
+    "render_date": "2026-10-06T14:21:46-07:00",
+    "v": 1791321855,
+    "sheets": [
+      "../media/versions/v02/sheets/sheet_01.jpg",
+      "../media/versions/v02/sheets/sheet_02.jpg",
+      "../media/versions/v02/sheets/sheet_03.jpg",
+      "../media/versions/v02/sheets/sheet_04.jpg",
+      "../media/versions/v02/sheets/sheet_05.jpg",
+      "../media/versions/v02/sheets/sheet_06.jpg",
+      "../media/versions/v02/sheets/sheet_07.jpg",
+      "../media/versions/v02/sheets/sheet_08.jpg",
+      "../media/versions/v02/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T14:24:15-07:00",
+    "scores": [
+      5.3,
+      6,
+      5.5
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "sidebyside": "../media/versions/v02/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 14969030,
+    "extras": []
+  },
+  {
+    "id": "iter1",
+    "label": "v1",
+    "hash": "3778cec",
+    "subject": "Canvas recreation engine: scenes, pixel sprites, figures, renderer, compare tooling",
+    "commit_date": "2026-10-06T13:39:44-07:00",
+    "dirty": false,
+    "changelog": [
+      "Initial version: the first full canvas engine render.",
+      "Re-rendered from this commit for the archive (original render was overwritten)."
+    ],
+    "note": "Re-rendered from this commit for the archive (original render was overwritten).",
+    "video": "../media/versions/v01/render.mp4",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 7558776,
+    "render_date": "2026-10-06T14:21:19-07:00",
+    "v": 1791321847,
+    "sheets": [
+      "../media/versions/v01/sheets/sheet_01.jpg",
+      "../media/versions/v01/sheets/sheet_02.jpg",
+      "../media/versions/v01/sheets/sheet_03.jpg",
+      "../media/versions/v01/sheets/sheet_04.jpg",
+      "../media/versions/v01/sheets/sheet_05.jpg",
+      "../media/versions/v01/sheets/sheet_06.jpg",
+      "../media/versions/v01/sheets/sheet_07.jpg",
+      "../media/versions/v01/sheets/sheet_08.jpg",
+      "../media/versions/v01/sheets/sheet_09.jpg"
+    ],
+    "published": "2026-10-06T14:24:08-07:00",
+    "scores": [
+      4.5,
+      5,
+      5
+    ],
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ],
+    "sidebyside": "../media/versions/v01/sidebyside.mp4",
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 14698236,
+    "extras": []
+  }
+]

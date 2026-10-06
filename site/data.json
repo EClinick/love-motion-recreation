@@ -1,0 +1,12 @@
+{
+  "iteration": "iter14",
+  "label": "v14",
+  "final": {
+    "path": "../media/final/claude_v14_2880x2160.mp4",
+    "sidebyside": "../media/final/claude_v14_sidebyside.mp4",
+    "resolution": "2880x2160",
+    "duration": 20.458,
+    "size": 70149411,
+    "sbs_size": 29942214
+  }
+}

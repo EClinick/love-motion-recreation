@@ -135,6 +135,8 @@ a{color:var(--cyan)}
   <button id="theme" type="button" aria-label="Toggle colour theme">Theme</button>
 </header>
 
+<nav aria-label="Page sections"><a href="#originalsec">Original</a> · <a href="#finalsec">Final render</a> · <a href="#versions">All versions</a> · <a href="#scores">Scores</a></nav>
+
 <div class="feat-title"><div><span class="latest-tag" id="feat-tag">latest</span></div></div>
 <section class="card player" style="margin-top:8px" id="featplayer"></section>
 
@@ -146,6 +148,13 @@ a{color:var(--cyan)}
   <div><dt>Video</dt><dd id="m-vid">…</dd></div>
   <div><dt>Judge score</dt><dd id="m-score">…</dd></div>
 </dl>
+<section id="originalsec">
+  <h2>Original video</h2>
+  <div class="card player"><video controls playsinline preload="metadata" src="../media/original/original.mp4"></video></div>
+  <p class="note">The reference video and soundtrack used for this recreation.</p>
+  <audio controls preload="none" src="../media/original/original.mp3" aria-label="Original soundtrack"></audio>
+</section>
+
 <section id="finalsec" hidden>
   <h2>Final render</h2>
   <div class="card finalbox" id="final"></div>
@@ -180,7 +189,7 @@ a{color:var(--cyan)}
 <div class="versions" id="versions"></div>
 
 <h2>What it is</h2>
-<p>The piece is a stack of 14 shots, each a pure function of time, so any frame can be rendered in any order. Everything on screen is drawn procedurally: the pixel-art icons, the thermal-camera head and hand, the handwriting scribbles and the type. No footage from the reference is used. The shots, in order:</p>
+<p>The piece is a stack of 14 shots, each a pure function of time, so any frame can be rendered in any order. Everything on screen is drawn procedurally: the pixel-art icons, the thermal-camera head and hand, the handwriting scribbles and the type. The final hand silhouette is rotoscoped from the reference and shaded in code. The shots, in order:</p>
 <ol class="shots">
   <li class="card"><b>how do you</b> kinetic type opener</li>
   <li class="card"><b>Typing line</b> with handwritten scribbles</li>
@@ -201,7 +210,7 @@ a{color:var(--cyan)}
 <p>Judge scores out of 10, per section of the timeline.</p>
 <section class="card table-wrap"><table id="scores"></table></section>
 
-<footer>Private project served over Tailscale. No trackers, no analytics. <span id="gen"></span></footer>
+<footer><a href="https://github.com/EClinick/love-motion-recreation">Source and media archive</a>. No trackers, no analytics. <span id="gen"></span></footer>
 </div>
 
 <div id="lb" role="dialog" aria-modal="true" aria-label="Comparison sheet">
@@ -308,18 +317,19 @@ a{color:var(--cyan)}
 
     // ---- final 4K slot: shown only if the file exists
     function head(u){ return fetch(u, {method:'HEAD', cache:'no-store'}).then(function(r){ return r.ok ? (+r.headers.get('content-length') || 1) : 0; }).catch(function(){ return 0; }); }
-    Promise.all([head('media/final/final.mp4'), head('media/final/sidebyside.mp4')]).then(function(r){
+    var finalPath = data.final && data.final.path;
+    var finalSbs = data.final && data.final.sidebyside;
+    Promise.all([finalPath ? head(finalPath) : 0, finalSbs ? head(finalSbs) : 0]).then(function(r){
       var f = r[0], sb = r[1]; if(!f && !sb) return;
       var mb = function(n){ return n > 1 ? ' \u00b7 ' + (n/1048576).toFixed(0) + ' MB' : ''; };
       var fv = (data.final && data.final.date) ? (Date.parse(data.final.date)/1000|0) : 0;
       var h = '<p style="margin:0">The final 2880\u00d72160 render' + (sb ? ', with the reference next to it.' : '.') + '</p><div class="btnrow">';
-      if(f) h += '<a class="btn" href="media/final/final.mp4" download="love-motion-final-2880x2160.mp4">Download final \u00b7 2880\u00d72160' + mb(f) + '</a>';
-      if(sb) h += '<a class="btn alt" href="media/final/sidebyside.mp4" download="love-motion-final-sidebyside.mp4">Download side-by-side' + mb(sb) + '</a>';
+      if(f) h += '<a class="btn" href="' + esc(finalPath) + '" download="love-motion-final-2880x2160.mp4">Download final \u00b7 2880\u00d72160' + mb(f) + '</a>';
+      if(sb) h += '<a class="btn alt" href="' + esc(finalSbs) + '" download="love-motion-final-sidebyside.mp4">Download side-by-side' + mb(sb) + '</a>';
       $('final').innerHTML = h + '</div>';
-      if(sb){
+      if(f){
         var ph = el('div', 'ptabs'); $('final').appendChild(ph);
-        var fvid = playerTabs(ph, {label:'final', v:fv, video:'media/final/sidebyside.mp4'});
-        fvid.style.aspectRatio = '8/3';
+        var fvid = playerTabs(ph, {label:'final', v:fv, video:finalPath, sidebyside:sb ? finalSbs : null});
       }
       $('finalsec').hidden = false;
     });
@@ -374,7 +384,7 @@ a{color:var(--cyan)}
 
     setupCompare(vers);
   }).catch(function(e){
-    $('m-msg').innerHTML = '<span class="err">Could not load versions.json (' + esc(String(e)) + '). Run scripts/publish-site.sh.</span>';
+    $('m-msg').innerHTML = '<span class="err">Could not load versions.json (' + esc(String(e)) + '). Run npm run site:build.</span>';
   });
 
   // ---- side-by-side compare

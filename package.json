@@ -6,7 +6,9 @@
   "scripts": {
     "preview": "node src/render.js --out out/preview.mp4",
     "render": "node src/render.js --scale 2 --samples 4 --out out/final.mp4",
-    "compare": "scripts/compare.sh out/preview.mp4 out/compare/latest"
+    "compare": "scripts/compare.sh out/preview.mp4 out/compare/latest",
+    "site:build": "node scripts/build-site.js",
+    "site": "npm run site:build && node scripts/serve-site.js"
   },
   "keywords": [],
   "author": "",
