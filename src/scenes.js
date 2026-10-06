@@ -244,7 +244,7 @@ const SIGNATURE = (() => {
 })();
 
 function sceneType(ctx, t, f) {
-  flat(ctx, '#e0dfdd', 'rgba(70,66,66,0.3)', 0, 0);
+  flat(ctx, '#e6e5e3', 'rgba(70,66,66,0.18)', 0, 0);
   const x0 = kf(t, [[0.68, 100], [0.8, 72, 'outCubic'], [1.96, 42, 'linear']]);
   const y0 = 540;
   const [sx, sy] = shake(t, 2.5, 1, 4);
@@ -277,7 +277,7 @@ function sceneType(ctx, t, f) {
   }
   // handwritten signature below the line
   if (t > 0.64 && t < 0.98) {
-    const pts = SIGNATURE.map(([a, b]) => [a * 1.35 + 90, b * 1.7 + 670]);
+    const pts = SIGNATURE.map(([a, b]) => [a * 1.15 + 190, b * 1.35 + 760]);
     fx.strokePartial(ctx, pts, Math.max(0, inv(0.9, 0.98, t)), inv(0.64, 0.78, t), 3.4, '#77716f');
   }
   if (t > 0.7 && t < 0.95) fx.strokePartial(ctx, [[530, 330], [524, 420], [516, 512]], 0, inv(0.7, 0.78, t), 3.4, PEN);
@@ -534,6 +534,17 @@ function sceneProfile(ctx, t, f) {
     else if (t > 5.55) x.filter = `sepia(${0.45 * inv(5.55, 5.84, t)}) saturate(${lerp(1, 1.25, inv(5.55, 5.84, t))}) brightness(${lerp(1, 0.82, inv(5.55, 5.84, t))})`;
     x.drawImage(heat, 0, 0);
     x.filter = 'none';
+    if (settle < 1) {
+      x.save();
+      x.globalCompositeOperation = 'source-atop';
+      const cr = x.createRadialGradient(330, 330, 40, 330, 360, 420);
+      cr.addColorStop(0, `rgba(184,90,32,${0.55 * (1 - settle)})`);
+      cr.addColorStop(0.6, `rgba(170,30,26,${0.5 * (1 - settle)})`);
+      cr.addColorStop(1, `rgba(160,24,24,${0.85 * (1 - settle)})`);
+      x.fillStyle = cr;
+      x.fillRect(-100, -100, 1000, 1100);
+      x.restore();
+    }
     if (toTan > 0.5) {
       // irregular dark burn ring around an olive patch in the hair
       x.save();
@@ -554,7 +565,7 @@ function sceneProfile(ctx, t, f) {
       // darker, narrower torso
       const tg = x.createLinearGradient(0, 640, 0, 940);
       tg.addColorStop(0, 'rgba(58,48,40,0)');
-      tg.addColorStop(0.4, 'rgba(58,48,40,0.9)');
+      tg.addColorStop(0.3, 'rgba(58,48,40,0.97)');
       tg.addColorStop(1, 'rgba(58,48,40,0.95)');
       x.filter = 'none';
       x.globalCompositeOperation = 'source-atop';
@@ -704,7 +715,7 @@ const ringPhi = (t) =>
     [8.0, 0.45, 'inQuad'],
     [8.3, 1.3, 'inQuad'],
   ]);
-const ringAt = (t) => ringLayout(ringPhi(t), { xs: 0.8, R: 470, cy: 490, roll: -0.06 });
+const ringAt = (t) => ringLayout(ringPhi(t), { xs: 0.8, R: 470, cy: kf(t, [[7.5, 490], [8.0, 540]]), cx: kf(t, [[7.5, 770], [8.0, 690]]), roll: kf(t, [[7.5, -0.06], [8.0, 0.1]]) });
 const iconPos = (t, name) => {
   const it = ringAt(t).find((o) => o.name === name);
   return [it.x, it.y];
@@ -973,6 +984,8 @@ function sceneAction(ctx, t, f) {
   x.save();
   x.filter = 'saturate(0.6) brightness(0.95)';
   drawSprite(x, 'camera', pos[0], pos[1], width, rot, 1, { sy });
+  x.globalCompositeOperation = 'screen';
+  drawSprite(x, 'camera', pos[0], pos[1], width, rot, 0.32, { sy, silhouette: '#9a9a9a' });
   x.restore();
   // white zigzag + red slashes at the cut
   if (q < 0.14) {
@@ -1120,7 +1133,7 @@ function sceneIntention(ctx, t, f) {
     [[594, 1080], [1074, 672], [990, 760], [1050, 742], [960, 840], [1010, 830], [880, 940], [700, 1080]].forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)));
     ctx.fill();
     ctx.beginPath();
-    fx.strokePartial(ctx, [[774, 372], [1014, 252]], 0, 1, 8, '#e2211b', true);
+    fx.strokePartial(ctx, Array.from({ length: 16 }, (_, i) => [lerp(774, 1014, i / 15), lerp(372, 252, i / 15)]), 0, 1, 10, '#e2211b', true);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
@@ -1234,7 +1247,7 @@ function sceneCuriosity(ctx, t, f) {
       ctx.rotate(r);
       ctx.fillStyle = '#e2211b';
       ctx.beginPath();
-      ctx.ellipse(0, 0, 10, 18, 0, 0, 7);
+      ctx.ellipse(0, 0, 12, 20, 0, 0, 7);
       ctx.fill();
       ctx.restore();
     });
@@ -1456,12 +1469,12 @@ function sceneHand(ctx, t, f) {
   x.rotate(sway + (1 - settle) * -0.3 + fall * -0.25);
   x.scale(lerp(0.65, 1, settle), 1);
   x.translate(-710 + (1 - settle) * 15 + fall * -290, -1110 + (1 - settle) * 140 + fall * 30);
-  if (settle < 1) x.filter = `hue-rotate(${-34 * (1 - settle)}deg) saturate(${1 + (1 - settle) * 0.9}) brightness(${lerp(0.68, 1, settle)})`;
+  if (settle < 1) x.filter = `hue-rotate(${-40 * (1 - settle)}deg) saturate(${1 + (1 - settle) * 1.0}) brightness(${lerp(0.6, 0.92, settle)})`;
   else if (fall > 0) x.filter = `saturate(${1 - fall * 0.85}) brightness(${1 - fall * 0.08})`;
   if (fall > 0) {
     // wider fist with an orange rim on its right edge
     x.translate(520, 900);
-    x.scale(1 + fall * 0.25, 1);
+    x.scale(1 + fall * 0.45, 1);
     x.translate(-520, -900);
     const rim = createCanvas(hand.width, hand.height);
     const rx = rim.getContext('2d');
@@ -1480,7 +1493,7 @@ function sceneHand(ctx, t, f) {
   }
   x.drawImage(hand, 250, 250);
   x.restore();
-  composite(ctx, c, { blur: (1 - settle) * 30 + fall * 4, alpha: 1 - fall * 0.1 });
+  composite(ctx, c, { blur: (1 - settle) * 34 + fall * 4, alpha: 1 - fall * 0.1 });
   if (settle < 1) {
     ctx.save();
     ctx.filter = `blur(${16 * S}px)`;
@@ -1649,9 +1662,9 @@ const LOOPS = [
   ['E', 17.46, 0.12, 30, 34, 3, 1.8, 0, 0],
   ['O', 17.47, 0.12, 12, 110, 21, 1.0, 0, -40],
   ['L', 17.72, 0.12, 30, 22, 22, 1.4, 0, 0],
-  ['V', 19.2, 0.25, 30, 80, 4, 1.2, 15, -40],
+  ['V', 19.2, 0.25, 30, 80, 4, 1.2, -15, -40],
   ['O', 19.22, 0.25, 14, 50, 5, 1.1, 0, -30],
-  ['L', 19.24, 0.15, 20, 28, 6, 1.1, -20, 20],
+  ['L', 19.24, 0.15, 14, 55, 6, 1.1, -20, 60],
   ['E', 19.26, 0.25, 34, 26, 7, 1.3, -10, -10],
   ['V', 19.45, 0.25, 40, 30, 8, 1.3, 10, 0],
   ['L', 19.4, 0.25, 34, 18, -35, 1.05, -30, 30],
@@ -1663,7 +1676,7 @@ const LOOPS = [
 ];
 const FINAL_LOOPS = [
   ['O', 6, 80, -2, 1.0, 2, -10],
-  ['E', 60, 30, 33, 1.2, -45, -35],
+  ['E', 75, 34, 33, 1.2, -55, -40],
   ['V', 26, 18, 34, 1.2, 0, 0],
 ];
 
@@ -1751,7 +1764,7 @@ function sceneFinale(ctx, t, f) {
       if (tt < 18.0 && i < k.length - 1) hk.push([tt + 0.09, v, 'linear']);
     });
     const [x, y] = kf(t, hk);
-    const r = t < 17.9 ? 4 : r0 === 11 ? kf(t, [[18.0, 11], [18.4, 4], [18.75, 7], [19.5, 6], [20.0, 5]]) : r0 === 8 ? kf(t, [[18.0, 8], [18.25, 4], [18.5, 10], [18.75, 4], [19.5, 6], [19.8, 9]]) : lerp(r0, r1, inv(19.2, 19.7, t));
+    const r = t < 17.9 ? 4 : r0 === 11 ? kf(t, [[18.0, 11], [18.4, 4], [18.75, 7], [19.5, 6], [20.0, 7]]) : r0 === 8 ? kf(t, [[18.0, 8], [18.25, 4], [18.5, 10], [18.75, 4], [19.5, 6], [19.8, 9]]) : lerp(r0, r1, inv(19.2, 19.7, t));
     dot(ctx, x, y, r * (t > 19.2 && t < 19.4 ? 0.5 : 1) * lerp(1, 1.1, grow), '#2a1714');
   });
   LOOPS.forEach(([ch, s, d, rx, ry, seed, turns, dx, dy]) => {
@@ -1769,7 +1782,18 @@ function sceneFinale(ctx, t, f) {
     });
     // diagonal pen tail from the upper left into the L
     const [lx, ly] = pos.L;
-    fx.strokePartial(ctx, [[lx - 140, ly - 120], [lx - 70, ly - 50], [lx - 10, ly + 5]], 0, inv(19.95, 20.08, t), 1.6, '#e0402e');
+    const tail = Array.from({ length: 24 }, (_, i) => { const u = i / 23; return [lerp(lx - 140, lx + 4, u) + Math.sin(u * Math.PI) * 30, lerp(ly - 120, ly + 18, u)]; });
+    fx.strokePartial(ctx, tail, 0, inv(19.95, 20.08, t), 1.6, '#e0402e');
+    if (t > 20.0) {
+      const [ex, ey] = pos.E;
+      ctx.fillStyle = '#e0402e';
+      ctx.beginPath();
+      ctx.moveTo(ex + 22, ey - 4);
+      ctx.lineTo(ex + 36, ey + 2);
+      ctx.lineTo(ex + 24, ey + 10);
+      ctx.closePath();
+      ctx.fill();
+    }
     fx.strokePartial(ctx, smoothLoop(12, 10, 1.2, 77).map(([a, b]) => [a + lx + 12, b + ly + 26]), 0, inv(20.05, 20.15, t), 1.6, '#e0402e');
   }
   // black hook strokes

@@ -97,7 +97,7 @@ function mottle(ctx, frame, k = 1) {
   ctx.save();
   ctx.imageSmoothingEnabled = true;
   ctx.globalCompositeOperation = 'soft-light';
-  ctx.globalAlpha = 0.5 * k;
+  ctx.globalAlpha = 0.22 * k;
   ctx.drawImage(m, 0, 0, W, H);
   ctx.globalCompositeOperation = 'source-over';
   for (let i = 0; i < 7; i++) {

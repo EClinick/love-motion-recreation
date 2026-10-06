@@ -8,7 +8,7 @@ function headPath(ctx, seed = 3) {
   // face: forehead, brow, nose, lips, chin, then a slender neck angled forward
   // profile tuned to measured proportions (local px; nose tip ~ (59,312), chin ~ (65,480))
   const face = [
-    [128, 905], [168, 800], [190, 700], [205, 630], [200, 585], [189, 555], [150, 540],
+    [128, 905], [168, 800], [196, 700], [212, 640], [198, 600], [194, 572], [189, 555], [150, 540],
     [100, 528], [77, 512], [66, 492], [65, 472], [72, 452], [75, 432], [68, 412], [70, 392],
     [74, 372], [76, 352], [66, 335], [59, 312], [80, 290], [100, 268], [111, 232], [117, 200],
     [105, 175], [91, 152], [81, 120], [96, 100],
@@ -21,9 +21,10 @@ function headPath(ctx, seed = 3) {
     const u = i / n;
     const a = Math.PI * (1.2 + u * 0.9);
     const tuft = Math.abs(noise1(u * 9, seed)) * 0.09 + Math.abs(noise1(u * 26, seed + 4)) * 0.04 + (r() - 0.5) * 0.02;
-    const quiff = u < 0.25 ? Math.sin((u / 0.25) * Math.PI) * 0.1 + Math.abs(noise1(u * 60, seed + 9)) * 0.06 : 0;
+    const quiff = u < 0.25 ? Math.sin((u / 0.25) * Math.PI) * 0.15 + Math.abs(noise1(u * 60, seed + 9)) * 0.06 : 0;
+    const backTuft = u > 0.55 && u < 0.92 ? Math.max(0, Math.sin(u * Math.PI * 14)) * 0.07 : 0;
     const rx = u > 0.45 ? lerp(250, 228, Math.min(1, (u - 0.45) / 0.3)) : 250; // rounder, smaller back crown
-    hair.push([330 + Math.cos(a) * rx * (1 + tuft + quiff), 222 + Math.sin(a) * 210 * (1 + tuft + quiff * 0.4)]);
+    hair.push([330 + Math.cos(a) * rx * (1 + tuft + quiff + backTuft), 222 + Math.sin(a) * 210 * (1 + tuft + quiff * 0.4 + backTuft)]);
   }
   // back of skull, nape, neck, then a shorter sloping shoulder
   const back = [
@@ -43,16 +44,16 @@ function headPath(ctx, seed = 3) {
 }
 
 // Hand poses (local = screen - (250,250)). Each finger: [base, ctrl, tip], w0, w1.
-const PALM = [[380, 830], [388, 700], [392, 600], [396, 500], [415, 410], [455, 365], [515, 352], [580, 355], [612, 385], [608, 460], [575, 540], [556, 600], [552, 700], [560, 830]];
+const PALM = [[380, 830], [384, 700], [380, 590], [392, 500], [415, 410], [455, 365], [515, 352], [580, 355], [612, 385], [608, 460], [580, 540], [560, 600], [552, 700], [556, 830]];
 const POSES = {
   // natural spread: thumb low and left, index diagonal up-left, middle up, ring up-right
   open: {
     palm: PALM,
     f: [
-      [[[440, 470], [360, 455], [282, 440]], 66, 50],
-      [[[455, 350], [370, 290], [295, 240]], 64, 44],
-      [[[525, 325], [526, 220], [512, 118]], 66, 47],
-      [[[580, 335], [650, 245], [705, 165]], 59, 43],
+      [[[455, 470], [365, 455], [282, 440]], 66, 42],
+      [[[455, 350], [370, 290], [295, 240]], 64, 40],
+      [[[525, 325], [526, 220], [520, 118]], 66, 40],
+      [[[580, 335], [635, 245], [670, 152]], 59, 36],
       [[[592, 395], [615, 372], [628, 350]], 40, 30],
     ],
   },
@@ -62,7 +63,7 @@ const POSES = {
     f: [
       [[[430, 450], [370, 445], [312, 452]], 68, 47],
       [[[455, 350], [400, 296], [352, 306]], 64, 47],
-      [[[525, 325], [520, 230], [488, 150]], 66, 50],
+      [[[525, 325], [590, 240], [665, 150]], 66, 42],
       [[[580, 330], [622, 258], [650, 220]], 59, 44],
       [[[595, 390], [626, 360], [642, 332]], 47, 37],
     ],
@@ -84,6 +85,7 @@ function blendPose(a, b, t) {
   const A = POSES[a];
   const B = POSES[b];
   return {
+    fist: b === 'fist' && t > 0.3,
     palm: A.palm.map((p, i) => [lerp(p[0], B.palm[i][0], t), lerp(p[1], B.palm[i][1], t)]),
     f: A.f.map(([pts, w0, w1], i) => [pts.map((p, j) => [lerp(p[0], B.f[i][0][j][0], t), lerp(p[1], B.f[i][0][j][1], t)]), lerp(w0, B.f[i][1], t), lerp(w1, B.f[i][2], t)]),
   };
@@ -131,11 +133,11 @@ function thermalHand(pose) {
   x.globalCompositeOperation = 'source-atop';
   // lit left side (cream-yellow) vs deep red shadow side on the right
   const r = x.createLinearGradient(270, 0, 700, 0);
-  r.addColorStop(0, 'rgba(255,240,192,0.8)');
-  r.addColorStop(0.16, 'rgba(250,196,110,0.4)');
-  r.addColorStop(0.34, 'rgba(240,120,40,0.12)');
+  r.addColorStop(0, 'rgba(255,236,190,0.85)');
+  r.addColorStop(0.3, 'rgba(255,214,150,0.55)');
+  r.addColorStop(0.5, 'rgba(240,120,40,0.08)');
   r.addColorStop(0.65, 'rgba(255,110,30,0.15)');
-  r.addColorStop(0.74, 'rgba(200,36,14,0.65)');
+  r.addColorStop(0.74, 'rgba(184,48,16,0.75)');
   r.addColorStop(1, 'rgba(170,36,16,0.85)');
   x.fillStyle = r;
   x.fillRect(0, 0, w, h);
@@ -146,7 +148,7 @@ function thermalHand(pose) {
   x.lineCap = 'round';
   x.lineWidth = 12;
   x.filter = 'blur(3px)';
-  for (let i = 1; i < pose.f.length - 1; i++) {
+  for (let i = 1; i < (pose.fist ? 0 : pose.f.length - 1); i++) {
     const a0 = pose.f[i][0][0];
     const b0 = pose.f[i + 1][0][0];
     const mx = (a0[0] + b0[0]) / 2;
@@ -158,10 +160,15 @@ function thermalHand(pose) {
   }
   x.restore();
   // warm palm highlight
-  const ph = x.createRadialGradient(430, 560, 0, 430, 560, 130);
-  ph.addColorStop(0, 'rgba(255,240,192,0.5)');
-  ph.addColorStop(1, 'rgba(255,214,110,0)');
+  const ph = x.createRadialGradient(460, 530, 0, 460, 530, 120);
+  ph.addColorStop(0, 'rgba(248,192,112,0.6)');
+  ph.addColorStop(1, 'rgba(248,192,112,0)');
   x.fillStyle = ph;
+  x.fillRect(0, 0, w, h);
+  const fa = x.createRadialGradient(380, 860, 0, 380, 860, 300);
+  fa.addColorStop(0, 'rgba(255,216,144,0.6)');
+  fa.addColorStop(1, 'rgba(255,214,110,0)');
+  x.fillStyle = fa;
   x.fillRect(0, 0, w, h);
   const s = createCanvas(w, h);
   const sx = s.getContext('2d');
@@ -188,8 +195,8 @@ function thermal(kind, palette = 'heat') {
   if (palette === 'heat') {
     const g = x.createLinearGradient(0, 0, 0, h);
     if (kind === 'head') {
-      g.addColorStop(0, '#f6a83a');
-      g.addColorStop(0.22, '#ef8a2c');
+      g.addColorStop(0, '#f09828');
+      g.addColorStop(0.22, '#ec8228');
       g.addColorStop(0.4, '#e86c20');
       g.addColorStop(0.6, '#ea7022');
       g.addColorStop(0.75, '#f49c3a');
@@ -218,12 +225,11 @@ function thermal(kind, palette = 'heat') {
       f.addColorStop(1, 'rgba(236,80,22,0)');
       x.fillStyle = f;
       x.fillRect(0, 0, w, h);
-      const crown = x.createLinearGradient(0, 0, 0, 300);
-      crown.addColorStop(0, 'rgba(255,200,84,0.7)');
-      crown.addColorStop(0.55, 'rgba(255,196,80,0.3)');
+      const crown = x.createRadialGradient(200, 80, 10, 200, 80, 240);
+      crown.addColorStop(0, 'rgba(255,206,96,0.7)');
       crown.addColorStop(1, 'rgba(255,196,80,0)');
       x.fillStyle = crown;
-      x.fillRect(0, 0, w, 300);
+      x.fillRect(0, 0, w, 360);
       // white/pink shirt on the shoulders
       const shirt = x.createLinearGradient(0, 700, 0, 940);
       shirt.addColorStop(0, 'rgba(255,216,96,0.0)');
@@ -231,9 +237,9 @@ function thermal(kind, palette = 'heat') {
       shirt.addColorStop(1, 'rgba(252,250,246,1)');
       x.fillStyle = shirt;
       x.beginPath();
-      x.moveTo(200, 940);
-      x.bezierCurveTo(250, 780, 360, 720, 480, 712);
-      x.bezierCurveTo(580, 712, 650, 790, 700, 940);
+      x.moveTo(110, 940);
+      x.bezierCurveTo(180, 790, 330, 728, 470, 722);
+      x.bezierCurveTo(600, 722, 700, 800, 780, 940);
       x.closePath();
       x.filter = 'blur(40px)';
       x.fill();
