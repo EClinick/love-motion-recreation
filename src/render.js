@@ -99,30 +99,32 @@ if (!isMainThread) {
   const segDir = path.join(ROOT, 'out', 'segments');
   fs.rmSync(segDir, { recursive: true, force: true });
   fs.mkdirSync(segDir, { recursive: true });
-  const per = Math.ceil(total / n);
+  // small chunks pulled by a worker pool, so one heavy shot can't stall the render
+  const chunk = Math.max(6, Math.ceil(total / (n * 4)));
+  const ranges = [];
+  for (let st = f0; st < f1; st += chunk) ranges.push([st, Math.min(f1, st + chunk)]);
   let done = 0;
   const t0 = Date.now();
-  const jobs = [];
-  for (let i = 0; i < n; i++) {
-    const start = f0 + i * per;
-    const end = Math.min(f1, start + per);
-    if (start >= end) break;
-    const segPath = path.join(segDir, `seg_${String(i).padStart(3, '0')}.mp4`);
-    jobs.push(
-      new Promise((resolve, reject) => {
-        const w = new Worker(__filename, { workerData: { start, end, scale: o.scale, samples: o.samples, segPath } });
-        w.on('message', (m) => {
-          if (m.done) {
-            done++;
-            if (done % 20 === 0 || done === total) process.stdout.write(`\r${done}/${total} frames  ${((Date.now() - t0) / 1000).toFixed(1)}s`);
-          }
-          if (m.finished !== undefined) (m.finished === 0 ? resolve(segPath) : reject(new Error('ffmpeg failed')));
-        });
-        w.on('error', reject);
-      })
-    );
-  }
-  Promise.all(jobs).then((segs) => {
+  const segs = ranges.map((_, i) => path.join(segDir, `seg_${String(i).padStart(4, '0')}.mp4`));
+  let next = 0;
+  const runOne = (i) =>
+    new Promise((resolve, reject) => {
+      const [start, end] = ranges[i];
+      const w = new Worker(__filename, { workerData: { start, end, scale: o.scale, samples: o.samples, segPath: segs[i] } });
+      w.on('message', (m) => {
+        if (m.done) {
+          done++;
+          if (done % 20 === 0 || done === total) process.stdout.write(`\r${done}/${total} frames  ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+        }
+        if (m.finished !== undefined) (m.finished === 0 ? resolve() : reject(new Error('ffmpeg failed')));
+      });
+      w.on('error', reject);
+    });
+  const lane = async () => {
+    while (next < ranges.length) await runOne(next++);
+  };
+  const jobs = [Promise.all(Array.from({ length: n }, lane)).then(() => segs)];
+  jobs[0].then((segs) => {
     console.log();
     const list = path.join(segDir, 'list.txt');
     fs.writeFileSync(list, segs.map((s) => `file '${s}'`).join('\n'));
