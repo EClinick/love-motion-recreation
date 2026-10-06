@@ -72,6 +72,55 @@ tr.pending td{color:var(--muted);font-style:italic}
 #lb button{position:absolute;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:999px;width:44px;height:44px;font-size:1.3rem;cursor:pointer}
 #lb .x{top:12px;right:12px} #lb .p{left:10px;top:50%} #lb .n{right:10px;top:50%}
 footer{margin-top:56px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px}
+
+.latest-tag{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:.8rem;font-weight:600;color:#fff;background:var(--accent);border-radius:999px;padding:2px 12px;margin-bottom:8px;letter-spacing:.02em}
+.feat-title{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;margin:40px 0 0}
+.feat-title h2{margin:0}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;text-decoration:none;border:0;border-radius:999px;padding:10px 20px;font:inherit;font-weight:600;cursor:pointer}
+.btn.alt{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn:focus-visible,summary:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.final{margin-top:16px}
+.chips{display:inline-flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{font-family:"JetBrains Mono",monospace;font-size:.78rem;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:0 8px;color:var(--ink)}
+.chip.mean{background:var(--cyan);border-color:var(--cyan);color:#06222a;font-weight:600}
+.chip.none{color:var(--muted);font-style:italic;background:transparent}
+.versions{display:grid;gap:12px;margin-top:16px}
+.ver>summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:14px 16px}
+.ver>summary::-webkit-details-marker{display:none}
+.ver>summary::before{content:"\25B8";color:var(--accent);font-size:1.1rem;transition:transform .15s}
+.ver[open]>summary::before{transform:rotate(90deg)}
+.ver .vl{font-weight:800;font-size:1.1rem}
+.ver .vsub{color:var(--muted);font-size:.85rem}
+.ver .vsub a{font-family:"JetBrains Mono",monospace}
+.ver .grow{flex:1 1 200px;min-width:0}
+.ver .body{padding:0 16px 16px;border-top:1px solid var(--line)}
+.ver .body video{border-radius:10px;margin-top:16px}
+.ver ul.cl{margin:12px 0 0;padding-left:20px;color:var(--muted);font-size:.92rem}
+.ver ul.cl li{margin:2px 0} .ver ul.cl li:first-child{color:var(--ink)}
+.ver h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:20px 0 0;font-weight:600}
+.ver.latest{border-color:var(--accent)}
+.tabs{display:flex;gap:4px;padding:8px 8px 0;background:var(--surface);border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:inherit;font-size:.88rem;font-weight:600;padding:8px 14px;cursor:pointer}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs .hint{margin-left:auto;align-self:center;color:var(--muted);font-size:.75rem;padding-right:8px}
+.ptabs{margin-top:16px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ptabs video{margin-top:0!important;border-radius:0!important}
+.finalbox{padding:16px;margin-top:16px}
+.finalbox .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+@media (max-width:520px){.tabs .hint{display:none}}
+.cmp{padding:16px;margin-top:16px}
+.cmp-pick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cmp-pick label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+select{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:.9rem}
+.cmp-vids{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.cmp-vids video{border-radius:8px}
+.cmp-bar{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.cmp-bar input[type=range]{flex:1 1 160px;min-width:120px;accent-color:var(--accent)}
+.cmp-bar .mono{color:var(--muted);min-width:7.5em}
+.cmp-bar .btn{padding:6px 16px}
+.cmp-tag{font-size:.8rem;color:var(--muted);margin-top:4px;text-align:center}
+.note{color:var(--muted);font-size:.9rem}
+@media (max-width:520px){.cmp-pick{gap:8px}.ver>summary{padding:12px}}
 a{color:var(--cyan)}
 .err{color:var(--accent)}
 </style>
@@ -86,11 +135,8 @@ a{color:var(--cyan)}
   <button id="theme" type="button" aria-label="Toggle colour theme">Theme</button>
 </header>
 
-<section class="card player">
-  <video id="vid" controls playsinline preload="metadata" poster="">
-    Your browser does not support HTML5 video.
-  </video>
-</section>
+<div class="feat-title"><div><span class="latest-tag" id="feat-tag">latest</span></div></div>
+<section class="card player" style="margin-top:8px" id="featplayer"></section>
 
 <dl class="card meta" id="meta" aria-label="Version info">
   <div><dt>Commit</dt><dd class="mono" id="m-hash">…</dd></div>
@@ -98,8 +144,40 @@ a{color:var(--cyan)}
   <div><dt>Commit date</dt><dd id="m-cdate">…</dd></div>
   <div><dt>Rendered</dt><dd id="m-rdate">…</dd></div>
   <div><dt>Video</dt><dd id="m-vid">…</dd></div>
-  <div><dt>Compare set</dt><dd id="m-iter">…</dd></div>
+  <div><dt>Judge score</dt><dd id="m-score">…</dd></div>
 </dl>
+<section id="finalsec" hidden>
+  <h2>Final render</h2>
+  <div class="card finalbox" id="final"></div>
+</section>
+
+<h2>Latest comparison sheets</h2>
+<div class="legend"><span><b>Left</b> = reference</span><span><b>Right</b> = this render</span><span>4 fps, 10 frames per sheet. Tap to enlarge.</span></div>
+<div class="gallery" id="gallery"></div>
+
+<h2>Compare versions</h2>
+<p class="note">Pick any two versions and play them side by side, synced. Left is older by default.</p>
+<section class="card cmp" id="cmp" hidden>
+  <div class="cmp-pick">
+    <div><label for="cmp-a">Left</label><select id="cmp-a"></select></div>
+    <div><label for="cmp-b">Right</label><select id="cmp-b"></select></div>
+  </div>
+  <div class="cmp-vids">
+    <video id="cv-a" playsinline preload="none" muted></video>
+    <video id="cv-b" playsinline preload="none"></video>
+  </div>
+  <div class="cmp-bar">
+    <button class="btn" id="cmp-play" type="button">Play</button>
+    <input id="cmp-seek" type="range" min="0" max="1000" value="0" aria-label="Seek both videos">
+    <span class="mono" id="cmp-time">0.0 / 0.0 s</span>
+    <button class="btn alt" id="cmp-audio" type="button" aria-pressed="false">Audio: right</button>
+    <button class="btn alt" id="cmp-swap" type="button">Swap</button>
+  </div>
+</section>
+
+<h2>Version history</h2>
+<p class="note">Every iteration, newest first. Open one to load its video and comparison sheets.</p>
+<div class="versions" id="versions"></div>
 
 <h2>What it is</h2>
 <p>The piece is a stack of 14 shots, each a pure function of time, so any frame can be rendered in any order. Everything on screen is drawn procedurally: the pixel-art icons, the thermal-camera head and hand, the handwriting scribbles and the type. No footage from the reference is used. The shots, in order:</p>
@@ -119,13 +197,9 @@ a{color:var(--cyan)}
 <p><b>Renderer.</b> Node with <code>@napi-rs/canvas</code> (Skia) draws each frame across worker threads. Segments are encoded with ffmpeg and muxed with the audio. Previews render at 1440&times;1080; the final render is 2880&times;2160 with 4-sample motion blur.</p>
 <p><b>Judge loop.</b> After each render, a script builds contact sheets of the reference next to the render at 4 fps. Several Sonnet &ldquo;judge&rdquo; agents compare them, score sections out of 10 and list the biggest differences. Those notes become the next iteration&rsquo;s fixes, and the cycle repeats.</p>
 
-<h2>Iteration history</h2>
+<h2>Score progress</h2>
 <p>Judge scores out of 10, per section of the timeline.</p>
 <section class="card table-wrap"><table id="scores"></table></section>
-
-<h2>Latest comparison sheets</h2>
-<div class="legend"><span><b>Left</b> = reference</span><span><b>Right</b> = this render</span><span>4 fps, 10 frames per sheet. Tap to enlarge.</span></div>
-<div class="gallery" id="gallery"></div>
 
 <footer>Private project served over Tailscale. No trackers, no analytics. <span id="gen"></span></footer>
 </div>
@@ -141,6 +215,7 @@ a{color:var(--cyan)}
 <script>
 (function(){
   var $ = function(id){return document.getElementById(id)};
+  var GH = 'https://github.com/EClinick/love-motion-recreation/commit/';
   // theme toggle (per-viewer convenience only)
   var root = document.documentElement;
   try{ var t = localStorage.getItem('theme'); if(t) root.setAttribute('data-theme', t); }catch(e){}
@@ -149,55 +224,189 @@ a{color:var(--cyan)}
     var n = dark ? 'light' : 'dark'; root.setAttribute('data-theme', n);
     try{ localStorage.setItem('theme', n); }catch(e){}
   };
-  function fmt(d){ var x = new Date(d); return isNaN(x) ? d : x.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}); }
-  function esc(s){ var e=document.createElement('span'); e.textContent=s; return e.innerHTML; }
+  function fmt(d){ if(!d) return '—'; var x = new Date(d); return isNaN(x) ? d : x.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}); }
+  function esc(s){ var e=document.createElement('span'); e.textContent=s==null?'':String(s); return e.innerHTML; }
+  function mean(a){ return a.reduce(function(x,y){return x+y},0)/a.length; }
+  function el(tag, cls, html){ var e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
+  function vsrc(v, p){ return p + (v.v ? '?v=' + v.v : ''); }
+  function hashLink(v){ return v.hash ? '<a class="mono" target="_blank" rel="noopener" href="' + GH + encodeURIComponent(v.hash) + '">' + esc(v.hash) + '</a>' + (v.dirty ? ' (+ uncommitted)' : '') : '—'; }
+  function scoreChips(v){
+    if(!v.scores) return '<span class="chip none">not judged yet</span>';
+    return '<span class="chips">' + v.scores.map(function(x){return '<span class="chip">' + x.toFixed(1) + '</span>'}).join('') + '<span class="chip mean">avg ' + mean(v.scores).toFixed(1) + '</span></span>';
+  }
+  function dur(v){ return (v.resolution||'') + (v.duration ? ' · ' + v.duration.toFixed(1) + ' s' : '') + (v.size ? ' · ' + (v.size/1048576).toFixed(1) + ' MB' : ''); }
 
-  fetch('data.json?_=' + Date.now(), {cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(d){
-    var v = d.render.v;
-    $('vid').src = 'media/current.mp4?v=' + v;
-    $('m-hash').textContent = d.version.hash + (d.version.dirty ? ' (+ uncommitted changes)' : '');
-    $('m-msg').textContent = d.version.subject;
-    $('m-cdate').textContent = fmt(d.version.date);
-    $('m-rdate').textContent = fmt(d.render.date);
-    $('m-vid').textContent = (d.render.resolution||'') + (d.render.duration ? ' · ' + d.render.duration.toFixed(1) + ' s' : '');
-    $('m-iter').textContent = d.iteration;
-    $('gen').textContent = 'Site data refreshed ' + fmt(d.generated) + '.';
-
-    // scores table
-    var s = d.scores, h = '<thead><tr><th>Round</th>' + s.sections.map(function(x){return '<th>'+esc(x)+'</th>'}).join('') + '<th>Mean</th></tr></thead><tbody>';
-    s.rounds.forEach(function(r, i){
-      var mean = r.scores.reduce(function(a,b){return a+b},0) / r.scores.length;
-      h += '<tr><td>Round ' + r.round + '</td>' + r.scores.map(function(x, j){
-        var prev = i ? s.rounds[i-1].scores[j] : null;
-        return '<td class="num' + (prev!==null && x>prev ? ' up' : '') + '">' + x.toFixed(1) + '<span class="bar" style="width:' + (x*5) + 'px"></span></td>';
-      }).join('') + '<td class="num">' + mean.toFixed(1) + '</td></tr>';
+  // ---- lightbox (shared by every gallery)
+  var lb = $('lb'), im = lb.querySelector('img'), cur = 0, srcs = [], cap = '';
+  function show(i){ cur = (i + srcs.length) % srcs.length; im.src = srcs[cur]; lb.querySelector('.bar2').textContent = cap + ' · sheet ' + (cur+1) + ' / ' + srcs.length + '  ·  left: reference, right: render'; }
+  function openLB(list, i, caption){ srcs = list; cap = caption; show(i); lb.classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeLB(){ lb.classList.remove('open'); document.body.style.overflow=''; }
+  lb.querySelector('.x').onclick = closeLB;
+  lb.querySelector('.p').onclick = function(e){ e.stopPropagation(); show(cur-1); };
+  lb.querySelector('.n').onclick = function(e){ e.stopPropagation(); show(cur+1); };
+  lb.onclick = function(e){ if(e.target === lb) closeLB(); };
+  im.onclick = closeLB;
+  document.addEventListener('keydown', function(e){
+    if(!lb.classList.contains('open')) return;
+    if(e.key==='Escape') closeLB(); else if(e.key==='ArrowLeft') show(cur-1); else if(e.key==='ArrowRight') show(cur+1);
+  });
+  function gallery(container, v){
+    var list = (v.sheets||[]).map(function(p){ return vsrc(v, p); });
+    list.forEach(function(src, i){
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', v.label + ': open sheet ' + (i+1));
+      b.innerHTML = '<img loading="lazy" src="' + esc(src) + '" alt="' + esc(v.label) + ' comparison sheet ' + (i+1) + ': reference on the left, render on the right"><span>' + (i+1) + ' / ' + list.length + '</span>';
+      b.onclick = function(){ openLB(list, i, v.label); };
+      container.appendChild(b);
     });
-    if(s.pending) h += '<tr class="pending"><td colspan="' + (s.sections.length+2) + '">' + esc(s.pending) + '</td></tr>';
+  }
+
+  // Render / Side-by-side tabs over one lazily-loaded <video>. Side-by-side is only fetched on first click.
+  function playerTabs(host, v){
+    var vid = el('video'); vid.controls = true; vid.playsInline = true; vid.preload = 'metadata';
+    var modes = [{k:'render', t:'Render', src:v.video, ar:'4/3'}];
+    if(v.sidebyside) modes.push({k:'sbs', t:'Side-by-side', src:v.sidebyside, ar:'8/3'});
+    var cur = null, tabs = null;
+    function set(m, keep){
+      var t = keep ? vid.currentTime : 0, playing = keep && !vid.paused;
+      cur = m; vid.style.aspectRatio = m.ar; vid.src = vsrc(v, m.src);
+      if(keep && t){ vid.addEventListener('loadedmetadata', function f(){ vid.removeEventListener('loadedmetadata', f); vid.currentTime = t; if(playing) vid.play().catch(function(){}); }); }
+      if(tabs) Array.prototype.forEach.call(tabs.querySelectorAll('button'), function(b){ b.setAttribute('aria-selected', b.dataset.k === m.k ? 'true' : 'false'); });
+    }
+    if(modes.length > 1){
+      tabs = el('div', 'tabs'); tabs.setAttribute('role', 'tablist');
+      modes.forEach(function(m){
+        var b = el('button', null, esc(m.t)); b.type = 'button'; b.dataset.k = m.k; b.setAttribute('role', 'tab');
+        b.onclick = function(){ if(cur !== m) set(m, true); };
+        tabs.appendChild(b);
+      });
+      tabs.appendChild(el('span', 'hint', 'reference left, recreation right'));
+      host.appendChild(tabs);
+    }
+    host.appendChild(vid);
+    set(modes[0], false);
+    return vid;
+  }
+
+  function getJSON(u){ return fetch(u + '?_=' + Date.now(), {cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error(u + ' ' + r.status); return r.json(); }); }
+
+  Promise.all([getJSON('versions.json'), getJSON('data.json').catch(function(){return {}})]).then(function(res){
+    var vers = res[0], data = res[1];
+    if(!vers.length) throw new Error('versions.json is empty');
+    var top = vers[0];
+
+    // ---- featured (latest)
+    $('feat-tag').textContent = top.label + ' — latest';
+    playerTabs($('featplayer'), top);
+    $('m-hash').innerHTML = hashLink(top);
+    $('m-msg').textContent = top.subject || '';
+    $('m-cdate').textContent = fmt(top.commit_date);
+    $('m-rdate').textContent = fmt(top.render_date);
+    $('m-vid').textContent = dur(top);
+    $('m-score').innerHTML = scoreChips(top);
+    if(data.generated) $('gen').textContent = 'Site data refreshed ' + fmt(data.generated) + '.';
+    gallery($('gallery'), top);
+
+    // ---- final 4K slot: shown only if the file exists
+    function head(u){ return fetch(u, {method:'HEAD', cache:'no-store'}).then(function(r){ return r.ok ? (+r.headers.get('content-length') || 1) : 0; }).catch(function(){ return 0; }); }
+    Promise.all([head('media/final/final.mp4'), head('media/final/sidebyside.mp4')]).then(function(r){
+      var f = r[0], sb = r[1]; if(!f && !sb) return;
+      var mb = function(n){ return n > 1 ? ' \u00b7 ' + (n/1048576).toFixed(0) + ' MB' : ''; };
+      var fv = (data.final && data.final.date) ? (Date.parse(data.final.date)/1000|0) : 0;
+      var h = '<p style="margin:0">The final 2880\u00d72160 render' + (sb ? ', with the reference next to it.' : '.') + '</p><div class="btnrow">';
+      if(f) h += '<a class="btn" href="media/final/final.mp4" download="love-motion-final-2880x2160.mp4">Download final \u00b7 2880\u00d72160' + mb(f) + '</a>';
+      if(sb) h += '<a class="btn alt" href="media/final/sidebyside.mp4" download="love-motion-final-sidebyside.mp4">Download side-by-side' + mb(sb) + '</a>';
+      $('final').innerHTML = h + '</div>';
+      if(sb){
+        var ph = el('div', 'ptabs'); $('final').appendChild(ph);
+        var fvid = playerTabs(ph, {label:'final', v:fv, video:'media/final/sidebyside.mp4'});
+        fvid.style.aspectRatio = '8/3';
+      }
+      $('finalsec').hidden = false;
+    });
+
+    // ---- version history
+    var box = $('versions');
+    vers.forEach(function(v, i){
+      var d = el('details', 'card ver' + (i===0 ? ' latest' : ''));
+      var cl = (v.changelog||[]);
+      d.innerHTML = '<summary><span class="vl">' + esc(v.label) + (i===0 ? ' — latest' : '') + '</span>' +
+        '<span class="vsub">' + esc(fmt(v.render_date || v.commit_date)) + ' · ' + hashLink(v) + '</span>' +
+        '<span class="grow"></span>' + scoreChips(v) + '</summary>';
+      var loaded = false;
+      d.addEventListener('toggle', function(){
+        if(!d.open || loaded) return; loaded = true;
+        var b = el('div', 'body');
+        b.innerHTML = '<p style="margin:16px 0 0"><b>' + esc(v.subject||'') + '</b></p>';
+        if(cl.length) b.innerHTML += '<ul class="cl">' + cl.map(function(x){return '<li>' + esc(x) + '</li>'}).join('') + '</ul>';
+        b.innerHTML += '<p class="note" style="margin:8px 0 0">' + esc(dur(v)) + '</p>';
+        var ph = el('div', 'ptabs'); b.appendChild(ph);
+        playerTabs(ph, v);
+        if((v.sheets||[]).length){
+          b.appendChild(el('h3', null, 'Comparison sheets'));
+          var g = el('div', 'gallery'); b.appendChild(g); gallery(g, v);
+        }
+        d.appendChild(b);
+      });
+      box.appendChild(d);
+    });
+
+    // ---- score table, built from the versions
+    var secs = (vers.filter(function(v){return v.score_sections && v.score_sections.length})[0] || {}).score_sections || ['0 – 7.25 s','7.5 – 14.75 s','15 – 20.4 s'];
+    var asc = vers.slice().reverse(), prev = null;
+    var h = '<thead><tr><th>Version</th>' + secs.map(function(x){return '<th>'+esc(x)+'</th>'}).join('') + '<th>Mean</th></tr></thead><tbody>';
+    asc.forEach(function(v){
+      if(!v.scores){ h += '<tr class="pending"><td colspan="' + (secs.length+2) + '">' + esc(v.label) + ': awaiting judge round</td></tr>'; return; }
+      h += '<tr><td>' + esc(v.label) + '</td>' + v.scores.map(function(x, j){
+        return '<td class="num' + (prev && x>prev[j] ? ' up' : '') + '">' + x.toFixed(1) + '<span class="bar" style="width:' + (x*5) + 'px"></span></td>';
+      }).join('') + '<td class="num">' + mean(v.scores).toFixed(1) + '</td></tr>';
+      prev = v.scores;
+    });
     $('scores').innerHTML = h + '</tbody>';
 
-    // gallery + lightbox
-    var g = $('gallery'), srcs = d.sheets.map(function(n){return 'media/compare/' + n + '?v=' + v});
-    srcs.forEach(function(src, i){
-      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label','Open sheet ' + (i+1));
-      b.innerHTML = '<img loading="lazy" src="' + src + '" alt="Comparison sheet ' + (i+1) + ': reference on the left, render on the right"><span>' + (i+1) + ' / ' + srcs.length + '</span>';
-      b.onclick = function(){ open(i); }; g.appendChild(b);
-    });
-    var lb = $('lb'), im = lb.querySelector('img'), cur = 0;
-    function show(i){ cur = (i + srcs.length) % srcs.length; im.src = srcs[cur]; lb.querySelector('.bar2').textContent = 'Sheet ' + (cur+1) + ' / ' + srcs.length + '  ·  left: reference, right: render'; }
-    function open(i){ show(i); lb.classList.add('open'); document.body.style.overflow='hidden'; }
-    function close(){ lb.classList.remove('open'); document.body.style.overflow=''; }
-    lb.querySelector('.x').onclick = close;
-    lb.querySelector('.p').onclick = function(e){ e.stopPropagation(); show(cur-1); };
-    lb.querySelector('.n').onclick = function(e){ e.stopPropagation(); show(cur+1); };
-    lb.onclick = function(e){ if(e.target === lb) close(); };
-    im.onclick = function(){ close(); };
-    document.addEventListener('keydown', function(e){
-      if(!lb.classList.contains('open')) return;
-      if(e.key==='Escape') close(); else if(e.key==='ArrowLeft') show(cur-1); else if(e.key==='ArrowRight') show(cur+1);
-    });
+    setupCompare(vers);
   }).catch(function(e){
-    $('m-msg').innerHTML = '<span class="err">Could not load data.json (' + esc(String(e)) + '). Run scripts/publish-site.sh.</span>';
+    $('m-msg').innerHTML = '<span class="err">Could not load versions.json (' + esc(String(e)) + '). Run scripts/publish-site.sh.</span>';
   });
+
+  // ---- side-by-side compare
+  function setupCompare(vers){
+    var A = $('cv-a'), B = $('cv-b'), sa = $('cmp-a'), sb = $('cmp-b'), play = $('cmp-play'), seek = $('cmp-seek'), tl = $('cmp-time'), au = $('cmp-audio');
+    if(vers.length < 2){ return; }
+    $('cmp').hidden = false;
+    vers.forEach(function(v, i){
+      [sa, sb].forEach(function(s){ var o = el('option'); o.value = i; o.textContent = v.label + (i===0 ? ' (latest)' : '') + (v.scores ? ' · avg ' + mean(v.scores).toFixed(1) : ''); s.appendChild(o); });
+    });
+    sa.value = Math.min(1, vers.length-1) + ''; sb.value = '0';
+    var audioRight = true, ready = 0;
+    function load(vid, v){ vid.pause(); vid.src = vsrc(v, v.video); vid.load(); }
+    function setSrc(){ play.textContent = 'Play'; load(A, vers[+sa.value]); load(B, vers[+sb.value]); seek.value = 0; updAudio(); upd(); }
+    function updAudio(){ A.muted = audioRight; B.muted = !audioRight; au.textContent = 'Audio: ' + (audioRight ? 'right' : 'left'); }
+    function len(){ return Math.min(A.duration || Infinity, B.duration || Infinity); }
+    function upd(){ var L = len(); if(!isFinite(L)) L = 0; tl.textContent = B.currentTime.toFixed(1) + ' / ' + L.toFixed(1) + ' s'; if(L && !seek.matches(':active')) seek.value = Math.round(B.currentTime / L * 1000); }
+    function go(t){ A.currentTime = t; B.currentTime = t; }
+    sa.onchange = sb.onchange = setSrc;
+    play.onclick = function(){
+      if(A.paused || B.paused){
+        if(B.ended || A.ended || B.currentTime >= len() - .05) go(0);
+        A.play().catch(function(){}); B.play().catch(function(){});
+      } else { A.pause(); B.pause(); }
+    };
+    function sync(){ play.textContent = (A.paused && B.paused) ? 'Play' : 'Pause'; }
+    [A, B].forEach(function(v){ v.addEventListener('play', sync); v.addEventListener('pause', sync); v.addEventListener('ended', function(){ A.pause(); B.pause(); sync(); }); });
+    B.addEventListener('timeupdate', function(){
+      upd();
+      if(!A.paused && Math.abs(A.currentTime - B.currentTime) > .1) A.currentTime = B.currentTime;  // drift correction
+    });
+    seek.oninput = function(){ var L = len(); if(isFinite(L)) go(seek.value/1000 * L); upd(); };
+    au.onclick = function(){ audioRight = !audioRight; updAudio(); };
+    $('cmp-swap').onclick = function(){ var t = sa.value; sa.value = sb.value; sb.value = t; var was = !B.paused, ct = B.currentTime; setSrc(); B.addEventListener('loadedmetadata', function f(){ B.removeEventListener('loadedmetadata', f); go(ct); }); };
+    A.addEventListener('loadedmetadata', upd); B.addEventListener('loadedmetadata', upd);
+    // only fetch video data once the section scrolls into view
+    var started = false;
+    function start(){ if(started) return; started = true; setSrc(); }
+    if('IntersectionObserver' in window){ var io = new IntersectionObserver(function(en){ if(en[0].isIntersecting){ io.disconnect(); start(); } }, {rootMargin:'200px'}); io.observe($('cmp')); } else start();
+    play.addEventListener('click', start);
+  }
 })();
 </script>
 </body>
