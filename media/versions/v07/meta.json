@@ -1,0 +1,44 @@
+{
+  "id": "iter7",
+  "label": "v7",
+  "hash": "a874e5e",
+  "subject": "Iteration 7: apply Sonnet judge round-6 fixes (hit timing, gold head, S-strokes, ring phase, star, cat depth)",
+  "commit_date": "2026-10-06T14:32:32-07:00",
+  "dirty": false,
+  "changelog": [
+    "vs v6: 3 source file(s) changed, +111/-77 lines (figures.js, render.js, scenes.js).",
+    "Round-6 fixes: heart/cap hit timing, gold head at 5.75s, short S ink strokes at 17.3s, ring phase, taller star, cat behind coin"
+  ],
+  "note": "Round-6 fixes: heart/cap hit timing, gold head at 5.75s, short S ink strokes at 17.3s, ring phase, taller star, cat behind coin",
+  "video": "media/versions/iter7/video.mp4",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 10741470,
+  "render_date": "2026-10-06T14:32:20-07:00",
+  "v": 1791322382,
+  "sidebyside": "media/versions/iter7/sidebyside.mp4",
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 24135077,
+  "sheets": [
+    "media/versions/iter7/sheets/sheet_01.jpg",
+    "media/versions/iter7/sheets/sheet_02.jpg",
+    "media/versions/iter7/sheets/sheet_03.jpg",
+    "media/versions/iter7/sheets/sheet_04.jpg",
+    "media/versions/iter7/sheets/sheet_05.jpg",
+    "media/versions/iter7/sheets/sheet_06.jpg",
+    "media/versions/iter7/sheets/sheet_07.jpg",
+    "media/versions/iter7/sheets/sheet_08.jpg",
+    "media/versions/iter7/sheets/sheet_09.jpg"
+  ],
+  "published": "2026-10-06T14:39:45-07:00",
+  "scores": [
+    7.0,
+    7.7,
+    7.7
+  ],
+  "score_sections": [
+    "0 – 7.25 s",
+    "7.5 – 14.75 s",
+    "15 – 20.4 s"
+  ]
+}
