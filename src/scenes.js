@@ -110,7 +110,7 @@ function flat(ctx, base = '#dfdedc', corner = 'rgba(70,66,66,0.28)', cx = 0, cy 
 // =====================================================================
 const BIG = 340;
 const SENT = ['how', 'do', 'you', 'communicate', 'that', 'you’re', 'going', 'through', 'a', 'change?'];
-const TYPE_T = [0, 0, 0, 0, 0.875, 1.25, 1.5, 1.75, 1.875, 1.96];
+const TYPE_T = [0, 0, 0, 0, 0.8, 1.25, 1.5, 1.75, 1.875, 1.96];
 
 function sceneOpen(ctx, t, f) {
   if (t < 0.083) {
@@ -188,9 +188,17 @@ function sceneOpen(ctx, t, f) {
     x.fillStyle = '#2a2624';
     [444, 504, 564, 624].forEach((yy) => x.fillRect(1100, yy, 10, 10));
   }
-  if (t > 0.46 && t < 0.6) {
-    // the whip reads as a crisp pixel-dot smear, not a gaussian blur
-    mosaic(ctx, c, kf(t, [[0.46, 3], [0.5, 14, 'outQuad'], [0.6, 8]]), {});
+  if (t > 0.47 && t < 0.6) {
+    // mid-whip the line reads as chunky dark dashes plus the handle column
+    const r = rng(23);
+    ctx.fillStyle = 'rgba(30,24,22,0.9)';
+    let px = 140;
+    while (px < 780) {
+      const w = 12 + Math.floor(r() * 4) * 12;
+      if (r() > 0.25) ctx.fillRect(px, 528, w, 12);
+      px += w + 12;
+    }
+    [444, 504, 564, 624].forEach((yy) => ctx.fillRect(1104, yy, 18, 18));
   } else composite(ctx, c, { blur: t >= 0.6 ? lerp(10, 2, inv(0.6, 0.68, t)) : t > 0.25 && t < 0.4 ? 2.5 : 0 });
 }
 
@@ -207,6 +215,33 @@ function sentenceParts(t, darkCol = INK, fresh = '#9a8f8a') {
 }
 
 const PEN = '#4a2020';
+
+// An original hand-drawn style signature, smoothed with Catmull-Rom.
+const SIG_KEYS = [
+  [0, 0], [-12, -30], [5, -62], [35, -58], [30, -40], [10, -20], [25, 0], [55, 5], [75, -25], [70, -40], [60, -25],
+  [75, 0], [95, -2], [110, -30], [105, -42], [95, -28], [110, 0], [135, -5], [150, -35], [160, -20], [165, 0],
+  [185, -15], [195, -40], [200, -15], [215, 2], [240, -10], [255, -95], [262, -110], [258, -80], [265, 0], [290, -5],
+  [310, -40], [300, -55], [290, -35], [305, 0], [340, 8], [380, -5], [420, -30], [440, -60], [450, -120], [455, -60],
+  [445, 30], [440, 70], [460, 40], [520, -10],
+];
+const SIGNATURE = (() => {
+  const out = [];
+  const P = SIG_KEYS;
+  for (let i = 0; i < P.length - 1; i++) {
+    const p0 = P[Math.max(0, i - 1)];
+    const p1 = P[i];
+    const p2 = P[i + 1];
+    const p3 = P[Math.min(P.length - 1, i + 2)];
+    for (let k = 0; k < 8; k++) {
+      const u = k / 8;
+      const u2 = u * u;
+      const u3 = u2 * u;
+      out.push([0, 1].map((j) => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * u + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * u2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * u3)));
+    }
+  }
+  out.push(P[P.length - 1]);
+  return out;
+})();
 
 function sceneType(ctx, t, f) {
   flat(ctx, '#e0dfdd', 'rgba(70,66,66,0.3)', 0, 0);
@@ -242,8 +277,8 @@ function sceneType(ctx, t, f) {
   }
   // handwritten signature below the line
   if (t > 0.64 && t < 0.98) {
-    const pts = fx.scribblePoints(11, 560, 170, 6, 320).map(([a, b]) => [a + 110, b + 630]);
-    fx.strokePartial(ctx, pts, Math.max(0, inv(0.86, 0.98, t)), inv(0.64, 0.84, t), 3.4, PEN);
+    const pts = SIGNATURE.map(([a, b]) => [a + 110, b + 650]);
+    fx.strokePartial(ctx, pts, Math.max(0, inv(0.88, 0.98, t)), inv(0.64, 0.8, t), 3, '#3a3532');
   }
   if (t > 0.7 && t < 0.95) fx.strokePartial(ctx, [[530, 330], [524, 420], [516, 512]], 0, inv(0.7, 0.78, t), 3.4, PEN);
   // long brown arc on the right with a little tail
@@ -251,10 +286,10 @@ function sceneType(ctx, t, f) {
     const arc = [];
     for (let i = 0; i <= 60; i++) {
       const u = i / 60;
-      arc.push([lerp(960, 1060, Math.sin(u * Math.PI * 0.9)) - u * 60, lerp(0, 960, u)]);
+      arc.push([lerp(960, 1080, Math.sin(u * Math.PI * 0.85)) - u * 80, lerp(0, 960, u)]);
     }
     const tail = fx.scribblePoints(15, 230, 60, 4, 80).map(([a, b]) => [900 - a, b + 975]);
-    fx.strokePartial(ctx, [...arc, ...tail], Math.max(0, inv(1.06, 1.16, t)), inv(0.92, 1.04, t), 3.6, PEN);
+    fx.strokePartial(ctx, [...arc, ...tail], Math.max(0, inv(1.08, 1.16, t)), inv(0.9, 0.98, t), 3.6, PEN);
     fx.strokePartial(ctx, [[735, 240], [728, 290], [745, 330], [760, 310]], 0, inv(0.95, 1.0, t), 3.4, PEN);
   }
   // strike + loop round "that you're", then a tail flick
@@ -263,8 +298,7 @@ function sceneType(ctx, t, f) {
     const xb = wordX(6) - 12;
     const fade = inv(1.36, 1.42, t);
     const loop = fx.loopPoints(5, 60, 26, 1.1).map(([a, b]) => [a + wordX(5) + 60, b + 548]);
-    fx.strokePartial(ctx, [[xa - 10, 548], [xb + 40, 544]], fade, inv(1.2, 1.3, t), 3.4, PEN);
-    fx.strokePartial(ctx, loop, fade, inv(1.24, 1.34, t), 3.4, PEN);
+    fx.strokePartial(ctx, loop, fade, inv(1.2, 1.27, t), 3.4, PEN);
     fx.strokePartial(ctx, [[xb + 30, 560], [xb - 20, 640], [xb - 70, 720]], fade, inv(1.28, 1.36, t), 3.4, PEN);
   }
   ctx.restore();
@@ -323,10 +357,10 @@ function sceneSparkle(ctx, t, f) {
   ]);
   const warm = inv(3.6, 3.76, t);
   const g = ctx.createRadialGradient(780, 545, lerp(80, 60, spot), 780, 560, lerp(900, 720, spot));
-  g.addColorStop(0, C.hex(warm > 0 ? warmCol : '#e2e2e2', Math.min(1, lerp(0.05, 0.32, spot) + warm * 0.5)));
-  g.addColorStop(0.45, C.hex(warmCol, lerp(0, 0.12, spot) + warm * 0.3));
-  g.addColorStop(0.78, `rgba(36,20,20,${0.55 * vs})`);
-  g.addColorStop(1, `rgba(26,15,16,${0.97 * vs})`);
+  g.addColorStop(0, C.hex(warm > 0 ? warmCol : '#e0e0e0', Math.min(1, lerp(0.05, 0.25, spot) + warm * 0.5)));
+  g.addColorStop(0.5, C.hex(warm > 0 ? warmCol : '#e0e0e0', lerp(0, 0.08, spot) + warm * 0.3));
+  g.addColorStop(0.72, `rgba(42,26,26,${0.6 * vs})`);
+  g.addColorStop(1, `rgba(26,15,16,${0.98 * vs})`);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
   if (warm > 0) {
@@ -360,7 +394,7 @@ function sceneSparkle(ctx, t, f) {
   x2.shadowBlur = 22 * S;
   x2.fill();
   x2.shadowBlur = 0;
-  x2.strokeStyle = '#1f6a5a';
+  x2.strokeStyle = `rgba(31,106,90,${inv(2.25, 2.45, t)})`;
   x2.lineWidth = 5;
   x2.filter = `blur(${1 * S}px)`;
   x2.stroke();
@@ -409,7 +443,7 @@ function sceneSparkle(ctx, t, f) {
   if (t < 2.3) {
     const q = 1;
     ctx.globalAlpha = 1 - inv(2.12, 2.3, t);
-    [[1, 700, 460, 380, 0.6, '#d8241c', 10], [2, 140, 760, 300, 1.2, '#2a2422', 6], [3, 300, 900, 260, 1.4, '#2a2422', 5], [4, 1080, 260, 200, 1.0, '#d8241c', 6]].forEach(([k2, ox, oy, len, curl, col, lw]) => {
+    [[1, 700, 450, 420, 0.4, '#d8241c', 12], [2, 140, 760, 300, 1.2, '#2a2422', 6], [3, 300, 900, 260, 1.4, '#2a2422', 5], [4, 1080, 440, 120, 1.0, '#d8241c', 8], [5, 250, 470, 900, 0.15, 'rgba(60,56,56,0.7)', 4], [6, 500, 780, 800, 0.1, 'rgba(60,56,56,0.6)', 3]].forEach(([k2, ox, oy, len, curl, col, lw]) => {
       const pts = fx.wanderPoints(600 + k2, len, curl, 40).map(([a, b]) => [a + ox, b + oy]);
       fx.strokePartial(ctx, pts, 0, q, lw, col, true);
     });
@@ -483,8 +517,8 @@ function sceneProfile(ctx, t, f) {
   camera(ctx, { x: sx, y: sy, z, cx: 900, cy: 600 });
 
   const drift = kf(t, [[4.1, 0], [5.0, 70, 'linear'], [5.6, 105, 'linear'], [6.3, 125]]);
-  const toTan = ease.inOutQuad(inv(5.82, 6.0, t));
-  const toShadow = ease.inOutQuad(inv(6.02, 6.12, t));
+  const toTan = ease.inOutQuad(inv(5.68, 5.92, t));
+  const toShadow = ease.inOutQuad(inv(6.06, 6.16, t));
   const shrink = lerp(1, 0.92, ease.inOutQuad(inv(5.85, 6.0, t)));
   const hx = 600 + drift + (1 - settle) * 160 + (1 - shrink) * 300;
   const hy = 225 + (1 - settle) * 240 - (1 - shrink) * 700;
@@ -496,8 +530,8 @@ function sceneProfile(ctx, t, f) {
   const heat = thermal('head', 'heat');
   if (toShadow < 1) {
     x.globalAlpha = 1 - toShadow;
-    if (settle < 1) x.filter = `hue-rotate(${-70 * (1 - settle)}deg) saturate(${1 + (1 - settle) * 0.6}) brightness(${lerp(0.45, 1, settle)})`;
-    else if (toTan > 0) x.filter = `saturate(${lerp(1, 0.5, toTan)}) brightness(${lerp(1, 0.8, toTan)}) sepia(${toTan * 0.7})`;
+    if (settle < 1) x.filter = `hue-rotate(${-95 * (1 - settle)}deg) saturate(${lerp(0.65, 1, settle)}) brightness(${lerp(0.4, 1, settle)})`;
+    else if (toTan > 0) x.filter = `saturate(${lerp(0.6, 0.35, toTan)}) brightness(${lerp(0.92, 0.78, toTan)}) sepia(${toTan * 0.8})`;
     x.drawImage(heat, 0, 0);
     x.filter = 'none';
     if (toTan > 0.5) {
@@ -528,10 +562,11 @@ function sceneProfile(ctx, t, f) {
   composite(ctx, c, { blur: (1 - settle) * 40 });
 
   // red contour rings over the blurred head during the intro
-  if (settle < 1) {
+  if (t > 3.93 && t < 4.2) {
     ctx.save();
     ctx.filter = `blur(${4 * S}px)`;
-    ctx.strokeStyle = `rgba(200,30,40,${0.6 * (1 - settle)})`;
+    ctx.strokeStyle = `rgba(160,24,24,${0.7 * Math.sin(Math.PI * inv(3.93, 4.2, t))})`;
+    ctx.lineWidth = 17;
     ctx.lineWidth = 10;
     [[0.6, 1], [0.8, 0.8], [1, 0.6]].forEach(([k]) => {
       ctx.beginPath();
@@ -572,12 +607,12 @@ function sceneProfile(ctx, t, f) {
     ctx.stroke();
     ctx.restore();
   }
-  if (t > 4.55 && t < 4.85) {
-    const a0 = inv(4.75, 4.85, t);
+  if (t > 4.55 && t < 4.9) {
+    const a0 = inv(4.82, 4.9, t);
     fx.strokePartial(ctx, fx.loopPoints(71, 26, 60, 0.55).map(([a, b]) => [a + 1165, b + 420]), a0, inv(4.6, 4.66, t), 7, CREAM);
     fx.strokePartial(ctx, fx.loopPoints(72, 100, 44, 1.0).map(([a, b]) => [a + 1150, b + 686]), a0, inv(4.62, 4.72, t), 7, CREAM);
   }
-  if (t > 4.45 && t < 4.6) dot(ctx, 888, 640, 5, '#fff');
+  if (t > 4.45 && t < 4.6) dot(ctx, 888, 738, 5, '#fff');
   if (t > 4.85 && t < 5.25) dot(ctx, 1074, 384, 5, '#fff');
   ctx.restore();
 
@@ -600,9 +635,9 @@ function sceneProfile(ctx, t, f) {
 // 5. The pixel icon ring.
 // =====================================================================
 const RING = ['clapper', 'skateboard', 'vinyl', 'book', 'camera', 'cat', 'coin', 'controller', 'cap', 'heart', 'cash', 'plant'];
-const RING_W = { clapper: 220, skateboard: 240, vinyl: 185, book: 185, camera: 185, cat: 165, coin: 175, controller: 220, cap: 230, heart: 320, cash: 320, plant: 220 };
+const RING_W = { clapper: 260, skateboard: 285, vinyl: 220, book: 220, camera: 220, cat: 195, coin: 205, controller: 260, cap: 275, heart: 380, cash: 380, plant: 260 };
 
-function ringLayout(phi, { cx = 770, cy = 605, R = 480, tilt = 0.96, F = 3000, xs = 1 } = {}) {
+function ringLayout(phi, { cx = 770, cy = 605, R = 480, tilt = 0.96, F = 3000, xs = 1, roll = 0 } = {}) {
   return RING.map((name, i) => {
     const a = Math.PI + (i / RING.length) * Math.PI * 2 + phi;
     const X = Math.cos(a) * R * xs;
@@ -610,19 +645,22 @@ function ringLayout(phi, { cx = 770, cy = 605, R = 480, tilt = 0.96, F = 3000, x
     const y = -Z * Math.cos(tilt);
     const zc = Z * Math.sin(tilt);
     const s = F / (F + zc);
-    return { name, x: cx + X * s, y: cy + y * s, s, z: zc, i };
+    const px = X * s;
+    const py = y * s;
+    return { name, x: cx + px * Math.cos(roll) - py * Math.sin(roll), y: cy + px * Math.sin(roll) + py * Math.cos(roll), s, z: zc, i };
   });
 }
 
 const ringPhi = (t) =>
   kf(t, [
-    [6.38, -2.8],
-    [6.95, -0.45, 'outCubic'],
-    [7.5, 0, 'linear'],
-    [8.0, 0.9, 'inOutQuad'],
+    [6.38, -3.2],
+    [6.75, -1.57, 'outCubic'],
+    [7.0, -0.6, 'linear'],
+    [7.5, 0, 'outQuad'],
+    [8.0, 0.9, 'inQuad'],
     [8.3, 1.3, 'inQuad'],
   ]);
-const ringAt = (t) => ringLayout(ringPhi(t), { xs: 0.88 });
+const ringAt = (t) => ringLayout(ringPhi(t), { xs: 0.8, R: 470, cy: 560, roll: -0.18 });
 const iconPos = (t, name) => {
   const it = ringAt(t).find((o) => o.name === name);
   return [it.x, it.y];
@@ -655,8 +693,8 @@ let BALL = null;
 function flash(ctx, x, y, a, seed) {
   if (a <= 0) return;
   ctx.save();
-  const g = ctx.createRadialGradient(x, y, 0, x, y, 240);
-  g.addColorStop(0, `rgba(255,180,60,${0.95 * a})`);
+  const g = ctx.createRadialGradient(x, y, 0, x, y, 260);
+  g.addColorStop(0, `rgba(255,154,32,${0.95 * a})`);
   g.addColorStop(0.4, `rgba(255,150,40,${0.5 * a})`);
   g.addColorStop(1, 'rgba(255,140,40,0)');
   ctx.fillStyle = g;
@@ -745,7 +783,7 @@ function sceneRing(ctx, t, f) {
   const hitAmt = (name) => {
     let a = 0;
     HITS.forEach(([ht, n]) => {
-      if (n === name) a = Math.max(a, 1 - Math.abs(t - ht - 0.03) / 0.11);
+      if (n === name) a = Math.max(a, 1 - Math.abs(t - ht - 0.02) / 0.06);
     });
     return clamp(a);
   };
@@ -761,14 +799,22 @@ function sceneRing(ctx, t, f) {
     });
   HITS.forEach(([ht, n], k) => {
     const [px, py] = iconPos(ht, n);
-    flash(x, px, py, 1 - Math.abs(t - ht - 0.03) / 0.1, k + 3);
+    flash(x, px, py, 1 - Math.abs(t - ht - 0.02) / 0.07, k + 3);
   });
   // black ink scribble dragged across the heart after its hit
   if (t > 7.25 && t < 7.45) {
     const [hx, hy] = iconPos(7.25, 'heart');
     const pts = [];
-    for (let i = 0; i <= 40; i++) pts.push([hx - 190 + i * 9.5, hy - 70 + Math.sin(i * 0.55) * 18]);
-    fx.strokePartial(x, pts, inv(7.37, 7.45, t), inv(7.25, 7.3, t), 40, '#141010', true);
+    for (let i = 0; i <= 40; i++) pts.push([hx - 190 + i * 9.5, hy - 85 + Math.sin(i * 0.55) * 22]);
+    fx.strokePartial(x, pts, inv(7.4, 7.48, t), inv(7.24, 7.29, t), 50, '#141010', true);
+  }
+  if (t > 6.8 && t < 7.12) {
+    const arc = [];
+    for (let i = 0; i <= 40; i++) {
+      const u = i / 40;
+      arc.push([lerp(600, 1000, u), 450 - Math.sin(u * Math.PI) * 55]);
+    }
+    fx.strokePartial(x, arc, inv(7.0, 7.12, t), inv(6.8, 6.95, t), 14, 'rgba(26,22,22,0.85)', true);
   }
   if (t > 7.42 && t < 7.85) {
     const arc = [];
@@ -822,30 +868,21 @@ function sceneRing(ctx, t, f) {
 // 6. Word cards: action. / intention. / curiosity. (dark)
 // =====================================================================
 function typed(ctx, word, t0, t, x, y, curX) {
+  if (t < t0) return;
   const wFull = fx.measure(ctx, word, CARD);
   if (t < t0 + 0.05) {
     // solid white selection block first
     ctx.fillStyle = CREAM;
-    ctx.fillRect(x - 90, y - CARD * 0.4, wFull + 150, CARD * 0.8);
+    ctx.fillRect(x - 96, y - 45, wFull + 70, 90);
     return;
   }
-  const p = inv(t0 + 0.05, t0 + 0.15, t);
-  const n = Math.ceil(lerp(word.length - 3, word.length, p));
-  const shown = word.slice(0, n);
-  const w = fx.measure(ctx, shown, CARD);
-  fx.text(ctx, shown, x, y, CARD, CREAM, { blur: p < 0.3 ? 2.5 : 0, glow: 'rgba(243,239,232,0.35)', glowBlur: 6 });
-  const blk = 1 - ease.outCubic(p);
-  if (blk > 0.02) {
-    ctx.fillStyle = CREAM;
-    ctx.fillRect(x + w + 8, y - CARD * 0.36, lerp(30, 200, blk), CARD * 0.72);
-  }
-  if (p >= 1) {
-    const q = inv(t0 + 0.15, t0 + 0.22, t);
-    const cw = lerp(35, 12, ease.outCubic(q));
-    const on = q < 1 || blinkOn(t - t0, 0.36);
-    ctx.fillStyle = on ? CREAM : 'rgba(243,239,232,0.3)';
-    ctx.fillRect(curX - cw / 2, y - 45, cw, 90);
-  }
+  const p = inv(t0 + 0.05, t0 + 0.16, t);
+  fx.text(ctx, word, x, y, CARD, CREAM, { blur: p < 0.3 ? 2.5 : 0, glow: 'rgba(243,239,232,0.35)', glowBlur: 6 });
+  // trailing block shrinks into the caret, which stays bright
+  const cw = lerp(120, 12, ease.outCubic(p));
+  const cx = lerp(x + wFull + 70, curX - 6, ease.outCubic(p));
+  ctx.fillStyle = CREAM;
+  ctx.fillRect(cx, y - 45, cw, 90);
 }
 
 function sparks(ctx, t, seed, n = 6, color = '#e52a20') {
@@ -881,8 +918,8 @@ function burst(ctx, cx, cy, q, seed, colors = ['#ece8e2', '#e8231d']) {
 function sceneAction(ctx, t, f) {
   fx.dark(ctx, '#141313');
   const q = t - 8.3;
-  const pos = kf(t, [[8.3, [560, 560]], [8.45, [540, 520], 'outCubic'], [8.55, [532, 525]], [8.75, [512, 470], 'inOutCubic'], [9.0, [375, 590], 'inOutCubic'], [9.13, [360, 600]]]);
-  const rot = kf(t, [[8.3, -0.05], [8.45, -0.15, 'outCubic'], [8.55, -0.12], [8.75, 1.62, 'inOutCubic'], [9.0, -0.35, 'inOutCubic'], [9.13, -0.38]]);
+  const pos = kf(t, [[8.3, [610, 460]], [8.45, [540, 520], 'outCubic'], [8.55, [532, 525]], [8.75, [512, 470], 'inOutCubic'], [9.0, [375, 590], 'inOutCubic'], [9.13, [360, 600]]]);
+  const rot = kf(t, [[8.3, -0.05], [8.45, -0.15, 'outCubic'], [8.55, -0.12], [8.75, 1.88, 'inOutCubic'], [9.0, -0.35, 'inOutCubic'], [9.13, -0.38]]);
   const width = kf(t, [[8.3, 450], [8.55, 405], [8.75, 620], [9.0, 900], [9.13, 940]]);
   const sy = kf(t, [[8.3, 1], [8.8, 1], [8.95, 0.24, 'inOutCubic'], [9.13, 0.22]]);
   const blur = kf(t, [[8.3, 10], [8.4, 2], [8.48, 0], [8.65, 0], [8.72, 3], [8.78, 0], [8.88, 3], [8.95, 0]]);
@@ -890,15 +927,15 @@ function sceneAction(ctx, t, f) {
   drawSprite(x, 'camera', pos[0], pos[1], width, rot, 1, { sy });
   // white zigzag + red slashes at the cut
   if (q < 0.14) {
-    const zz = [[880, 420], [940, 470], [885, 515], [945, 560], [890, 610]];
-    fx.strokePartial(x, zz, inv(8.36, 8.44, t), inv(8.3, 8.34, t), 11, CREAM);
+    const zz = [[880, 420], [1000, 540], [890, 640], [1000, 760], [895, 870], [990, 1000]];
+    fx.strokePartial(x, zz, inv(8.38, 8.44, t), inv(8.3, 8.33, t), 12, CREAM);
     x.save();
     x.lineWidth = 12;
-    burst(x, 760, 540, q / 0.14, 8, ['#e8231d']);
-    burst(x, 760, 540, q / 0.14, 18, ['#e8231d']);
+    burst(x, 760, 600, q / 0.3, 8, ['#e8231d']);
+    burst(x, 760, 600, q / 0.3, 18, ['#e8231d']);
     x.restore();
   }
-  const st = kf(t, [[8.3, 0.5], [8.4, 0.62, 'outBack'], [8.6, 0.65], [8.75, 0.9], [9.13, 0.8]]);
+  const st = kf(t, [[8.3, 0.65], [8.4, 0.65, 'outBack'], [8.6, 0.65], [8.75, 1.35], [9.13, 0.8]]);
   const sxs = kf(t, [[8.6, 1], [8.75, 0.42, 'outCubic'], [8.85, 0.42], [8.95, 2.6, 'outCubic']]);
   x.save();
   const anchor = kf(t, [[8.3, [650, 470]], [8.55, [650, 420]], [8.75, [540, 180]], [9.0, [600, 200]], [9.13, [610, 195]]]);
@@ -947,14 +984,14 @@ function speedLines(ctx, t, seed, n = 8, color = 'rgba(225,40,32,0.85)') {
 }
 
 const ROW_A = [
-  ['skateboard', -330, 0, 380, 1],
-  ['plant', 0, 0, 350, 2],
+  ['plant', 40, -10, 230, 2],
   ['cash', 270, 15, 476, 3],
   ['camera', 450, -60, 280, 0],
   ['heart', 590, 0, 450, 4],
   ['cap', 860, -10, 400, 5],
-  ['coin', 1180, 0, 360, 3],
-  ['cat', 1420, 0, 350, 1],
+  ['controller', 1210, 0, 420, 3],
+  ['coin', 1560, 0, 360, 4],
+  ['cat', 1820, 0, 350, 1],
 ];
 
 function sceneStripA(ctx, t, f) {
@@ -1004,7 +1041,7 @@ function sceneIntention(ctx, t, f) {
   x.shadowBlur = 25 * S;
   x.fill();
   x.shadowBlur = 0;
-  const bp = kf(t, [[9.84, [760, 430]], [10.0, [440, 500], 'outCubic'], [10.51, [425, 505]]]);
+  const bp = kf(t, [[9.84, [730, 525]], [9.9, [700, 520]], [10.0, [440, 500], 'outCubic'], [10.51, [425, 505]]]);
   const bw = kf(t, [[9.84, 470], [10.1, 500], [10.51, 520]]);
   drawSprite(x, 'book', bp[0], bp[1], bw, kf(t, [[9.84, -0.25], [10.0, -0.06]]) + noise1(t * 2, 4) * 0.04, 1, { shadow: 'rgba(255,40,30,0.35)', shadowBlur: 30 });
   composite(ctx, c, { blur: (1 - ease.outCubic(inv(9.84, 9.98, t))) * 25 });
@@ -1014,35 +1051,36 @@ function sceneIntention(ctx, t, f) {
     ctx.save();
     ctx.globalAlpha = a;
     ctx.filter = `blur(${10 * S}px)`;
-    ctx.fillStyle = '#c81a14';
+    ctx.fillStyle = 'rgba(200,26,20,0.35)';
     ctx.beginPath();
-    ctx.moveTo(1070, 0);
+    ctx.moveTo(1080, 0);
     ctx.lineTo(1440, 0);
-    ctx.lineTo(500, 1080);
-    ctx.lineTo(150, 1080);
+    ctx.lineTo(260, 1080);
+    ctx.lineTo(0, 1080);
+    ctx.lineTo(0, 700);
     ctx.closePath();
     ctx.fill();
     ctx.filter = 'none';
-    fx.strokePartial(ctx, [[600, 1060], [780, 940], [1000, 800]], 0, 1, 26, '#e2211b', true);
+    fx.strokePartial(ctx, [[540, 1070], [760, 940], [1000, 800]], 0, 1, 30, '#e2211b', true);
     ctx.restore();
     fx.grain(ctx, f + 5, 0.3);
   }
   sparks(ctx, t, 4, 6);
-  typed(ctx, 'intention.', 9.86, t, 834, 540, 1322);
+  typed(ctx, 'intention.', 9.95, t, 834, 540, 1322);
 }
 
 const ROW_B = [
-  ['heart', -870, 0, 320, 2],
-  ['cap', -620, -10, 330, 3],
-  ['controller', -350, 0, 340, 4],
+  ['heart', -1000, 0, 320, 2],
+  ['cap', -700, -10, 330, 3],
+  ['controller', -400, 0, 340, 4],
   ['coin', 0, 0, 380, 5],
-  ['cat', 260, 10, 390, 1],
-  ['camera', 520, -20, 330, 0],
+  ['cat', 190, 10, 400, 1],
+  ['camera', 380, -30, 260, 0],
 ];
 
 function sceneStripB(ctx, t, f) {
   flat(ctx, '#e3e2e0', 'rgba(80,76,74,0.15)', W, H);
-  const ox = kf(t, [[10.51, 996], [10.75, 625, 'outCubic'], [11.01, 300, 'inCubic']]);
+  const ox = kf(t, [[10.51, 1000], [10.58, 985], [10.75, 624, 'inOutCubic'], [11.01, 300, 'inCubic']]);
   const [c, x] = off(0);
   row(x, ROW_B, ox, 560, t);
   composite(ctx, c, { blur: t < 10.56 ? 6 : t > 10.92 ? (t - 10.92) * 50 : 0 });
@@ -1116,8 +1154,8 @@ function sceneCuriosity(ctx, t, f) {
   ctx.save();
   ctx.translate(pan, 0);
   const vin = ease.outBack(inv(11.01, 11.15, t));
-  const vx = kf(t, [[11.01, 480], [11.25, 420, 'outCubic']]);
-  drawSprite(ctx, 'vinyl', vx, 545, 360 * lerp(0.75, 1, vin), noise1(t, 9) * 0.05);
+  const vx = kf(t, [[11.01, 480], [11.08, 478], [11.25, 420, 'outCubic']]);
+  drawSprite(ctx, 'vinyl', vx, 545, 385 * lerp(0.75, 1, vin), noise1(t, 9) * 0.05);
   if (t < 11.16) {
     ctx.save();
     ctx.lineWidth = 7;
@@ -1129,10 +1167,10 @@ function sceneCuriosity(ctx, t, f) {
   const pop = (t0) => ease.outBack(inv(t0, t0 + 0.12, t), 2.2);
   if (t > 11.1) note(ctx, 'quarter', 1044, 800, pop(11.1) * 1.7, 0.12 + noise1(t, 1) * 0.08);
   if (t > 11.35) note(ctx, 'beam', 750, 270, pop(11.35) * 1.9, -0.12 + noise1(t, 2) * 0.08);
-  if (t > 11.58) note(ctx, 'eighth', 615, 810, pop(11.58) * 2.6, 0.15 + noise1(t, 3) * 0.08);
+  if (t > 11.42) note(ctx, 'eighth', 630, 800, pop(11.42) * 2.6, 0.15 + noise1(t, 3) * 0.08);
   ctx.restore();
   sparks(ctx, t, 6, 5);
-  typed(ctx, 'curiosity.', 10.95, t, 804 + pan, 536, 1323 + pan);
+  typed(ctx, 'curiosity.', 10.96, t, 804 + pan, 536, 1323 + pan);
 }
 
 // =====================================================================
@@ -1164,7 +1202,7 @@ function sceneScatter(ctx, t, f) {
   const [c, x] = off(0);
   x.save();
   camera(x, { z, x: kf(t, [[12.25, 0], [12.4, 30]]) });
-  const ring = ringLayout(phi, { tilt: 0.4, R: 370, cx: 750, cy: 575, F: 4000 });
+  const ring = ringLayout(phi - 0.21, { tilt: 0.4, R: 405, cx: 760, cy: 545, F: 4000 });
   ring
     .slice()
     .sort((a, b) => b.z - a.z)
@@ -1187,7 +1225,7 @@ function sceneScatter(ctx, t, f) {
         const q = inv(13.2, 13.35, t);
         x.save();
         x.filter = `blur(${3 * S}px)`;
-        const dab = kf(t, [[13.35, [250, 895]], [13.5, [219, 735]], [13.76, [210, 680]]]);
+        const dab = kf(t, [[13.2, [250, 895]], [13.5, [219, 735]], [13.76, [210, 680]]]);
         drawSprite(x, 'cash', lerp(px, dab[0], q), lerp(py, dab[1], q), w * lerp(1, 1.0, q), lerp(r, -0.3, q), 1, { silhouette: '#121010' });
         x.restore();
         return;
@@ -1209,24 +1247,24 @@ function sceneScatter(ctx, t, f) {
     for (let i = 0; i <= 40; i++) {
       const a = (i / 40) * Math.PI * 2;
       const rr = br * (1 + noise1(a * 3 + t * 4, 7) * 0.08);
-      x.lineTo(1110 + Math.cos(a) * rr, 640 + Math.sin(a) * rr * 1.1);
+      x.lineTo(1080 + Math.cos(a) * rr, 735 + Math.sin(a) * rr * 1.1);
     }
     x.fill();
-    if (t > 13.3) drawSprite(x, 'cat', 1150, 640, lerp(120, 190, ease.outBack(inv(13.3, 13.5, t))), 0, 1, { silhouette: '#0e0d0d' });
+    if (t > 13.3) drawSprite(x, 'cat', 1120, 690, lerp(120, 190, ease.outBack(inv(13.3, 13.5, t))), 0, 1, { silhouette: '#0e0d0d' });
     x.restore();
   }
   if (t > 12.4) {
     // thick calligraphic swirls and grey brush strokes
-    [[0, 12.4, 0.12, 110, 600, 420, 2.4, 14], [1, 12.42, 0.12, 200, 760, 380, 2.8, 13], [2, 12.42, 0.3, 585, 760, 320, 0.7, 0], [3, 13.0, 0.35, 760, 900, 420, 1.6, 0]].forEach(([k, s, d, ox, oy, len, curl, ink]) => {
+    [[0, 12.4, 0.12, 110, 600, 420, 2.4, 14], [1, 12.42, 0.12, 200, 760, 380, 2.8, 13], [2, 12.42, 0.12, 585, 780, 360, 0.5, 0]].forEach(([k, s, d, ox, oy, len, curl, ink]) => {
       if (t < s || t > s + d + 0.2) return;
-      const pts = fx.wanderPoints(200 + k, len, curl, 80).map(([a, b]) => [a + ox, b + oy]);
+      const pts = fx.wanderPoints(200 + k, len, curl, 80).map(([a, b]) => [a * (ink ? 0.7 : 1) + ox, b * (ink ? 2.6 : 1) + oy]);
       const p = inv(s, s + d, t);
       if (ink) {
         fx.strokePartial(x, pts, inv(s + d, s + d + 0.2, t), p, ink, '#1c1414', true);
       } else {
         x.save();
         x.filter = `blur(${6 * S}px)`;
-        fx.strokePartial(x, pts, Math.max(0, p - 0.5), p, 46, 'rgba(40,38,38,0.42)');
+        fx.strokePartial(x, pts, inv(12.85, 13.0, t), p, 50, 'rgba(40,38,38,0.6)');
         x.restore();
       }
     });
@@ -1241,10 +1279,22 @@ function sceneScatter(ctx, t, f) {
   // extra ink: blob top right, fuzzy dots, shards
   x.save();
   x.filter = `blur(${3 * S}px)`;
-  if (t > 12.62) dot(x, 1140, 185, 64 * ease.outBack(inv(12.62, 12.72, t)), '#0e0d0d');
-  if (t > 12.95) dot(x, 795, 800, 26, '#141212');
+  if (t > 12.62 && t < 12.95) {
+    x.beginPath();
+    for (let i = 0; i <= 30; i++) {
+      const a = (i / 30) * Math.PI * 2;
+      const rr = 64 * ease.outBack(inv(12.62, 12.72, t)) * (1 + noise1(a * 3, 9) * 0.18);
+      x.lineTo(1140 + Math.cos(a) * rr, 185 + Math.sin(a) * rr);
+    }
+    x.fillStyle = '#0e0d0d';
+    x.fill();
+  }
   if (t > 13.2) dot(x, 130, 70, 22, '#141212');
+  if (t > 13.15) dot(x, 354, 180, 22, '#141212');
+  x.filter = `blur(${8 * S}px)`;
+  if (t > 12.95 && t < 13.4) dot(x, 795, 800, 30, '#141212');
   x.restore();
+  if (t > 12.7 && t < 13.0) fx.strokePartial(x, [[814, 322], [826, 334], [834, 326], [842, 334], [856, 320]], 0, 1, 4, '#141212');
   if (t > 12.6 && t < 13.0) fx.strokePartial(x, fx.scribblePoints(321, 120, 60, 3, 50).map(([a, b]) => [a + 60, b + 260]), 0, inv(12.6, 12.7, t), 8, '#1c1414');
   if (t > 12.95) {
     x.fillStyle = '#141212';
@@ -1281,16 +1331,16 @@ function sceneHand(ctx, t, f) {
   if (fallP > 0) {
     ctx.save();
     ctx.filter = `blur(${80 * S}px)`;
-    ctx.fillStyle = `rgba(150,140,142,${0.14 * fallP})`;
+    ctx.fillStyle = `rgba(165,155,158,${0.24 * fallP})`;
     ctx.fillRect(520, -100, 555, H + 200);
     ctx.restore();
   }
-  const settle = ease.inOutCubic(inv(13.76, 14.25, t));
+  const settle = ease.inOutCubic(inv(13.76, 14.32, t));
   const fall = ease.inOutCubic(fallP);
   let pose;
   if (t < 14.25) pose = blendPose('curl', 'open', settle);
   else if (t < 15.0) pose = blendPose('open', 'open', 0);
-  else if (t < 15.6) pose = blendPose('open', 'curl', ease.inOutCubic(inv(15.25, 15.5, t)));
+  else if (t < 15.6) pose = blendPose('open', 'curl', ease.inOutCubic(inv(15.32, 15.55, t)));
   else pose = blendPose('curl', 'fist', fall);
   const hand = thermalHand(pose);
   const [c, x] = off(0);
@@ -1300,14 +1350,23 @@ function sceneHand(ctx, t, f) {
   x.rotate(sway + (1 - settle) * -0.5 + fall * -0.25);
   x.scale(0.85, 0.92);
   x.translate(-740 + (1 - settle) * -140 + fall * -330, -1110 + (1 - settle) * 140 + fall * 30);
-  if (settle < 1) x.filter = `hue-rotate(${-75 * (1 - settle)}deg) saturate(${1 + (1 - settle) * 0.6}) brightness(${lerp(0.5, 1, settle)})`;
+  if (settle < 1) x.filter = `hue-rotate(${-25 * (1 - settle)}deg) saturate(${1 + (1 - settle) * 0.4}) brightness(${lerp(0.7, 1, settle)})`;
   else if (fall > 0) x.filter = `saturate(${1 - fall * 0.85}) brightness(${1 + fall * 0.25})`;
   if (fall > 0) {
-    // orange rim on the right edge of the falling fist
+    // wider fist with an orange rim on its right edge
+    x.translate(520, 900);
+    x.scale(1 + fall * 0.45, 1);
+    x.translate(-520, -900);
+    const rim = createCanvas(hand.width, hand.height);
+    const rx = rim.getContext('2d');
+    rx.drawImage(hand, 0, 0);
+    rx.globalCompositeOperation = 'source-in';
+    rx.fillStyle = '#e0782a';
+    rx.fillRect(0, 0, hand.width, hand.height);
     const f2 = x.filter;
-    x.filter = `brightness(0) sepia(1) saturate(8) hue-rotate(-15deg) brightness(1.1)`;
+    x.filter = 'none';
     x.globalAlpha = fall;
-    x.drawImage(hand, 262, 250);
+    x.drawImage(rim, 262, 250);
     x.globalAlpha = 1;
     x.filter = f2;
   }
@@ -1317,8 +1376,10 @@ function sceneHand(ctx, t, f) {
   // white swirl arcs during the intro
   if (t < 14.25) {
     const q = inv(13.76, 14.2, t);
-    for (let k = 0; k < 3; k++) {
-      const pts = fx.loopPoints(400 + k, 160 + k * 40, 340, 0.7).map(([a, b]) => [a + 560 + k * 50, b + 640]);
+    for (let k = 0; k < 2; k++) {
+      const cx = k === 0 ? 415 : 690;
+      const pts = [];
+      for (let i = 0; i <= 40; i++) pts.push([cx + Math.sin((i / 40) * Math.PI) * (k ? 60 : -40), 380 + i * 14]);
       ctx.save();
       ctx.filter = `blur(${3 * S}px)`;
       fx.strokePartial(ctx, pts, q * 0.7, 0.3 + q * 0.7, 7, 'rgba(240,236,230,0.7)');
@@ -1328,11 +1389,11 @@ function sceneHand(ctx, t, f) {
   // thick blurred comet streaks converging left as the hand drops away
   if (fall > 0) {
     ctx.save();
-    ctx.filter = `blur(${7 * S}px)`;
+    ctx.filter = `blur(${11 * S}px)`;
     const r = rng(90);
     for (let i = 0; i < 5; i++) {
       const y = 320 + r() * 160;
-      const x0 = 80 + r() * 420 + (1 - fall) * 300;
+      const x0 = 24 + r() * 300 + (1 - fall) * 200;
       const g = ctx.createLinearGradient(x0, 0, x0 + 520, 0);
       g.addColorStop(0, `rgba(245,240,236,${0.8 * fall})`);
       g.addColorStop(1, 'rgba(245,240,236,0)');
@@ -1392,7 +1453,14 @@ function sceneLove(ctx, t, f) {
       fx.vignette(ctx, crush * 0.97, '28,26,26', lerp(0.6, 0.12, crush), W / 2, H / 2, 0.6);
       fx.grain(ctx, f + 1, 0.3 * crush);
     }
-    drawSprite(ctx, 'heart', 728, 545, w, 0, 1, { shadow: 'rgba(40,20,20,0.5)', shadowBlur: 22, shadowY: -14 });
+    ctx.save();
+    ctx.filter = `blur(${20 * S}px)`;
+    ctx.fillStyle = 'rgba(40,30,30,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(735, 440, w * 0.38, w * 0.12, 0, 0, 7);
+    ctx.fill();
+    ctx.restore();
+    drawSprite(ctx, 'heart', 728, 545, w, 0, 1, { shadow: 'rgba(40,20,20,0.4)', shadowBlur: 22, shadowY: -10 });
     letter(ctx, 'L', LX[0], LY, LSIZE, mixHex('#3b1d18', '#8a8888', crush));
     return;
   }
@@ -1406,7 +1474,7 @@ function sceneLove(ctx, t, f) {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
     }
-    drawSprite(ctx, 'camera', 729, 540, kf(t, [[16.2, 300], [16.5, 315]]), noise1(t, 3) * 0.04);
+    drawSprite(ctx, 'camera', 729, 540, kf(t, [[16.2, 320], [16.5, 330]]), noise1(t, 3) * 0.04, 1, { sy: 1.12 });
     letter(ctx, 'L', LX[0], LY, LSIZE, CREAM);
     letter(ctx, 'O', LX[1], LY, LSIZE, CREAM);
     return;
@@ -1426,8 +1494,8 @@ function sceneLove(ctx, t, f) {
   }
   if (t < 17.18) {
     fx.dark(ctx, '#141313');
-    const q = ease.outCubic(inv(16.82, 16.98, t));
-    drawSprite(ctx, 'vinyl', 729, 540, lerp(290, 300, q), 0, 1, { sx: lerp(0.4, 1, q), shadow: 'rgba(200,200,220,0.25)', shadowBlur: 30 });
+    const q = ease.outCubic(inv(16.86, 17.0, t));
+    drawSprite(ctx, 'vinyl', 729, 540, lerp(290, 300, q), 0, 1, { sx: lerp(0.38, 1, q), shadow: 'rgba(200,200,220,0.25)', shadowBlur: 30 });
     const lo = t > 16.92 ? '#3fb7d9' : CREAM;
     letter(ctx, 'L', LX[0], LY, LSIZE, lo);
     letter(ctx, 'O', LX[1], LY, LSIZE, lo);
@@ -1446,8 +1514,8 @@ function sceneLove(ctx, t, f) {
 const FIN = {
   L: [[17.25, [684, 624, -160]], [17.5, [684, 624, -160]], [17.75, [498, 846, 0]], [18.0, [444, 885, -110]], [18.25, [440, 895, -180]], [18.5, [438, 906, -140]], [18.75, [440, 900, -100]], [19.0, [444, 891, -50]], [19.25, [446, 880, -5]], [19.5, [447, 873, 0]], [19.75, [468, 843, 0]], [20.0, [513, 792, 0]], [20.46, [513, 792, 0]]],
   O: [[17.25, [1422, 402, 0]], [17.5, [1422, 402, 0]], [17.75, [1104, 336, 0]], [18.0, [942, 288, 0]], [18.5, [825, 264, 0]], [19.0, [807, 255, 0]], [19.5, [801, 273, 0]], [19.75, [798, 282, 0]], [20.0, [792, 330, 0]], [20.46, [792, 330, 0]]],
-  V: [[17.25, [666, 369, 150]], [17.5, [666, 369, 150]], [17.75, [813, 45, 0]], [18.0, [558, 156, 180]], [18.25, [450, 205, 190]], [18.5, [354, 249, 270]], [18.75, [338, 252, 285]], [19.0, [330, 255, 300]], [19.25, [340, 262, 345]], [19.5, [348, 267, 360]], [19.75, [369, 276, 360]], [20.0, [429, 324, 360]], [20.46, [429, 324, 360]]],
-  E: [[17.25, [537, 264, 180]], [17.5, [537, 264, 180]], [17.75, [888, 609, 0]], [18.0, [1053, 759, 120]], [18.25, [1134, 834, 170]], [18.5, [1173, 870, 145]], [18.75, [1185, 880, 100]], [19.0, [1188, 885, 50]], [19.25, [1176, 878, 0]], [19.5, [1164, 873, 0]], [19.75, [1149, 843, 0]], [20.0, [1101, 810, 0]], [20.46, [1101, 810, 0]]],
+  V: [[17.25, [666, 369, 150]], [17.5, [666, 369, 150]], [17.75, [813, 45, 0]], [18.0, [573, 150, 180]], [18.25, [450, 205, 190]], [18.5, [354, 249, 270]], [18.75, [338, 252, 285]], [19.0, [330, 255, 300]], [19.25, [340, 262, 345]], [19.5, [348, 267, 360]], [19.75, [369, 276, 360]], [20.0, [429, 324, 360]], [20.46, [429, 324, 360]]],
+  E: [[17.25, [537, 264, 180]], [17.5, [537, 264, 180]], [17.75, [888, 609, 0]], [18.0, [1053, 759, 120]], [18.25, [1134, 834, 170]], [18.5, [1173, 870, 170]], [18.75, [1185, 880, 150]], [19.0, [1188, 885, 100]], [19.25, [1176, 878, 40]], [19.5, [1164, 873, 0]], [19.75, [1149, 843, 0]], [20.0, [1101, 810, 0]], [20.46, [1101, 810, 0]]],
 };
 const DOTS = [
   // keyframes, radius
@@ -1457,28 +1525,44 @@ const DOTS = [
 ];
 const LOOPS = [
   // letter, start, dur, rx, ry, seed, turns, dx, dy
-  ['V', 17.3, 0.14, 40, 30, 1, 2.2, 0, 0],
-  ['L', 17.33, 0.14, 34, 40, 2, 2.0, 0, 0],
-  ['E', 17.35, 0.12, 30, 34, 3, 1.8, 0, 0],
-  ['O', 17.36, 0.12, 12, 110, 21, 1.0, 0, -40],
-  ['V', 19.2, 0.25, 30, 50, 4, 1.6, 15, -20],
-  ['O', 19.22, 0.25, 14, 60, 5, 1.2, 0, -40],
-  ['L', 19.24, 0.25, 22, 90, 6, 1.3, -40, 70],
-  ['E', 19.26, 0.25, 60, 40, 7, 1.8, -40, -30],
-  ['V', 19.45, 0.25, 50, 40, 8, 2.0, 10, 0],
-  ['L', 19.47, 0.25, 80, 34, 10, 1.6, -20, 20],
-  ['E', 19.5, 0.25, 34, 30, 11, 1.8, 0, 0],
-  ['V', 19.7, 0.25, 44, 60, 12, 2.2, 0, -20],
-  ['O', 19.7, 0.25, 14, 105, 13, 1.1, 2, -60],
-  ['L', 19.72, 0.25, 60, 30, 14, 1.6, -10, 0],
-  ['E', 19.74, 0.25, 36, 40, 15, 1.7, 0, 0],
+  ['V', 17.44, 0.14, 40, 30, 1, 2.2, 0, 0],
+  ['L', 17.46, 0.14, 34, 40, 2, 2.0, 0, 0],
+  ['E', 17.46, 0.12, 30, 34, 3, 1.8, 0, 0],
+  ['O', 17.47, 0.12, 12, 110, 21, 1.0, 0, -40],
+  ['L', 17.72, 0.12, 30, 22, 22, 1.4, 0, 0],
+  ['V', 19.2, 0.25, 26, 50, 4, 1.2, 15, -30],
+  ['O', 19.22, 0.25, 14, 50, 5, 1.1, 0, -30],
+  ['L', 19.24, 0.25, 22, 70, 6, 1.1, -30, 60],
+  ['E', 19.26, 0.25, 34, 26, 7, 1.3, -10, -10],
+  ['V', 19.45, 0.25, 40, 30, 8, 1.3, 10, 0],
+  ['L', 19.47, 0.25, 60, 30, -35, 1.2, -12, 20],
+  ['E', 19.5, 0.25, 34, 26, 11, 1.3, 0, 0],
+  ['V', 19.7, 0.25, 34, 48, 12, 1.4, 0, -20],
+  ['O', 19.7, 0.25, 12, 52, 13, 1.1, 2, -50],
+  ['L', 19.72, 0.25, 50, 26, -30, 1.3, -10, 0],
+  ['E', 19.74, 0.25, 34, 30, 15, 1.3, 0, 0],
 ];
 const FINAL_LOOPS = [
   ['O', 12, 48, 31, 1.0, 4, -8],
-  ['L', 70, 30, 32, 1.1, -50, -24],
-  ['E', 44, 26, 33, 1.6, 0, 0],
+  ['E', 60, 30, 33, 1.2, -45, -35],
   ['V', 26, 18, 34, 1.2, 0, 0],
 ];
+
+function smoothLoop(rx, ry, turns, seed, n = 160) {
+  const r = rng(Math.abs(seed) + 50);
+  const tilt = seed < 0 ? seed * D : (r() - 0.5) * 0.6;
+  const a0 = r() * Math.PI * 2;
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const u = i / n;
+    const a = a0 + u * turns * Math.PI * 2;
+    const g = 1 + u * 0.12; // slight spiral so overlapping passes separate
+    const px = Math.cos(a) * rx * g;
+    const py = Math.sin(a) * ry * g;
+    pts.push([px * Math.cos(tilt) - py * Math.sin(tilt), px * Math.sin(tilt) + py * Math.cos(tilt)]);
+  }
+  return pts;
+}
 
 function sceneFinale(ctx, t, f) {
   ctx.fillStyle = '#dededd';
@@ -1493,17 +1577,23 @@ function sceneFinale(ctx, t, f) {
     const q = inv(17.2, 17.44, t);
     const sh = ease.inOutCubic(inv(17.26, 17.32, t));
     const fade = 1 - inv(17.38, 17.44, t);
-    [[0, 160, 120, 324, 222, 640, 2.4], [1, 520, 560, 969, 507, 560, 1.6], [2, 900, 160, 1190, 800, 520, 2.0], [3, 980, 820, 600, 860, 420, 1.8]].forEach(([k, ox, oy, tx2, ty2, len, curl]) => {
-      const L = lerp(len, 110, sh);
+    [[0, 160, 120, 324, 222, 640, 2.4], [1, 520, 560, 969, 507, 560, 1.6], [2, 900, 160, 1293, 822, 520, 2.0], [3, 980, 820, 1299, 72, 420, 1.8]].forEach(([k, ox, oy, tx2, ty2, len, curl]) => {
+      const L = lerp(len, k === 3 ? 70 : 120, sh);
       const pts = fx.wanderPoints(500 + k, L, curl, 60).map(([a, b]) => [a + lerp(ox, tx2, sh), b + lerp(oy, ty2, sh)]);
       ctx.save();
       ctx.globalAlpha = fade * lerp(1, 0.7, sh);
       ctx.filter = `blur(${lerp(16, 8, sh) * S}px)`;
       fx.strokePartial(ctx, pts, q * 0.3, 0.7 + q * 0.3, lerp(70, 18, sh), 'rgba(60,58,58,0.45)');
       ctx.filter = `blur(${lerp(5, 2, sh) * S}px)`;
-      fx.strokePartial(ctx, pts, q * 0.3, 0.7 + q * 0.3, lerp(32, 9, sh), '#1a1818', true);
+      fx.strokePartial(ctx, pts, q * 0.3 * (1 - sh), 0.7 + q * 0.3 + sh, lerp(32, 10, sh), '#1a1818', true);
       ctx.restore();
     });
+    if (sh > 0) {
+      [[114, 717, 60, 40], [654, 732, 40, 75], [744, 957, 50, 30]].forEach(([a, b, rx, ry], k) => {
+        const pts = fx.loopPoints(700 + k, rx, ry, 1.6, 120).map(([u, v]) => [u + a, v + b]);
+        fx.strokePartial(ctx, pts, 0, sh, 1.6, `rgba(224,64,46,${0.7 * fade})`);
+      });
+    }
   }
   const grow = ease.inOutCubic(inv(19.75, 20.05, t));
   const size = lerp(56, 74, grow);
@@ -1520,22 +1610,30 @@ function sceneFinale(ctx, t, f) {
   });
   DOTS.forEach(([k, r0, r1]) => {
     if (t > 18.9 && t < 19.2) return;
-    const [x, y] = kf(t, k);
-    const r = lerp(r0, r1, inv(19.2, 19.7, t));
+    const hk = [];
+    k.forEach(([tt, v], i) => {
+      hk.push([tt, v, 'inOutCubic']);
+      if (tt < 18.0 && i < k.length - 1) hk.push([tt + 0.09, v, 'linear']);
+    });
+    const [x, y] = kf(t, hk);
+    const r = t < 17.9 ? 4 : lerp(r0, r1, inv(19.2, 19.7, t));
     dot(ctx, x, y, r * (t > 19.2 && t < 19.4 ? 0.5 : 1) * lerp(1, 1.1, grow), '#2a1714');
   });
   LOOPS.forEach(([ch, s, d, rx, ry, seed, turns, dx, dy]) => {
     if (t < s || t > s + d + 0.16) return;
     const [ax, ay] = pos[ch];
-    const pts = fx.loopPoints(seed, rx, ry, turns, 200).map(([a, b], i) => [a + ax + dx + noise1(i * 0.15, seed) * rx * 0.35, b + ay + dy + noise1(i * 0.15, seed + 3) * ry * 0.3]);
+    const pts = smoothLoop(rx, ry, turns, seed).map(([a, b]) => [a + ax + dx, b + ay + dy]);
     fx.strokePartial(ctx, pts, inv(s + d, s + d + 0.16, t), inv(s, s + d, t), 1.6, '#e0402e');
   });
   if (t > 19.95) {
     FINAL_LOOPS.forEach(([ch, rx, ry, seed, turns, dx, dy]) => {
       const [ax, ay] = pos[ch];
-      const pts = fx.loopPoints(seed, rx, ry, turns, 200).map(([a, b]) => [a + ax + dx, b + ay + dy]);
+      const pts = smoothLoop(rx, ry, turns, seed).map(([a, b]) => [a + ax + dx, b + ay + dy]);
       fx.strokePartial(ctx, pts, 0, inv(19.95, 20.1, t), 1.6, '#e0402e');
     });
+    // diagonal pen tail from the upper left into the L
+    const [lx, ly] = pos.L;
+    fx.strokePartial(ctx, [[lx - 140, ly - 120], [lx - 70, ly - 50], [lx - 10, ly + 5]], 0, inv(19.95, 20.08, t), 1.6, '#e0402e');
   }
   // black hook strokes
   if (t > 17.63 && t < 17.77) {

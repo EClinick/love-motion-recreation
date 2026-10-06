@@ -247,8 +247,8 @@ const builders = {
       const r = Math.hypot(x - 14, y - 14);
       return r > 6.5 && r < 10.5 && (Math.abs(a + 2.2) < 0.2 || Math.abs(a - 0.94) < 0.2);
     }, '#a9a2c4');
-    g.circle(14, 14, 5.2, '#e0303c');
-    g.circle(14, 14, 3.6, '#cc2430');
+    g.circle(14, 14, 4.6, '#e0303c');
+    g.circle(14, 14, 3.2, '#cc2430');
     g.rect(13, 13, 2, 2, '#f6e8ea');
     return g;
   },
