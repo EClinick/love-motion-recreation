@@ -249,7 +249,7 @@ const builders = {
     }, '#a9a2c4');
     g.circle(14, 14, 4.6, '#e0303c');
     g.circle(14, 14, 3.2, '#cc2430');
-    g.rect(13, 13, 2, 2, '#f6e8ea');
+    g.px(14, 14, '#f6e8ea');
     return g;
   },
   skateboard() {
