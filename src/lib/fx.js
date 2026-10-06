@@ -1,7 +1,7 @@
 // Shared drawing effects: film grain, vignettes, sparkle stars, scribbles, typography.
 const { createCanvas, GlobalFonts } = require('@napi-rs/canvas');
 const path = require('path');
-const { W, H, rng, lerp, clamp, noise1 } = require('./core');
+const { W, H, rng, lerp, clamp, noise1, state } = require('./core');
 
 const FONT_DIR = path.join(__dirname, '..', '..', 'fonts');
 GlobalFonts.registerFromPath(path.join(FONT_DIR, 'Satoshi-500.woff2'), 'Satoshi');
@@ -191,10 +191,10 @@ function text(ctx, str, x, y, size, color, opts = {}) {
   ctx.textAlign = opts.align ?? 'left';
   ctx.textBaseline = opts.baseline ?? 'middle';
   ctx.fillStyle = color;
-  if (opts.blur) ctx.filter = `blur(${opts.blur}px)`;
+  if (opts.blur) ctx.filter = `blur(${(opts.blur) * state.S}px)`;
   if (opts.glow) {
     ctx.shadowColor = opts.glow;
-    ctx.shadowBlur = opts.glowBlur ?? 18;
+    ctx.shadowBlur = (opts.glowBlur ?? 18) * state.S;
   }
   ctx.globalAlpha *= opts.alpha ?? 1;
   ctx.fillText(str, x, y);
@@ -236,7 +236,7 @@ function layer(ctx, draw, opts = {}) {
   const x = c.getContext('2d');
   draw(x);
   ctx.save();
-  if (opts.blur) ctx.filter = `blur(${opts.blur}px)`;
+  if (opts.blur) ctx.filter = `blur(${(opts.blur) * state.S}px)`;
   if (opts.op) ctx.globalCompositeOperation = opts.op;
   ctx.globalAlpha = opts.alpha ?? 1;
   ctx.drawImage(c, 0, 0);

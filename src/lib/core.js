@@ -2,6 +2,8 @@
 const W = 1440;
 const H = 1080;
 const FPS = 24000 / 1001;
+// Render scale; canvas blur/shadow radii are in device pixels so they must be multiplied by it.
+const state = { S: 1 };
 
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -94,4 +96,4 @@ function mixHex(h1, h2, t) {
   return '#' + ((1 << 24) | (r << 16) | (g << 8) | bl).toString(16).slice(1);
 }
 
-module.exports = { W, H, FPS, clamp, lerp, inv, smooth, ease, kf, rng, hash, noise1, shake, hex, mixHex };
+module.exports = { state, W, H, FPS, clamp, lerp, inv, smooth, ease, kf, rng, hash, noise1, shake, hex, mixHex };

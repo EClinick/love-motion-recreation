@@ -2,6 +2,7 @@
 // Each sprite is built from simple primitives (rects, ellipses, polygons) and then
 // given an optional 1px outline, the same way a pixel artist would block them in.
 const { createCanvas } = require('@napi-rs/canvas');
+const { state } = require('./core');
 
 class Grid {
   constructor(w, h) {
@@ -351,7 +352,7 @@ function drawSprite(ctx, name, x, y, width, rot = 0, alpha = 1, opts = {}) {
   ctx.imageSmoothingEnabled = false;
   if (opts.shadow) {
     ctx.shadowColor = opts.shadow;
-    ctx.shadowBlur = opts.shadowBlur ?? 30;
+    ctx.shadowBlur = (opts.shadowBlur ?? 30) * state.S;
   }
   if (opts.silhouette) {
     // flat black silhouette version (used during the ink scatter)

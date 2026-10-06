@@ -26,7 +26,8 @@ function args() {
 
 function renderer(scale, samples) {
   const { createCanvas } = require('@napi-rs/canvas');
-  const { renderFrame } = require('./scenes');
+  const { renderFrame, setScale } = require('./scenes');
+  setScale(scale);
   const { W, H } = require('./lib/core');
   const canvas = createCanvas(W * scale, H * scale);
   const ctx = canvas.getContext('2d');

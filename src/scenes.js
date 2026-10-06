@@ -1,7 +1,7 @@
 // Scene timeline. Every function is pure in `t` (seconds) so frames render in any order.
 const { createCanvas } = require('@napi-rs/canvas');
 const C = require('./lib/core');
-const { W, H, kf, inv, lerp, clamp, ease, rng, noise1, shake, mixHex } = C;
+const { W, H, kf, inv, lerp, clamp, ease, rng, noise1, shake, mixHex, state } = C;
 const fx = require('./lib/fx');
 const { drawSprite } = require('./lib/sprites');
 const { thermal } = require('./lib/figures');
@@ -11,27 +11,36 @@ const CREAM = '#f3efe8';
 const BODY = 50; // body copy size (matches reference measurements)
 const CARD = 89; // "action." / "intention." / "curiosity."
 
+// Output scale (1 = 1440x1080, 2 = 2880x2160). Offscreen layers match it so nothing softens.
+let S = 1;
+function setScale(s) {
+  S = s;
+  state.S = s;
+  scratch.length = 0;
+}
+
 // Offscreen helper: draw into a scratch canvas then composite (for blur / mosaic).
 const scratch = [];
 function off(i = 0) {
-  if (!scratch[i]) scratch[i] = createCanvas(W, H);
+  if (!scratch[i]) scratch[i] = createCanvas(W * S, H * S);
   const c = scratch[i];
   const x = c.getContext('2d');
   x.setTransform(1, 0, 0, 1, 0, 0);
   x.globalAlpha = 1;
   x.globalCompositeOperation = 'source-over';
   x.filter = 'none';
-  x.clearRect(0, 0, W, H);
+  x.clearRect(0, 0, W * S, H * S);
+  x.setTransform(S, 0, 0, S, 0, 0);
   return [c, x];
 }
 
 function composite(ctx, c, opts = {}) {
   ctx.save();
-  if (opts.blur && opts.blur > 0.3) ctx.filter = `blur(${opts.blur}px)`;
+  if (opts.blur && opts.blur > 0.3) ctx.filter = `blur(${(opts.blur) * state.S}px)`;
   if (opts.filter) ctx.filter = opts.filter;
   ctx.globalAlpha = opts.alpha ?? 1;
   if (opts.op) ctx.globalCompositeOperation = opts.op;
-  ctx.drawImage(c, 0, 0);
+  ctx.drawImage(c, 0, 0, W, H);
   ctx.restore();
 }
 
@@ -52,7 +61,7 @@ function mosaic(ctx, src, block, opts = {}) {
   sx.drawImage(src, 0, 0, sw, sh);
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  if (opts.blur) ctx.filter = `blur(${opts.blur}px)`;
+  if (opts.blur) ctx.filter = `blur(${(opts.blur) * state.S}px)`;
   ctx.globalAlpha = opts.alpha ?? 1;
   ctx.drawImage(s, 0, 0, W, H);
   ctx.restore();
@@ -329,7 +338,7 @@ function sceneSparkle(ctx, t, f) {
   rg.addColorStop(1, sc.edge);
   x2.fillStyle = rg;
   x2.shadowColor = sc.edge;
-  x2.shadowBlur = 24;
+  x2.shadowBlur = (24) * state.S;
   x2.fill();
   x2.shadowBlur = 0;
   composite(ctx, c2, { alpha: sIn * (t < 2.05 ? 0.6 : 1), filter: t < 2.06 ? 'brightness(1.5) saturate(0.5)' : undefined });
@@ -493,7 +502,7 @@ function sceneProfile(ctx, t, f) {
       x.save();
       x.globalAlpha = (1 - toShadow) * clamp((toTan - 0.3) * 2);
       x.fillStyle = '#3a2410';
-      x.filter = 'blur(2px)';
+      x.filter = `blur(${2 * state.S}px)`;
       x.beginPath();
       x.ellipse(380, 210, 120, 140, 0.3, 0, 7);
       x.fill();
@@ -665,7 +674,7 @@ function flash(ctx, x, y, a, seed) {
 function inkBall(ctx, x, y, r, trail = []) {
   if (trail.length > 1) {
     ctx.save();
-    ctx.filter = 'blur(10px)';
+    ctx.filter = `blur(${10 * state.S}px)`;
     ctx.strokeStyle = 'rgba(40,38,38,0.32)';
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -677,7 +686,7 @@ function inkBall(ctx, x, y, r, trail = []) {
     ctx.restore();
   }
   ctx.save();
-  ctx.filter = 'blur(2.5px)';
+  ctx.filter = `blur(${2.5 * state.S}px)`;
   ctx.fillStyle = '#0c0b0b';
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 7);
@@ -813,7 +822,7 @@ function sceneAction(ctx, t, f) {
   fx.starPath(x, 0, 0, 170 * st, 0, 0.1);
   x.fillStyle = '#e8231d';
   x.shadowColor = 'rgba(255,40,30,0.6)';
-  x.shadowBlur = 20;
+  x.shadowBlur = (20) * state.S;
   x.fill();
   x.restore();
   composite(ctx, c, { blur });
@@ -899,7 +908,7 @@ function sceneIntention(ctx, t, f) {
   }
   x.closePath();
   x.shadowColor = 'rgba(255,40,30,0.45)';
-  x.shadowBlur = 25;
+  x.shadowBlur = (25) * state.S;
   x.fill();
   composite(ctx, c, { blur: t < 9.9 ? 3 : 0 });
   const bp = kf(t, [[9.84, [470, 520]], [10.0, [440, 500], 'outCubic'], [10.51, [425, 505]]]);
@@ -927,7 +936,7 @@ function note(ctx, kind, x, y, s, rot = 0) {
   ctx.fillStyle = '#e2211b';
   ctx.strokeStyle = '#e2211b';
   ctx.shadowColor = 'rgba(255,40,30,0.45)';
-  ctx.shadowBlur = 14;
+  ctx.shadowBlur = (14) * state.S;
   const head = (hx, hy) => {
     ctx.beginPath();
     ctx.ellipse(hx, hy, 22, 16, -0.4, 0, 7);
@@ -1053,7 +1062,7 @@ function sceneScatter(ctx, t, f) {
     const bx = kf(t, [[12.85, 1116], [13.4, 1110], [13.6, 1090]]);
     const by = kf(t, [[12.85, 615], [13.4, 620], [13.6, 700]]);
     x.save();
-    x.filter = 'blur(3px)';
+    x.filter = `blur(${3 * state.S}px)`;
     x.fillStyle = '#0e0d0d';
     x.beginPath();
     for (let i = 0; i <= 40; i++) {
@@ -1072,7 +1081,7 @@ function sceneScatter(ctx, t, f) {
       const pts = fx.wanderPoints(200 + k, len, curl, 80).map(([a, b]) => [a + ox, b + oy]);
       const p = inv(s, s + d, t);
       x.save();
-      x.filter = 'blur(6px)';
+      x.filter = `blur(${6 * state.S}px)`;
       fx.strokePartial(x, pts, Math.max(0, p - 0.5), p, 46, 'rgba(40,38,38,0.42)');
       x.restore();
       fx.strokePartial(x, pts, Math.max(0, p - 0.35), p, 7, '#141212', true);
@@ -1127,7 +1136,7 @@ function sceneHand(ctx, t, f) {
     for (let k = 0; k < 3; k++) {
       const pts = fx.wanderPoints(400 + k, 700, 1.2, 60).map(([a, b]) => [a * 0.6 + 560 + k * 70, b * 0.6 + 640]);
       ctx.save();
-      ctx.filter = 'blur(3px)';
+      ctx.filter = `blur(${3 * state.S}px)`;
       fx.strokePartial(ctx, pts, q * 0.7, 0.3 + q * 0.7, 7, 'rgba(240,236,230,0.75)');
       ctx.restore();
     }
@@ -1135,7 +1144,7 @@ function sceneHand(ctx, t, f) {
   // horizontal white light streaks as the hand drops away
   if (fall > 0) {
     ctx.save();
-    ctx.filter = 'blur(4px)';
+    ctx.filter = `blur(${4 * state.S}px)`;
     const r = rng(90);
     for (let i = 0; i < 6; i++) {
       const y = 280 + r() * 160;
@@ -1300,7 +1309,7 @@ function sceneFinale(ctx, t, f) {
     [[0, 260, 160, 240, 2.6], [1, 1180, 290, 160, 2.0], [2, 860, 700, 140, 1.6], [3, 1340, 900, 120, 1.8], [4, 300, 980, 120, 2.2]].forEach(([k, ox, oy, len, curl]) => {
       const pts = fx.wanderPoints(500 + k, len, curl, 50).map(([a, b]) => [a + ox, b + oy]);
       ctx.save();
-      ctx.filter = 'blur(10px)';
+      ctx.filter = `blur(${10 * state.S}px)`;
       fx.strokePartial(ctx, pts, q * 0.5, 0.5 + q * 0.5, 34, 'rgba(50,48,48,0.55)');
       ctx.restore();
       fx.strokePartial(ctx, pts, q * 0.5, 0.5 + q * 0.5, 6, '#1a1818', true);
@@ -1368,4 +1377,4 @@ function renderFrame(ctx, t, f) {
   fx.vignette(ctx, 0.14, '0,0,0', 0.6);
 }
 
-module.exports = { renderFrame, TIMELINE };
+module.exports = { renderFrame, TIMELINE, setScale };
