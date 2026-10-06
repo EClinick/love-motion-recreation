@@ -1,0 +1,44 @@
+{
+  "id": "iter1",
+  "label": "v1",
+  "hash": "3778cec",
+  "subject": "Canvas recreation engine: scenes, pixel sprites, figures, renderer, compare tooling",
+  "commit_date": "2026-10-06T13:39:44-07:00",
+  "dirty": false,
+  "changelog": [
+    "Initial version: the first full canvas engine render.",
+    "Re-rendered from this commit for the archive (original render was overwritten)."
+  ],
+  "note": "Re-rendered from this commit for the archive (original render was overwritten).",
+  "video": "media/versions/iter1/video.mp4",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 9117474,
+  "render_date": "2026-10-06T14:21:19-07:00",
+  "v": 1791321847,
+  "sheets": [
+    "media/versions/iter1/sheets/sheet_01.jpg",
+    "media/versions/iter1/sheets/sheet_02.jpg",
+    "media/versions/iter1/sheets/sheet_03.jpg",
+    "media/versions/iter1/sheets/sheet_04.jpg",
+    "media/versions/iter1/sheets/sheet_05.jpg",
+    "media/versions/iter1/sheets/sheet_06.jpg",
+    "media/versions/iter1/sheets/sheet_07.jpg",
+    "media/versions/iter1/sheets/sheet_08.jpg",
+    "media/versions/iter1/sheets/sheet_09.jpg"
+  ],
+  "published": "2026-10-06T14:24:08-07:00",
+  "scores": [
+    4.5,
+    5.0,
+    5.0
+  ],
+  "score_sections": [
+    "0 \u2013 7.25 s",
+    "7.5 \u2013 14.75 s",
+    "15 \u2013 20.4 s"
+  ],
+  "sidebyside": "media/versions/iter1/sidebyside.mp4",
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 22520463
+}
