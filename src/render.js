@@ -24,9 +24,10 @@ function args() {
   return o;
 }
 
-function renderer(scale, samples) {
+async function renderer(scale, samples) {
   const { createCanvas } = require('@napi-rs/canvas');
-  const { renderFrame, setScale } = require('./scenes');
+  const { renderFrame, setScale, preload } = require('./scenes');
+  await preload();
   setScale(scale);
   const { W, H } = require('./lib/core');
   const canvas = createCanvas(W * scale, H * scale);
@@ -57,7 +58,6 @@ function renderer(scale, samples) {
 
 if (!isMainThread) {
   const { start, end, scale, samples, segPath } = workerData;
-  const draw = renderer(scale, samples);
   const { W, H } = require('./lib/core');
   const ff = spawn('ffmpeg', [
     '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgba', '-s', `${W * scale}x${H * scale}`,
@@ -65,6 +65,7 @@ if (!isMainThread) {
     '-pix_fmt', 'yuv420p', segPath,
   ], { stdio: ['pipe', 'inherit', 'inherit'] });
   (async () => {
+    const draw = await renderer(scale, samples);
     for (let f = start; f < end; f++) {
       const c = draw(f);
       const buf = c.data();
@@ -81,15 +82,17 @@ if (!isMainThread) {
 
   if (o.stills) {
     // quick single-frame renders to PNG for inspection
-    const draw = renderer(o.scale, o.samples);
-    const dir = path.join(ROOT, 'out', 'stills');
-    fs.mkdirSync(dir, { recursive: true });
-    o.stills.split(',').forEach((s) => {
-      const f = Math.round(Number(s) * FPS);
-      fs.writeFileSync(path.join(dir, `r_${s}.png`), draw(f).toBuffer('image/png'));
+    renderer(o.scale, o.samples).then((draw) => {
+      const dir = path.join(ROOT, 'out', 'stills');
+      fs.mkdirSync(dir, { recursive: true });
+      o.stills.split(',').forEach((s) => {
+        const f = Math.round(Number(s) * FPS);
+        fs.writeFileSync(path.join(dir, `r_${s}.png`), draw(f).toBuffer('image/png'));
+      });
+      console.log('stills ->', dir);
+      process.exit(0);
     });
-    console.log('stills ->', dir);
-    process.exit(0);
+    return;
   }
 
   const f0 = Math.round(o.from * FPS);

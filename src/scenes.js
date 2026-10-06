@@ -1490,6 +1490,69 @@ function sceneScatter(ctx, t, f) {
 // =====================================================================
 // 8. Hand: "through ones own ability to"
 // =====================================================================
+// Rotoscoped hand silhouettes (scripts/trace-hand.js -> ref/derived/hand/f_####.png).
+const fsMod = require('fs');
+const pathMod = require('path');
+const HAND_DIR = pathMod.join(__dirname, '..', 'ref', 'derived', 'hand');
+const handMasks = {};
+// Image decoding is async in @napi-rs/canvas, so masks are preloaded before rendering.
+async function preload() {
+  if (!fsMod.existsSync(HAND_DIR)) return;
+  const { loadImage } = require('@napi-rs/canvas');
+  for (const name of fsMod.readdirSync(HAND_DIR)) {
+    const m = /^f_(\d+)\.png$/.exec(name);
+    if (m) handMasks[Number(m[1])] = await loadImage(fsMod.readFileSync(pathMod.join(HAND_DIR, name)));
+  }
+}
+function handMask(t) {
+  return handMasks[Math.round(t * C.FPS)] || null;
+}
+
+// Thermal shading inside a traced silhouette (screen space).
+function tracedHand(ctx, mask, filter, tint = 0) {
+  const [c, x] = off(0);
+  x.drawImage(mask, 0, 0, W, H);
+  x.globalCompositeOperation = 'source-in';
+  const g = x.createLinearGradient(0, 330, 0, H);
+  g.addColorStop(0, '#ee6020');
+  g.addColorStop(0.45, '#f07e26');
+  g.addColorStop(0.8, '#e8902a');
+  g.addColorStop(1, '#d88a22');
+  x.fillStyle = g;
+  x.fillRect(0, 0, W, H);
+  x.globalCompositeOperation = 'source-atop';
+  const r = x.createLinearGradient(470, 0, 980, 0);
+  r.addColorStop(0, 'rgba(255,242,204,0.95)');
+  r.addColorStop(0.35, 'rgba(255,222,156,0.7)');
+  r.addColorStop(0.6, 'rgba(245,130,40,0.1)');
+  r.addColorStop(0.8, 'rgba(200,50,16,0.7)');
+  r.addColorStop(1, 'rgba(176,36,16,0.9)');
+  x.fillStyle = r;
+  x.fillRect(0, 0, W, H);
+  // soft darker band just inside the outline (rounded, lit-from-inside look)
+  const [ec, ex] = off(3);
+  ex.drawImage(mask, 0, 0, W, H);
+  ex.globalCompositeOperation = 'source-in';
+  ex.fillStyle = 'rgba(160,36,14,0.5)';
+  ex.fillRect(0, 0, W, H);
+  ex.globalCompositeOperation = 'destination-out';
+  ex.filter = `blur(${14 * S}px)`;
+  ex.drawImage(mask, 0, 0, W, H);
+  ex.filter = 'none';
+  x.drawImage(ec, 0, 0, W, H);
+  if (tint > 0) {
+    // intro: crimson body with violet toward the lower right
+    x.fillStyle = `rgba(160,24,40,${0.95 * tint})`;
+    x.fillRect(0, 0, W, H);
+    const v = x.createRadialGradient(900, 1000, 10, 900, 1000, 360);
+    v.addColorStop(0, `rgba(80,40,160,${0.7 * tint})`);
+    v.addColorStop(1, 'rgba(80,40,160,0)');
+    x.fillStyle = v;
+    x.fillRect(0, 0, W, H);
+  }
+  x.globalCompositeOperation = 'source-over';
+  composite(ctx, c, { filter: filter || undefined });
+}
 function sceneHand(ctx, t, f) {
   const bg = bgRamp(t, [[13.76, '#141313'], [15.4, '#141313'], [15.55, '#2c1517'], [15.66, '#3a2a2c'], [15.8, '#5b4e51'], [15.89, '#625658']]);
   fx.dark(ctx, bg);
@@ -1510,8 +1573,16 @@ function sceneHand(ctx, t, f) {
   else if (t < 15.0) pose = blendPose('open', 'open', 0);
   else if (t < 15.6) pose = blendPose('open', 'curl', ease.inOutCubic(inv(15.38, 15.56, t)));
   else pose = blendPose('curl', 'fist', fall);
-  const hand = thermalHand(pose);
-  const [c, x] = off(0);
+  const traced = t < 15.62 ? handMask(t) : null;
+  if (traced) {
+    let filt = '';
+    if (settle < 1) filt = `brightness(${lerp(0.66, 1, settle)}) blur(${(1 - settle) * 10 * S}px)`;
+    else if (fall > 0) filt = `saturate(${1 - fall * 0.85}) brightness(${1 - fall * 0.08})`;
+    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0);
+  }
+  const hand = traced ? null : thermalHand(pose);
+  const [c, x] = traced ? [null, null] : off(0);
+  if (!traced) {
   x.save();
   const sway = noise1(t * 0.8, 6) * 0.02 + Math.sin(t * 2.2) * 0.01;
   x.translate(700, 1110);
@@ -1543,6 +1614,7 @@ function sceneHand(ctx, t, f) {
   x.drawImage(hand, 250, 250);
   x.restore();
   composite(ctx, c, { blur: (1 - settle) * 34 + fall * 4, alpha: 1 - fall * 0.1 });
+  }
   if (settle < 1) {
     ctx.save();
     ctx.filter = `blur(${16 * S}px)`;
@@ -1888,4 +1960,4 @@ function renderFrame(ctx, t, f) {
   fx.vignette(ctx, 0.1, '0,0,0', 0.6);
 }
 
-module.exports = { renderFrame, TIMELINE, setScale };
+module.exports = { renderFrame, TIMELINE, setScale, preload };
