@@ -277,8 +277,8 @@ function sceneType(ctx, t, f) {
   }
   // handwritten signature below the line
   if (t > 0.64 && t < 0.98) {
-    const pts = SIGNATURE.map(([a, b]) => [a * 1.1 + 110, b * 1.7 + 670]);
-    fx.strokePartial(ctx, pts, Math.max(0, inv(0.9, 0.98, t)), inv(0.64, 0.78, t), 3.4, '#555150');
+    const pts = SIGNATURE.map(([a, b]) => [a * 1.35 + 90, b * 1.7 + 670]);
+    fx.strokePartial(ctx, pts, Math.max(0, inv(0.9, 0.98, t)), inv(0.64, 0.78, t), 3.4, '#77716f');
   }
   if (t > 0.7 && t < 0.95) fx.strokePartial(ctx, [[530, 330], [524, 420], [516, 512]], 0, inv(0.7, 0.78, t), 3.4, PEN);
   // long brown arc on the right with a little tail
@@ -297,7 +297,7 @@ function sceneType(ctx, t, f) {
     const xa = wordX(4);
     const xb = wordX(6) - 12;
     const fade = inv(1.36, 1.42, t);
-    const loop = fx.loopPoints(5, 150, 50, 1.1).map(([a, b]) => [a + wordX(5) + 80, b + 548]);
+    const loop = fx.loopPoints(5, 150, 50, 0.85).map(([a, b]) => [a + wordX(5) + 80, b + 548]);
     fx.strokePartial(ctx, loop, fade, inv(1.2, 1.27, t), 3.4, PEN);
     fx.strokePartial(ctx, [[xb + 30, 560], [xb - 20, 640], [xb - 70, 720]], fade, inv(1.28, 1.36, t), 3.4, PEN);
   }
@@ -509,7 +509,7 @@ function sceneProfile(ctx, t, f) {
     ctx.fillRect(0, 0, W, H);
   }
 
-  const settle = ease.inOutCubic(inv(3.82, 4.25, t));
+  const settle = ease.inOutCubic(inv(3.82, 4.35, t));
   const z = lerp(1, 1.04, inv(4.1, 6.2, t));
   const [sx, sy] = shake(t, 2.2, 0.8, 21);
   ctx.save();
@@ -530,7 +530,7 @@ function sceneProfile(ctx, t, f) {
   if (toShadow < 1) {
     x.globalAlpha = 1 - toShadow;
     if (settle < 1) x.filter = `hue-rotate(${-115 * Math.pow(1 - settle, 1.5)}deg) saturate(${lerp(0.8, 1.15, settle)}) brightness(${lerp(0.42, 1, settle * settle)})`;
-    else if (toTan > 0) x.filter = `sepia(${lerp(0.35, 0.85, toTan)}) saturate(${lerp(0.8, 0.35, toTan)}) brightness(${lerp(0.8, 0.5, toTan)})`;
+    else if (toTan > 0) x.filter = `sepia(${lerp(0.35, 0.85, toTan)}) saturate(${lerp(0.8, 0.55, toTan)}) brightness(${lerp(0.8, 0.58, toTan)})`;
     else if (t > 5.55) x.filter = `sepia(${0.5 * inv(5.55, 5.84, t)}) saturate(${lerp(1, 1.1, inv(5.55, 5.84, t))}) brightness(${lerp(1, 0.95, inv(5.55, 5.84, t))})`;
     x.drawImage(heat, 0, 0);
     x.filter = 'none';
@@ -602,6 +602,16 @@ function sceneProfile(ctx, t, f) {
     ctx.fillRect(200, 520, 260, 30);
     ctx.restore();
   }
+  if (t < 3.95) {
+    ctx.save();
+    ctx.filter = `blur(${40 * S}px)`;
+    ctx.globalAlpha = 1 - inv(3.88, 3.95, t);
+    ctx.fillStyle = '#7a1460';
+    ctx.beginPath();
+    ctx.ellipse(1330, 990, 170, 120, -0.5, 0, 7);
+    ctx.fill();
+    ctx.restore();
+  }
   if (t < 3.98) {
     const g = ctx.createRadialGradient(1440, 1080, 0, 1440, 1080, 160);
     g.addColorStop(0, 'rgba(220,30,30,0.9)');
@@ -670,7 +680,7 @@ function sceneProfile(ctx, t, f) {
 const RING = ['clapper', 'skateboard', 'vinyl', 'book', 'camera', 'cat', 'coin', 'controller', 'cap', 'heart', 'cash', 'plant'];
 const RING_W = { clapper: 260, skateboard: 285, vinyl: 220, book: 220, camera: 220, cat: 195, coin: 205, controller: 260, cap: 275, heart: 380, cash: 380, plant: 260 };
 
-function ringLayout(phi, { cx = 770, cy = 605, R = 480, tilt = 0.96, F = 3000, xs = 1, roll = 0 } = {}) {
+function ringLayout(phi, { cx = 770, cy = 605, R = 480, tilt = 0.96, F = 4500, xs = 1, roll = 0 } = {}) {
   return RING.map((name, i) => {
     const a = Math.PI + (i / RING.length) * Math.PI * 2 + phi;
     const X = Math.cos(a) * R * xs;
@@ -727,12 +737,12 @@ let BALL = null;
 function flash(ctx, x, y, a, seed) {
   if (a <= 0) return;
   ctx.save();
-  const g = ctx.createRadialGradient(x, y, 0, x, y, 260);
+  const g = ctx.createRadialGradient(x, y, 0, x, y, 330);
   g.addColorStop(0, `rgba(255,154,32,${0.95 * a})`);
   g.addColorStop(0.4, `rgba(255,150,40,${0.5 * a})`);
   g.addColorStop(1, 'rgba(255,140,40,0)');
   ctx.fillStyle = g;
-  ctx.fillRect(x - 220, y - 220, 440, 440);
+  ctx.fillRect(x - 340, y - 340, 680, 680);
   const r = rng(seed);
   ctx.strokeStyle = `rgba(240,160,30,${a})`;
   ctx.lineCap = 'round';
@@ -961,7 +971,7 @@ function sceneAction(ctx, t, f) {
   const blur = kf(t, [[8.3, 10], [8.4, 2], [8.48, 0], [8.65, 0], [8.72, 3], [8.78, 0], [8.88, 3], [8.95, 0]]);
   const [c, x] = off(0);
   x.save();
-  x.filter = 'saturate(0.7) brightness(0.85)';
+  x.filter = 'saturate(0.7) brightness(0.72) contrast(1.1)';
   drawSprite(x, 'camera', pos[0], pos[1], width, rot, 1, { sy });
   x.restore();
   // white zigzag + red slashes at the cut
@@ -977,7 +987,7 @@ function sceneAction(ctx, t, f) {
   const st = kf(t, [[8.3, 1.0], [8.4, 0.85, 'outBack'], [8.6, 0.85], [8.75, 2.3], [9.13, 0.8]]);
   const sxs = kf(t, [[8.6, 1], [8.75, 0.36, 'outCubic'], [8.85, 0.36], [8.95, 2.6, 'outCubic']]);
   x.save();
-  const anchor = kf(t, [[8.3, [650, 470]], [8.55, [650, 420]], [8.75, [540, 170]], [9.0, [600, 200]], [9.13, [610, 195]]]);
+  const anchor = kf(t, [[8.3, [650, 380]], [8.55, [650, 420]], [8.75, [540, 170]], [9.0, [600, 200]], [9.13, [610, 195]]]);
   x.translate(anchor[0], anchor[1]);
   x.rotate(kf(t, [[8.3, 0.3], [8.6, 0.1], [8.75, 0], [9.0, -0.36]]));
   x.scale(sxs, 1 / Math.sqrt(sxs));
@@ -1215,7 +1225,7 @@ function sceneCuriosity(ctx, t, f) {
     const q = inv(11.01, 11.16, t);
     const drift = q * 40;
     [[660, 330, 1050, 150], [720, 300, 940, 210], [900, 765, 1275, 675], [610, 930, 650, 900]].forEach(([a, b, c, d]) => {
-      fx.strokePartial(ctx, [[a + drift, b], [c + drift, d]], 0, 1, 6 * (1 - q * 0.5), '#ece8e2', true);
+      fx.strokePartial(ctx, [[a + drift, b], [c + drift, d]], 0, 1, 11 * (1 - q * 0.4), '#f4f0ea', true);
     });
     [[1245, 240, -0.4], [1335, 531, 0.2], [1074, 846, 0.6]].forEach(([a, b, r]) => {
       ctx.save();
@@ -1223,7 +1233,7 @@ function sceneCuriosity(ctx, t, f) {
       ctx.rotate(r);
       ctx.fillStyle = '#e2211b';
       ctx.beginPath();
-      ctx.ellipse(0, 0, 8, 16, 0, 0, 7);
+      ctx.ellipse(0, 0, 9, 17, 0, 0, 7);
       ctx.fill();
       ctx.restore();
     });
@@ -1311,7 +1321,7 @@ function sceneScatter(ctx, t, f) {
     for (let i = 0; i <= 40; i++) {
       const a = (i / 40) * Math.PI * 2;
       const rr = br * (1 + noise1(a * 3 + t * 4, 7) * 0.08);
-      x.lineTo(1080 + Math.cos(a) * rr, kf(t, [[13.0, 670], [13.5, 735]]) + Math.sin(a) * rr * 1.1);
+      x.lineTo(1080 + Math.cos(a) * rr, kf(t, [[13.0, 670], [13.25, 675], [13.5, 735]]) + Math.sin(a) * rr * 1.1);
     }
     x.fill();
     if (t > 13.3) drawSprite(x, 'cat', 1090, 720, lerp(120, 190, ease.outBack(inv(13.3, 13.5, t))), 0, 1, { silhouette: '#0e0d0d' });
@@ -1364,7 +1374,8 @@ function sceneScatter(ctx, t, f) {
     }
     x.save();
     x.filter = `blur(${3 * S}px)`;
-    fx.strokePartial(x, arc, e, p, 25, '#2a2a2a', true);
+    x.globalAlpha = 1 - e;
+    fx.strokePartial(x, arc, 0, p, 25, '#2a2a2a', true);
     x.restore();
   }
   // extra ink: blob top right, fuzzy dots, shards
@@ -1423,8 +1434,8 @@ function sceneHand(ctx, t, f) {
   if (fallP > 0) {
     const bandG = ctx.createLinearGradient(440, 0, 1150, 0);
     bandG.addColorStop(0, 'rgba(255,255,255,0)');
-    bandG.addColorStop(0.15, `rgba(255,255,255,${0.12 * fallP})`);
-    bandG.addColorStop(0.85, `rgba(255,255,255,${0.12 * fallP})`);
+    bandG.addColorStop(0.2, `rgba(255,255,255,${0.08 * fallP})`);
+    bandG.addColorStop(0.8, `rgba(255,255,255,${0.08 * fallP})`);
     bandG.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = bandG;
     ctx.fillRect(440, 0, 710, H);
@@ -1441,8 +1452,9 @@ function sceneHand(ctx, t, f) {
   x.save();
   const sway = noise1(t * 0.8, 6) * 0.02 + Math.sin(t * 2.2) * 0.01;
   x.translate(700, 1110);
-  x.rotate(sway + (1 - settle) * -0.9 + fall * -0.25);
-  x.translate(-700 + (1 - settle) * 15 + fall * -300, -1110 + (1 - settle) * 140 + fall * 30);
+  x.rotate(sway + (1 - settle) * -0.3 + fall * -0.25);
+  x.scale(lerp(0.65, 1, settle), 1);
+  x.translate(-760 + (1 - settle) * 15 + fall * -240, -1110 + (1 - settle) * 140 + fall * 30);
   if (settle < 1) x.filter = `hue-rotate(${-22 * (1 - settle)}deg) saturate(${1 + (1 - settle) * 0.7}) brightness(${lerp(0.72, 1, settle)})`;
   else if (fall > 0) x.filter = `saturate(${1 - fall * 0.85}) brightness(${1 - fall * 0.08})`;
   if (fall > 0) {
@@ -1466,6 +1478,13 @@ function sceneHand(ctx, t, f) {
   x.drawImage(hand, 250, 250);
   x.restore();
   composite(ctx, c, { blur: (1 - settle) * 30 + fall * 4, alpha: 1 - fall * 0.1 });
+  if (settle < 1) {
+    ctx.save();
+    ctx.filter = `blur(${16 * S}px)`;
+    ctx.globalAlpha = 0.7 * (1 - settle);
+    fx.strokePartial(ctx, [[760, 1080], [770, 820], [745, 600]], 0, 1, 40, '#5030a0', false);
+    ctx.restore();
+  }
   // white swirl arcs during the intro
   if (t < 14.25) {
     const q = inv(13.76, 14.2, t);
@@ -1588,7 +1607,8 @@ function sceneLove(ctx, t, f) {
   if (t < 17.18) {
     fx.dark(ctx, '#141313');
     const q = ease.outCubic(inv(16.86, 17.0, t));
-    drawSprite(ctx, 'vinyl', 729, 540, lerp(330, 350, q), 0, 1, { sx: lerp(0.38, 1, q), shadow: 'rgba(200,200,220,0.25)', shadowBlur: 30 });
+    drawSprite(ctx, 'vinyl', 729, 540, lerp(330, 350, q), 0, 1, { sx: lerp(0.38, 1, q), shadow: 'rgba(220,220,235,0.3)', shadowBlur: 22 });
+    if (q < 0.7) dot(ctx, 729, 540, 12, '#e0303c');
     const lo = t > 16.92 ? '#3fb7d9' : CREAM;
     letter(ctx, 'L', LX[0], LY, LSIZE, lo);
     letter(ctx, 'O', LX[1], LY, LSIZE, lo);
@@ -1623,12 +1643,12 @@ const LOOPS = [
   ['E', 17.46, 0.12, 30, 34, 3, 1.8, 0, 0],
   ['O', 17.47, 0.12, 12, 110, 21, 1.0, 0, -40],
   ['L', 17.72, 0.12, 30, 22, 22, 1.4, 0, 0],
-  ['V', 19.2, 0.25, 26, 50, 4, 1.2, 15, -30],
+  ['V', 19.2, 0.25, 30, 80, 4, 1.2, 15, -40],
   ['O', 19.22, 0.25, 14, 50, 5, 1.1, 0, -30],
-  ['L', 19.24, 0.25, 20, 28, 6, 1.1, -20, 20],
+  ['L', 19.24, 0.15, 20, 28, 6, 1.1, -20, 20],
   ['E', 19.26, 0.25, 34, 26, 7, 1.3, -10, -10],
   ['V', 19.45, 0.25, 40, 30, 8, 1.3, 10, 0],
-  ['L', 19.47, 0.25, 60, 30, -35, 1.2, -12, 20],
+  ['L', 19.4, 0.25, 60, 30, -35, 1.05, -12, 24],
   ['E', 19.5, 0.25, 34, 26, 11, 1.3, 0, 0],
   ['V', 19.7, 0.25, 34, 48, 12, 1.4, 0, -20],
   ['O', 19.7, 0.25, 12, 52, 13, 1.1, 2, -50],
@@ -1693,10 +1713,10 @@ function sceneFinale(ctx, t, f) {
       });
       // draw unfiltered into layers, then blur each layer once (per-segment filters are far too slow at 4K)
       fx.strokePartial(halo, pts, q * 0.3, 0.7 + q * 0.3, lerp(70, 18, sh), 'rgba(60,58,58,0.45)');
-      fx.strokePartial(core, pts, q * 0.3 * (1 - sh), 0.7 + q * 0.3 + sh, lerp(32, 12, sh), sh > 0.5 ? '#3a3636' : '#1a1818', true);
+      fx.strokePartial(core, pts, q * 0.3 * (1 - sh), 0.7 + q * 0.3 + sh, lerp(32, 12, sh), sh > 0.5 ? '#444040' : '#1a1818', true);
     });
     composite(ctx, haloC, { blur: lerp(16, 8, sh), alpha: fade * lerp(1, 0.4, sh) });
-    composite(ctx, coreC, { blur: lerp(5, 7, sh), alpha: fade * lerp(1, 0.6, sh) });
+    composite(ctx, coreC, { blur: lerp(5, 7, sh), alpha: fade * lerp(1, 0.75, sh) });
     if (sh > 0) {
       [[114, 717, 60, 40], [654, 732, 40, 75], [744, 957, 50, 30]].forEach(([a, b, rx, ry], k) => {
         const pts = fx.loopPoints(700 + k, rx, ry, 2.6, 200).map(([u, v], i) => [u + a + noise1(i * 0.2, k) * 14, v + b + noise1(i * 0.2, k + 5) * 14]);
@@ -1725,7 +1745,7 @@ function sceneFinale(ctx, t, f) {
       if (tt < 18.0 && i < k.length - 1) hk.push([tt + 0.09, v, 'linear']);
     });
     const [x, y] = kf(t, hk);
-    const r = t < 17.9 ? 4 : r0 === 11 ? kf(t, [[18.0, 11], [18.4, 4], [18.75, 7], [19.5, 6]]) : r0 === 8 ? kf(t, [[18.0, 8], [18.4, 10], [19.5, 10]]) : lerp(r0, r1, inv(19.2, 19.7, t));
+    const r = t < 17.9 ? 4 : r0 === 11 ? kf(t, [[18.0, 11], [18.4, 4], [18.75, 7], [19.5, 6]]) : r0 === 8 ? kf(t, [[18.0, 8], [18.25, 4], [18.5, 10], [18.75, 4], [19.5, 6]]) : lerp(r0, r1, inv(19.2, 19.7, t));
     dot(ctx, x, y, r * (t > 19.2 && t < 19.4 ? 0.5 : 1) * lerp(1, 1.1, grow), '#2a1714');
   });
   LOOPS.forEach(([ch, s, d, rx, ry, seed, turns, dx, dy]) => {
@@ -1783,7 +1803,7 @@ function renderFrame(ctx, t, f) {
   sc[2](ctx, t, f);
   ctx.restore();
   const isDark = (t > 3.78 && t < 5.7) || (t > 8.3 && t < 9.13) || (t > 9.84 && t < 10.51) || (t > 11.01 && t < 11.85) || (t > 13.76 && t < 15.89) || (t > 16.2 && t < 16.52) || (t > 16.77 && t < 17.18);
-  fx.grain(ctx, f, isDark ? 0.2 : 0.15);
+  fx.grain(ctx, f, t > 15.6 && t < 15.89 ? 0.08 : isDark ? 0.24 : 0.1);
   fx.vignette(ctx, 0.1, '0,0,0', 0.6);
 }
 
