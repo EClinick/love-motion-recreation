@@ -44,7 +44,7 @@ function headPath(ctx, seed = 3) {
 }
 
 // Hand poses (local = screen - (250,250)). Each finger: [base, ctrl, tip], w0, w1.
-const PALM = [[380, 830], [384, 700], [380, 590], [392, 500], [415, 410], [455, 365], [515, 352], [580, 355], [612, 385], [608, 460], [580, 540], [560, 600], [552, 700], [556, 830]];
+const PALM = [[380, 830], [384, 700], [372, 600], [404, 500], [410, 410], [440, 335], [515, 300], [584, 308], [620, 360], [612, 460], [580, 540], [560, 600], [552, 700], [556, 830]];
 const POSES = {
   // natural spread: thumb low and left, index diagonal up-left, middle up, ring up-right
   open: {
@@ -91,37 +91,92 @@ function blendPose(a, b, t) {
   };
 }
 
-function handShape(ctx, pose = POSES.open) {
-  const finger = (pts, w0, w1) => {
-    const n = 48;
-    for (let i = 0; i <= n; i++) {
-      const u = i / n;
-      const [a, b, c] = pts;
-      const x = (1 - u) * (1 - u) * a[0] + 2 * (1 - u) * u * b[0] + u * u * c[0];
-      const y = (1 - u) * (1 - u) * a[1] + 2 * (1 - u) * u * b[1] + u * u * c[1];
-      ctx.beginPath();
-      ctx.arc(x, y, lerp(w0, w1, u) / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  };
-  const P = pose.palm;
+// ---- realistic hand: tapered jointed fingers, cylinder shading, overlap shadows ----
+function quad(pts, u) {
+  const [a, b, c] = pts;
+  return [
+    (1 - u) * (1 - u) * a[0] + 2 * (1 - u) * u * b[0] + u * u * c[0],
+    (1 - u) * (1 - u) * a[1] + 2 * (1 - u) * u * b[1] + u * u * c[1],
+  ];
+}
+
+// extend a finger's base back into the palm so it grows out of it (no seam)
+function rooted(pts, by = 50) {
+  const [a, b, c] = pts;
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const l = Math.hypot(dx, dy) || 1;
+  return [[a[0] - (dx / l) * by, a[1] - (dy / l) * by], b, c];
+}
+
+// Outline polygon of a finger: tapering width, slight knuckle bulges, rounded tip.
+function fingerOutline(pts, w0, w1, u0 = 0) {
+  const n = 28;
+  const L = [];
+  const R = [];
+  const centre = [];
+  for (let i = 0; i <= n; i++) {
+    const u = u0 + (1 - u0) * (i / n);
+    const p = quad(pts, u);
+    const q = quad(pts, Math.min(1, u + 0.01));
+    const p0 = quad(pts, Math.max(0, u - 0.01));
+    const tx = q[0] - p0[0];
+    const ty = q[1] - p0[1];
+    const tl = Math.hypot(tx, ty) || 1;
+    const nx = -ty / tl;
+    const ny = tx / tl;
+    const knuckle = 1 + 0.07 * Math.exp(-(((u - 0.4) / 0.06) ** 2)) + 0.05 * Math.exp(-(((u - 0.72) / 0.05) ** 2));
+    const hw = (lerp(w0, w1, u) / 2) * knuckle;
+    centre.push({ p, nx, ny, hw, tx: tx / tl, ty: ty / tl });
+    L.push([p[0] + nx * hw, p[1] + ny * hw]);
+    R.push([p[0] - nx * hw, p[1] - ny * hw]);
+  }
+  // rounded fingertip cap
+  const end = centre[centre.length - 1];
+  const cap = [];
+  for (let k = 1; k < 10; k++) {
+    const a = (k / 10) * Math.PI;
+    const ca = Math.cos(a);
+    const sa = Math.sin(a);
+    cap.push([end.p[0] + end.nx * end.hw * ca + end.tx * end.hw * 0.95 * sa, end.p[1] + end.ny * end.hw * ca + end.ty * end.hw * 0.95 * sa]);
+  }
+  return { poly: [...L, ...cap, ...R.reverse()], centre };
+}
+
+function smoothPoly(ctx, P, closed = true) {
+  ctx.beginPath();
+  ctx.moveTo((P[0][0] + P[1][0]) / 2, (P[0][1] + P[1][1]) / 2);
+  for (let i = 1; i < P.length; i++) {
+    const a = P[i];
+    const b = P[(i + 1) % P.length];
+    ctx.quadraticCurveTo(a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+  }
+  if (closed) ctx.closePath();
+}
+
+function palmPath(ctx, P) {
   ctx.beginPath();
   ctx.moveTo(...P[0]);
   for (let i = 1; i < P.length - 1; i++) ctx.quadraticCurveTo(P[i][0], P[i][1], (P[i][0] + P[i + 1][0]) / 2, (P[i][1] + P[i + 1][1]) / 2);
   ctx.lineTo(...P[P.length - 1]);
   ctx.closePath();
-  ctx.fill();
-  pose.f.forEach(([pts, w0, w1]) => finger(pts, w0, w1));
 }
 
-// Per-frame thermal hand (pose changes every frame, so no cache).
-function thermalHand(pose) {
-  const w = 800;
-  const h = 860;
-  const c = createCanvas(w, h);
-  const x = c.getContext('2d');
-  x.fillStyle = '#fff';
-  handShape(x, pose);
+// silhouette only (used by the static thermal('hand') cache)
+function handShape(ctx, pose = POSES.open) {
+  palmPath(ctx, pose.palm);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(455, 480, 70, 58, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  pose.f.forEach(([pts, w0, w1]) => {
+    smoothPoly(ctx, fingerOutline(rooted(pts), w0 * 1.08, w1).poly);
+    ctx.fill();
+  });
+}
+
+// thermal colouring shared by every part of the hand (same gradients => seamless joins)
+function paintThermal(x, w, h) {
   x.globalCompositeOperation = 'source-in';
   const g = x.createLinearGradient(0, 0, 0, h);
   g.addColorStop(0, '#f26422');
@@ -131,7 +186,6 @@ function thermalHand(pose) {
   x.fillStyle = g;
   x.fillRect(0, 0, w, h);
   x.globalCompositeOperation = 'source-atop';
-  // lit left side (cream-yellow) vs deep red shadow side on the right
   const r = x.createLinearGradient(270, 0, 700, 0);
   r.addColorStop(0, 'rgba(255,236,190,0.85)');
   r.addColorStop(0.3, 'rgba(255,214,150,0.55)');
@@ -141,38 +195,118 @@ function thermalHand(pose) {
   r.addColorStop(1, 'rgba(170,36,16,0.85)');
   x.fillStyle = r;
   x.fillRect(0, 0, w, h);
-  // dark separations between adjacent finger bases
-  x.save();
-  x.globalCompositeOperation = 'source-atop';
-  x.strokeStyle = 'rgba(130,24,10,0.55)';
-  x.lineCap = 'round';
-  x.lineWidth = 12;
-  x.filter = 'blur(3px)';
-  for (let i = 1; i < (pose.fist ? 0 : pose.f.length - 1); i++) {
-    const a0 = pose.f[i][0][0];
-    const b0 = pose.f[i + 1][0][0];
-    const mx = (a0[0] + b0[0]) / 2;
-    const my = (a0[1] + b0[1]) / 2;
-    x.beginPath();
-    x.moveTo(mx, my + 25);
-    x.lineTo(mx, my - 30);
-    x.stroke();
-  }
-  x.restore();
-  // warm palm highlight
-  const ph = x.createRadialGradient(460, 530, 0, 460, 530, 120);
-  ph.addColorStop(0, 'rgba(248,192,112,0.6)');
-  ph.addColorStop(1, 'rgba(248,192,112,0)');
-  x.fillStyle = ph;
-  x.fillRect(0, 0, w, h);
   const fa = x.createRadialGradient(380, 860, 0, 380, 860, 300);
   fa.addColorStop(0, 'rgba(255,216,144,0.6)');
   fa.addColorStop(1, 'rgba(255,214,110,0)');
   x.fillStyle = fa;
   x.fillRect(0, 0, w, h);
+  x.globalCompositeOperation = 'source-over';
+}
+
+// Per-frame thermal hand (pose changes every frame, so no cache).
+function thermalHand(pose) {
+  const w = 800;
+  const h = 860;
+  const c = createCanvas(w, h);
+  const x = c.getContext('2d');
+  const layer = createCanvas(w, h);
+  const lx = layer.getContext('2d');
+
+  // palm + thumb-base bulge
+  lx.fillStyle = '#fff';
+  palmPath(lx, pose.palm);
+  lx.fill();
+  lx.beginPath();
+  lx.ellipse(455, 480, 70, 58, -0.5, 0, Math.PI * 2);
+  lx.fill();
+  paintThermal(lx, w, h);
+  lx.globalCompositeOperation = 'source-atop';
+  const ph = lx.createRadialGradient(460, 520, 0, 460, 520, 130);
+  ph.addColorStop(0, 'rgba(248,192,112,0.55)');
+  ph.addColorStop(1, 'rgba(248,192,112,0)');
+  lx.fillStyle = ph;
+  lx.fillRect(0, 0, w, h);
+  // darker right edge of the palm / forearm (turning away from the light)
+  lx.filter = 'blur(10px)';
+  lx.strokeStyle = 'rgba(150,30,12,0.45)';
+  lx.lineWidth = 46;
+  palmPath(lx, pose.palm.map(([a, b]) => [a + 24, b]));
+  lx.stroke();
+  lx.filter = 'none';
+  lx.globalCompositeOperation = 'source-over';
+  x.drawImage(layer, 0, 0);
+
+  // fingers back to front: pinky, ring, middle, index, thumb
+  const order = [4, 3, 2, 1, 0];
+  order.forEach((fi) => {
+    const [pts0, w0, w1] = pose.f[fi];
+    const pts = rooted(pts0);
+    const { poly } = fingerOutline(pts, w0 * 1.08, w1);
+    const free = fingerOutline(pts, w0 * 1.08, w1, 0.3); // visible part beyond the knuckle
+    lx.setTransform(1, 0, 0, 1, 0, 0);
+    lx.globalCompositeOperation = 'source-over';
+    lx.filter = 'none';
+    lx.clearRect(0, 0, w, h);
+    lx.fillStyle = '#fff';
+    smoothPoly(lx, poly);
+    lx.fill();
+    paintThermal(lx, w, h);
+    // cylinder shading only along the free part of the finger (fades into the palm)
+    lx.save();
+    smoothPoly(lx, free.poly);
+    lx.clip();
+    lx.filter = 'blur(7px)';
+    lx.strokeStyle = 'rgba(140,28,10,0.26)';
+    lx.lineWidth = w0 * 0.4;
+    smoothPoly(lx, free.poly);
+    lx.stroke();
+    lx.strokeStyle = 'rgba(255,238,200,0.22)';
+    lx.lineWidth = w0 * 0.22;
+    lx.lineCap = 'round';
+    lx.beginPath();
+    free.centre.forEach((cc, i) => {
+      const px = cc.p[0] + cc.nx * cc.hw * 0.25;
+      const py = cc.p[1] + cc.ny * cc.hw * 0.25;
+      if (i === 0) lx.moveTo(px, py);
+      else lx.lineTo(px, py);
+    });
+    lx.stroke();
+    lx.filter = 'blur(2px)';
+    lx.strokeStyle = 'rgba(150,40,16,0.16)';
+    lx.lineWidth = 3;
+    [0.45, 0.75].forEach((u) => {
+      const cc = free.centre[Math.round(u * (free.centre.length - 1))];
+      lx.beginPath();
+      lx.moveTo(cc.p[0] + cc.nx * cc.hw * 0.7, cc.p[1] + cc.ny * cc.hw * 0.7);
+      lx.lineTo(cc.p[0] - cc.nx * cc.hw * 0.7, cc.p[1] - cc.ny * cc.hw * 0.7);
+      lx.stroke();
+    });
+    lx.restore();
+    // fade the root in, so the part buried in the palm blends instead of showing a cut edge
+    const r0 = quad(pts, 0.02);
+    const r1 = quad(pts, 0.26);
+    const fade = lx.createLinearGradient(r0[0], r0[1], r1[0], r1[1]);
+    fade.addColorStop(0, 'rgba(0,0,0,0)');
+    fade.addColorStop(1, 'rgba(0,0,0,1)');
+    lx.globalCompositeOperation = 'destination-in';
+    lx.fillStyle = fade;
+    lx.fillRect(0, 0, w, h);
+    lx.globalCompositeOperation = 'source-over';
+    // soft occlusion only where this finger crosses a finger behind it (not on the palm)
+    x.save();
+    x.globalCompositeOperation = 'source-atop';
+    x.filter = 'blur(10px)';
+    x.globalAlpha = fi === 4 ? 0 : 0.3;
+    x.fillStyle = '#5a0e04';
+    smoothPoly(x, free.poly.map(([a2, b2]) => [a2 + 5, b2 + 7]));
+    x.fill();
+    x.restore();
+    x.drawImage(layer, 0, 0);
+  });
+
   const s = createCanvas(w, h);
   const sx = s.getContext('2d');
-  sx.filter = 'blur(2.5px)';
+  sx.filter = 'blur(1.4px)';
   sx.drawImage(c, 0, 0);
   return s;
 }
