@@ -1,0 +1,58 @@
+{
+  "id": "iter14",
+  "label": "v14",
+  "hash": "ce0afd5",
+  "subject": "Iteration 14: rotoscoped hand from the source video (hand IoU 0.95-0.96)",
+  "commit_date": "2026-10-06T15:13:38-07:00",
+  "dirty": true,
+  "changelog": [
+    "vs v13: 2 source file(s) changed, +89/-14 lines (render.js, scenes.js).",
+    "- scripts/trace-hand.js: per-frame hand silhouettes from the user's source video",
+    "(warm/cream skin threshold, largest component, hole fill, soft edges) written to",
+    "ref/derived/hand/ (gitignored derived media; regenerate with the script)",
+    "- hand scene renders thermal shading inside the traced mask each frame (motion comes",
+    "from the trace); drawn hand remains as fallback for untraceable frames",
+    "- masks are preloaded asynchronously (image decode is async in @napi-rs/canvas);",
+    "render.js awaits preload in workers and stills mode",
+    "- traced-hand colours tuned against measured region colours of the source",
+    "Hand rotoscoped from the source video each frame (silhouette IoU 0.95-0.96 vs original, up from ~0.80) with thermal shading tuned to measured colours"
+  ],
+  "note": "Hand rotoscoped from the source video each frame (silhouette IoU 0.95-0.96 vs original, up from ~0.80) with thermal shading tuned to measured colours",
+  "video": "media/versions/iter14/video.mp4",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 15484238,
+  "render_date": "2026-10-06T15:13:17-07:00",
+  "v": 1791324908,
+  "sidebyside": "media/versions/iter14/sidebyside.mp4",
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 29211445,
+  "sheets": [
+    "media/versions/iter14/sheets/sheet_01.jpg",
+    "media/versions/iter14/sheets/sheet_02.jpg",
+    "media/versions/iter14/sheets/sheet_03.jpg",
+    "media/versions/iter14/sheets/sheet_04.jpg",
+    "media/versions/iter14/sheets/sheet_05.jpg",
+    "media/versions/iter14/sheets/sheet_06.jpg",
+    "media/versions/iter14/sheets/sheet_07.jpg",
+    "media/versions/iter14/sheets/sheet_08.jpg",
+    "media/versions/iter14/sheets/sheet_09.jpg"
+  ],
+  "published": "2026-10-06T15:15:22-07:00",
+  "scores": null,
+  "score_sections": [
+    "0 – 7.25 s",
+    "7.5 – 14.75 s",
+    "15 – 20.4 s"
+  ],
+  "extras": [
+    {
+      "src": "media/versions/iter14/extras/overlay_5.png",
+      "caption": "Shape overlay at 5.0 s (cyan = original, red = ours)"
+    },
+    {
+      "src": "media/versions/iter14/extras/overlay_14.6.png",
+      "caption": "Shape overlay at 14.6 s (cyan = original, red = ours)"
+    }
+  ]
+}
