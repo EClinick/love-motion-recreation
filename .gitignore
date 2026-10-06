@@ -1,0 +1,5 @@
+node_modules/
+out/
+ref/*.mp4
+ref/*.mp3
+fonts/*.woff2

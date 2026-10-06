@@ -1,0 +1,18 @@
+{
+  "name": "love-motion-recreation",
+  "version": "1.0.0",
+  "description": "From-scratch canvas recreation of a kinetic-type / pixel-icon motion piece",
+  "main": "src/render.js",
+  "scripts": {
+    "preview": "node src/render.js --out out/preview.mp4",
+    "render": "node src/render.js --scale 2 --samples 4 --out out/final.mp4",
+    "compare": "scripts/compare.sh out/preview.mp4 out/compare/latest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@napi-rs/canvas": "^1.0.10"
+  }
+}
