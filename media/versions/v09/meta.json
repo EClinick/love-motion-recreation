@@ -1,0 +1,44 @@
+{
+  "id": "iter9",
+  "label": "v9",
+  "hash": "2aca35b",
+  "subject": "Iteration 9: softer head with quiff, wider neck and shoulder glow; hand tone/proportions; balanced grain; round-8 fixes",
+  "commit_date": "2026-10-06T14:42:55-07:00",
+  "dirty": false,
+  "changelog": [
+    "vs v8: 2 source file(s) changed, +95/-67 lines (figures.js, scenes.js).",
+    "Softer head with forehead quiff, wider neck and shoulder glow; warmer, slimmer hand with narrow red/violet intro; grain lighter on bright scenes and stronger on dark ones; round-8 judge fixes"
+  ],
+  "note": "Softer head with forehead quiff, wider neck and shoulder glow; warmer, slimmer hand with narrow red/violet intro; grain lighter on bright scenes and stronger on dark ones; round-8 judge fixes",
+  "video": "media/versions/iter9/video.mp4",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 19372871,
+  "render_date": "2026-10-06T14:42:53-07:00",
+  "v": 1791323004,
+  "sidebyside": "media/versions/iter9/sidebyside.mp4",
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 33065890,
+  "sheets": [
+    "media/versions/iter9/sheets/sheet_01.jpg",
+    "media/versions/iter9/sheets/sheet_02.jpg",
+    "media/versions/iter9/sheets/sheet_03.jpg",
+    "media/versions/iter9/sheets/sheet_04.jpg",
+    "media/versions/iter9/sheets/sheet_05.jpg",
+    "media/versions/iter9/sheets/sheet_06.jpg",
+    "media/versions/iter9/sheets/sheet_07.jpg",
+    "media/versions/iter9/sheets/sheet_08.jpg",
+    "media/versions/iter9/sheets/sheet_09.jpg"
+  ],
+  "published": "2026-10-06T14:49:37-07:00",
+  "scores": [
+    7.0,
+    7.8,
+    7.7
+  ],
+  "score_sections": [
+    "0 – 7.25 s",
+    "7.5 – 14.75 s",
+    "15 – 20.4 s"
+  ]
+}
