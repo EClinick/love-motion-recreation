@@ -341,6 +341,15 @@ a{color:var(--cyan)}
         b.innerHTML += '<p class="note" style="margin:8px 0 0">' + esc(dur(v)) + '</p>';
         var ph = el('div', 'ptabs'); b.appendChild(ph);
         playerTabs(ph, v);
+        if((v.extras||[]).length){
+          b.appendChild(el('h3', null, 'Shape overlay (cyan = original, red = ours)'));
+          var xg = el('div', 'gallery'); b.appendChild(xg);
+          v.extras.forEach(function(x){
+            var f = el('figure'); f.style.margin = '0';
+            f.innerHTML = '<img loading="lazy" style="border:1px solid var(--line);border-radius:10px" src="' + esc(vsrc(v, x.src)) + '" alt="' + esc(x.caption) + '"><figcaption class="note" style="font-size:.8rem">' + esc(x.caption) + '</figcaption>';
+            xg.appendChild(f);
+          });
+        }
         if((v.sheets||[]).length){
           b.appendChild(el('h3', null, 'Comparison sheets'));
           var g = el('div', 'gallery'); b.appendChild(g); gallery(g, v);
