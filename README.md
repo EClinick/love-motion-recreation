@@ -1,28 +1,75 @@
 # love-motion-recreation
 
-A frame-by-frame recreation of a 20-second kinetic-typography / pixel-icon motion piece,
-built entirely from code: every icon, figure, scribble and transition is drawn procedurally
-with `@napi-rs/canvas` (Skia) and encoded with ffmpeg. No footage from the reference is used.
+A frame-by-frame recreation of a 20-second kinetic-typography / pixel-icon motion piece, built in
+code with `@napi-rs/canvas` (Skia) and ffmpeg, and refined over 14 iterations with a loop of
+Claude Sonnet "judge" agents comparing every version against the original.
+
+![Original (left) vs Claude's recreation (right)](media/final/preview.jpg)
+
+## Final result (v14)
+
+| | |
+|---|---|
+| Final render, 2880×2160 with motion blur | [`media/final/claude_v14_2880x2160.mp4`](media/final/claude_v14_2880x2160.mp4) |
+| Original vs Claude, side by side | [`media/final/claude_v14_sidebyside.mp4`](media/final/claude_v14_sidebyside.mp4) |
+| The original video and soundtrack | [`media/original/original.mp4`](media/original/original.mp4), [`media/original/original.mp3`](media/original/original.mp3) |
+| Every version's render, side-by-side and comparison sheets | [`media/`](media/README.md) |
+
+## How it was made
+
+- **Everything is drawn in code.** 14 shots on a single timeline, each a pure function of time:
+  kinetic type, handwriting scribbles, a sparkle star, original pixel-art icons (heart, coin, camera,
+  vinyl, cat, …), a 3D icon ring with a bouncing ink ball, word cards, an ink scatter and the
+  L‑O‑V‑E finale. Film grain, vignettes and motion blur (temporal supersampling) are applied per frame.
+- **The hand is rotoscoped.** For the hand shot (13.8–15.6 s) the silhouette is traced from the
+  source video every frame (`scripts/trace-hand.js`) and filled with the thermal shading in code.
+  The head profile, icons and everything else are drawn, tuned to measured proportions and colours.
+- **Judged and measured.** Each iteration was rendered, turned into reference-vs-render contact
+  sheets, and scored by three Sonnet judges (one per section of the video). Their notes drove the
+  next version. Shape and colour were also checked numerically: `scripts/shape-compare.js` measures
+  silhouette overlap (IoU) and `scripts/region-color.js` compares region colours against the original.
+
+## Progress
+
+Judge scores out of 10 for the three sections (0–7.25 s / 7.5–14.75 s / 15–20.4 s):
+
+| Version | Opening | Middle | Finale | Notable change |
+|---|---|---|---|---|
+| v1 | 4.5 | 5.0 | 5.0 | First full pass |
+| v3 | 6.3 | 6.5 | 6.5 | Timing, scale and layout fixes from the judges |
+| v6 | 6.9 | 7.5 | 7.5 | Ring, burst and finale choreography |
+| v8 | 6.8 | 7.8 | 7.6 | Rebuilt head, hand and film grain |
+| v10 | 7.0 | 7.9 | 8.0 | Measured silhouette fitting (head IoU 0.82) |
+| v12 | 7.0 | 8.0 | 8.2 | Head colour matched by measurement |
+| **v14** | **6.8** | **7.9** | **8.4** | **Hand rotoscoped from the source (IoU 0.95–0.96)** |
+
+The full table, with every version's files, is in [`media/README.md`](media/README.md).
 
 ## Layout
 
-| path | what |
+| Path | What |
 | --- | --- |
-| `src/scenes.js` | the timeline – 14 shots, each a pure function of time |
-| `src/lib/sprites.js` | original pixel-art icons rasterised on an integer grid |
-| `src/lib/figures.js` | thermal-gradient head profile and hand |
-| `src/lib/fx.js` | grain, vignettes, sparkle stars, handwriting scribbles, type |
-| `src/render.js` | multi-threaded renderer → ffmpeg segments → mux with audio |
-| `scripts/compare.sh` | side-by-side reference vs. render contact sheets |
+| `src/scenes.js` | The timeline: 14 shots, each a pure function of time |
+| `src/lib/sprites.js` | Original pixel-art icons rasterised on an integer grid |
+| `src/lib/figures.js` | Thermal-gradient head profile and drawn hand |
+| `src/lib/fx.js` | Grain, mottling, vignettes, sparkle stars, scribbles, type |
+| `src/render.js` | Multi-threaded renderer (chunked worker pool) → ffmpeg → mux with audio |
+| `scripts/compare.sh` | Reference vs render contact sheets (4 fps) |
+| `scripts/sidebyside.sh` | Reference vs render side-by-side video |
+| `scripts/trace-hand.js` | Rotoscopes hand silhouettes from the source video into `ref/derived/hand/` |
+| `scripts/shape-compare.js`, `scripts/region-color.js` | Silhouette IoU and region-colour measurements |
+| `site/`, `scripts/publish-site.sh` | Versioned showcase site (served privately over Tailscale) |
+| `media/` | Web-encoded videos, sheets and overlays for every version, the original, and the final |
 
-## Usage
+## Rebuilding
 
 Put `reference.mp4` and `audio.mp3` in `ref/` (see `ref/README.md`), then:
 
 ```bash
 npm install && scripts/fetch-fonts.sh
-npm run preview      # 1440x1080, ~15s
-npm run compare      # contact sheets in out/compare/latest
-npm run render       # 2880x2160 with 4-sample motion blur
-node src/render.js --stills 2.5,8.7   # single frames to out/stills
+node scripts/trace-hand.js           # hand silhouettes from the source (needed from v14 on)
+npm run preview                      # 1440x1080 preview, ~30 s
+npm run compare                      # contact sheets in out/compare/latest
+npm run render                       # 2880x2160 with 4-sample motion blur
+node src/render.js --stills 2.5,8.7  # single frames to out/stills
 ```
