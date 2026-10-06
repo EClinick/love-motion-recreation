@@ -1,0 +1,44 @@
+{
+  "id": "iter3",
+  "label": "v3",
+  "hash": "8b14209",
+  "subject": "Iteration 3: apply Sonnet judge round-2 fixes across all sections",
+  "commit_date": "2026-10-06T14:01:19-07:00",
+  "dirty": false,
+  "changelog": [
+    "vs v2: 3 source file(s) changed, +301/-164 lines (figures.js, sprites.js, scenes.js).",
+    "Re-rendered from this commit for the archive (original render was overwritten)."
+  ],
+  "note": "Re-rendered from this commit for the archive (original render was overwritten).",
+  "video": "media/versions/iter3/video.mp4",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 10390354,
+  "render_date": "2026-10-06T14:22:14-07:00",
+  "v": 1791321861,
+  "sheets": [
+    "media/versions/iter3/sheets/sheet_01.jpg",
+    "media/versions/iter3/sheets/sheet_02.jpg",
+    "media/versions/iter3/sheets/sheet_03.jpg",
+    "media/versions/iter3/sheets/sheet_04.jpg",
+    "media/versions/iter3/sheets/sheet_05.jpg",
+    "media/versions/iter3/sheets/sheet_06.jpg",
+    "media/versions/iter3/sheets/sheet_07.jpg",
+    "media/versions/iter3/sheets/sheet_08.jpg",
+    "media/versions/iter3/sheets/sheet_09.jpg"
+  ],
+  "published": "2026-10-06T14:24:21-07:00",
+  "scores": [
+    6.3,
+    6.5,
+    6.5
+  ],
+  "score_sections": [
+    "0 \u2013 7.25 s",
+    "7.5 \u2013 14.75 s",
+    "15 \u2013 20.4 s"
+  ],
+  "sidebyside": "media/versions/iter3/sidebyside.mp4",
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 23577030
+}
