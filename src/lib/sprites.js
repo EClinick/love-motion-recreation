@@ -250,8 +250,6 @@ const builders = {
     g.circle(14, 14, 5.2, '#e0303c');
     g.circle(14, 14, 3.6, '#cc2430');
     g.rect(13, 13, 2, 2, '#f6e8ea');
-    g.px(14, 12, '#f6e8ea');
-    g.px(14, 15, '#f6e8ea');
     return g;
   },
   skateboard() {
