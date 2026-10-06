@@ -145,12 +145,12 @@ const builders = {
   },
   cap() {
     const g = new Grid(32, 24);
-    const c = '#f1eee4';
+    const c = '#f7f6f2';
     g.fill((x, y) => y < 16 && ((x - 13) / 11.5) ** 2 + ((y - 16) / 13) ** 2 <= 1, c);
     // brim sweeping out to the right
     g.poly([[13, 14], [30, 13], [31, 17], [24, 21], [12, 18]], c);
-    g.tint((x, y) => y > 16.5 && x > 12, '#cfc8b4');
-    g.tint((x, y) => x < 6 && y > 9, '#d8d2c0');
+    g.tint((x, y) => y > 16.5 && x > 12, '#dcd9d0');
+    g.tint((x, y) => x < 6 && y > 9, '#e2dfd6');
     g.outline(OUT);
     // panel seams + button
     g.line(13, 4, 9, 15, '#b9b29c');
@@ -186,26 +186,29 @@ const builders = {
     return g;
   },
   camera() {
-    const g = new Grid(34, 22);
-    // top plate (silver)
-    g.rect(2, 4, 30, 6, '#c9c9cb');
-    g.rect(5, 2, 7, 2, '#b2b2b5');
-    g.rect(22, 2, 6, 2, '#b2b2b5');
-    // leatherette body
-    g.rect(2, 10, 30, 10, '#2c2b2e');
-    g.tint((x, y) => y > 18, '#1d1c1f');
-    g.tint((x, y) => y < 6, '#e6e6e8');
+    const g = new Grid(34, 25);
+    // silver top plate
+    g.rect(2, 5, 30, 6, '#a4a4a8');
+    g.rect(5, 2, 7, 3, '#8e8e93');
+    g.rect(22, 3, 6, 2, '#8e8e93');
+    // black leatherette body (taller)
+    g.rect(2, 11, 30, 12, '#2a2b2e');
+    g.tint((x, y) => y > 21, '#1b1c1e');
+    g.tint((x, y) => y < 7, '#c8c8cc');
+    g.tint((x, y) => y > 11 && y < 13, '#3a3b3f');
     g.outline(OUT);
     // lens
-    g.circle(17, 12.5, 7.2, OUT);
-    g.circle(17, 12.5, 6.2, '#8d8d92');
-    g.circle(17, 12.5, 4.6, '#2a2a30');
-    g.circle(17, 12.5, 3, '#4c5468');
-    g.rect(15, 10, 2, 2, '#9fb0c8');
-    // viewfinder window + red dot
-    g.rect(24, 5, 5, 3, '#3a3a40');
-    g.rect(25, 5, 2, 1, '#8e9aa8');
-    g.rect(6, 6, 2, 2, '#d8262e');
+    g.circle(17, 14.5, 7.6, OUT);
+    g.circle(17, 14.5, 6.6, '#8d8d92');
+    g.circle(17, 14.5, 5.4, '#5e5e64');
+    g.circle(17, 14.5, 4.2, '#24242a');
+    g.circle(17, 14.5, 2.6, '#40485a');
+    g.rect(15, 12, 2, 2, '#a8b8d0');
+    // viewfinder window + red dot + shutter
+    g.rect(24, 6, 5, 3, '#2e2e34');
+    g.rect(25, 6, 2, 1, '#8e9aa8');
+    g.rect(6, 7, 2, 2, '#c8262e');
+    g.rect(7, 3, 3, 1, '#d8d8dc');
     return g;
   },
   book() {
@@ -244,9 +247,11 @@ const builders = {
       const r = Math.hypot(x - 14, y - 14);
       return r > 6.5 && r < 10.5 && (Math.abs(a + 2.2) < 0.2 || Math.abs(a - 0.94) < 0.2);
     }, '#a9a2c4');
-    g.circle(14, 14, 4.6, '#e0303c');
-    g.circle(14, 14, 3.2, '#c4202c');
+    g.circle(14, 14, 5.2, '#e0303c');
+    g.circle(14, 14, 3.6, '#cc2430');
     g.rect(13, 13, 2, 2, '#f6e8ea');
+    g.px(14, 12, '#f6e8ea');
+    g.px(14, 15, '#f6e8ea');
     return g;
   },
   skateboard() {
@@ -353,6 +358,7 @@ function drawSprite(ctx, name, x, y, width, rot = 0, alpha = 1, opts = {}) {
   if (opts.shadow) {
     ctx.shadowColor = opts.shadow;
     ctx.shadowBlur = (opts.shadowBlur ?? 30) * state.S;
+    ctx.shadowOffsetY = (opts.shadowY ?? 0) * state.S;
   }
   if (opts.silhouette) {
     // flat black silhouette version (used during the ink scatter)

@@ -180,14 +180,14 @@ function strokePartial(ctx, pts, p0, p1, width, color, taper = false) {
 }
 
 // ---------------------------------------------------------------- type
-function font(size, weight = 700) {
+function font(size, weight = 900) {
   return `${weight} ${size}px Satoshi`;
 }
 
 function text(ctx, str, x, y, size, color, opts = {}) {
   ctx.save();
-  ctx.font = font(size, opts.weight ?? 700);
-  ctx.letterSpacing = `${(opts.tracking ?? -0.03) * size}px`;
+  ctx.font = font(size, opts.weight ?? 900);
+  ctx.letterSpacing = `${(opts.tracking ?? -0.04) * size}px`;
   ctx.textAlign = opts.align ?? 'left';
   ctx.textBaseline = opts.baseline ?? 'middle';
   ctx.fillStyle = color;
@@ -201,7 +201,7 @@ function text(ctx, str, x, y, size, color, opts = {}) {
   ctx.restore();
 }
 
-function measure(ctx, str, size, weight = 700, tracking = -0.03) {
+function measure(ctx, str, size, weight = 900, tracking = -0.04) {
   ctx.save();
   ctx.font = font(size, weight);
   ctx.letterSpacing = `${tracking * size}px`;
@@ -213,9 +213,9 @@ function measure(ctx, str, size, weight = 700, tracking = -0.03) {
 // Render a sequence of words, each with its own colour, starting at x.
 function words(ctx, parts, x, y, size, opts = {}) {
   let cx = x;
-  const space = measure(ctx, ' ', size, opts.weight);
+  const space = measure(ctx, ' ', size, opts.weight, opts.tracking);
   parts.forEach((p) => {
-    const w = measure(ctx, p.t, size, p.weight ?? opts.weight);
+    const w = measure(ctx, p.t, size, p.weight ?? opts.weight, opts.tracking);
     text(ctx, p.t, cx, y, size, p.c, { ...opts, ...p.o, weight: p.weight ?? opts.weight });
     cx += w + space;
   });

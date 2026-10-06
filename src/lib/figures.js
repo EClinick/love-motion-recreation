@@ -13,13 +13,13 @@ function headPath(ctx, seed = 3) {
   // messy hair crown, generated with noise so it reads as tousled
   const r = rng(seed);
   const hair = [];
-  const n = 26;
+  const n = 44;
   for (let i = 0; i <= n; i++) {
     const u = i / n;
     const a = Math.PI * (1.08 + u * 1.02);
     const rx = 240;
     const ry = 195;
-    const bump = 1 + Math.abs(noise1(u * 14, seed)) * 0.13 + (r() - 0.5) * 0.04;
+    const bump = 1 + Math.abs(noise1(u * 22, seed)) * 0.12 + (r() - 0.5) * 0.07 + (i % 3 === 0 ? 0.04 : 0);
     hair.push([335 + Math.cos(a) * rx * bump, 205 + Math.sin(a) * ry * bump]);
   }
   const back = [
@@ -38,8 +38,53 @@ function headPath(ctx, seed = 3) {
   ctx.closePath();
 }
 
-// Hand reaching upward, fingers splayed like a claw; local = screen - (250,250).
-function handShape(ctx) {
+// Hand poses (local = screen - (250,250)). Each finger: [base, ctrl, tip], w0, w1.
+const POSES = {
+  // thumb out left, four fingers bunched up and to the right
+  open: {
+    palm: [[400, 860], [415, 700], [425, 470], [440, 330], [520, 285], [650, 295], [700, 345], [660, 520], [600, 700], [580, 860]],
+    f: [
+      [[[470, 420], [360, 430], [245, 445]], 84, 54],
+      [[[505, 330], [440, 250], [372, 172]], 68, 46],
+      [[[575, 300], [575, 200], [565, 110]], 68, 46],
+      [[[630, 315], [680, 220], [722, 125]], 62, 42],
+      [[[668, 350], [710, 290], [736, 235]], 50, 36],
+    ],
+  },
+  // fingers curling in, thumb sweeping forward
+  curl: {
+    palm: [[400, 860], [415, 700], [425, 470], [440, 330], [520, 290], [650, 300], [700, 350], [660, 520], [600, 700], [580, 860]],
+    f: [
+      [[[460, 360], [380, 300], [310, 270]], 82, 52],
+      [[[525, 305], [520, 215], [495, 165]], 66, 46],
+      [[[585, 300], [600, 205], [585, 150]], 66, 46],
+      [[[635, 315], [655, 235], [640, 180]], 60, 42],
+      [[[668, 350], [690, 285], [675, 245]], 50, 36],
+    ],
+  },
+  // loose fist with the index pointing left
+  fist: {
+    palm: [[400, 860], [410, 700], [420, 470], [440, 340], [520, 300], [640, 310], [690, 360], [660, 520], [600, 700], [580, 860]],
+    f: [
+      [[[470, 380], [430, 360], [400, 340]], 78, 56],
+      [[[520, 320], [420, 280], [320, 270]], 64, 44],
+      [[[580, 320], [560, 270], [530, 290]], 66, 50],
+      [[[630, 335], [615, 285], [590, 305]], 60, 46],
+      [[[665, 370], [650, 320], [628, 340]], 50, 40],
+    ],
+  },
+};
+
+function blendPose(a, b, t) {
+  const A = POSES[a];
+  const B = POSES[b];
+  return {
+    palm: A.palm.map((p, i) => [lerp(p[0], B.palm[i][0], t), lerp(p[1], B.palm[i][1], t)]),
+    f: A.f.map(([pts, w0, w1], i) => [pts.map((p, j) => [lerp(p[0], B.f[i][0][j][0], t), lerp(p[1], B.f[i][0][j][1], t)]), lerp(w0, B.f[i][1], t), lerp(w1, B.f[i][2], t)]),
+  };
+}
+
+function handShape(ctx, pose = POSES.open) {
   const finger = (pts, w0, w1) => {
     const n = 48;
     for (let i = 0; i <= n; i++) {
@@ -52,25 +97,47 @@ function handShape(ctx) {
       ctx.fill();
     }
   };
-  // forearm + palm
+  const P = pose.palm;
   ctx.beginPath();
-  ctx.moveTo(345, 860);
-  ctx.bezierCurveTo(360, 760, 380, 680, 360, 590);
-  ctx.bezierCurveTo(340, 510, 370, 440, 450, 420);
-  ctx.bezierCurveTo(540, 405, 600, 460, 590, 540);
-  ctx.bezierCurveTo(582, 620, 575, 700, 600, 860);
+  ctx.moveTo(...P[0]);
+  for (let i = 1; i < P.length - 1; i++) ctx.quadraticCurveTo(P[i][0], P[i][1], (P[i][0] + P[i + 1][0]) / 2, (P[i][1] + P[i + 1][1]) / 2);
+  ctx.lineTo(...P[P.length - 1]);
   ctx.closePath();
   ctx.fill();
-  // thumb: out to the left
-  finger([[400, 545], [300, 470], [215, 445]], 100, 58);
-  // index: up and slightly left
-  finger([[435, 455], [385, 310], [368, 150]], 88, 54);
-  // middle: up-right, longest
-  finger([[505, 440], [555, 290], [612, 135]], 88, 54);
-  // ring: right
-  finger([[550, 470], [630, 360], [700, 225]], 78, 50);
-  // pinky
-  finger([[575, 520], [635, 470], [685, 400]], 62, 40);
+  pose.f.forEach(([pts, w0, w1]) => finger(pts, w0, w1));
+}
+
+// Per-frame thermal hand (pose changes every frame, so no cache).
+function thermalHand(pose) {
+  const w = 800;
+  const h = 860;
+  const c = createCanvas(w, h);
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff';
+  handShape(x, pose);
+  x.globalCompositeOperation = 'source-in';
+  const g = x.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#ff7a24');
+  g.addColorStop(0.45, '#ff9a34');
+  g.addColorStop(0.8, '#ffb442');
+  g.addColorStop(1, '#ffc650');
+  x.fillStyle = g;
+  x.fillRect(0, 0, w, h);
+  x.globalCompositeOperation = 'source-atop';
+  // lit left side (cream-yellow) vs deep red shadow side on the right
+  const r = x.createLinearGradient(240, 0, 720, 0);
+  r.addColorStop(0, 'rgba(255,236,190,0.9)');
+  r.addColorStop(0.35, 'rgba(255,214,140,0.45)');
+  r.addColorStop(0.65, 'rgba(255,110,30,0.15)');
+  r.addColorStop(0.85, 'rgba(200,36,14,0.6)');
+  r.addColorStop(1, 'rgba(138,26,16,0.9)');
+  x.fillStyle = r;
+  x.fillRect(0, 0, w, h);
+  const s = createCanvas(w, h);
+  const sx = s.getContext('2d');
+  sx.filter = 'blur(2.5px)';
+  sx.drawImage(c, 0, 0);
+  return s;
 }
 
 const cache = {};
@@ -85,7 +152,7 @@ function thermal(kind, palette = 'heat') {
   const x = c.getContext('2d');
   x.fillStyle = '#fff';
   if (kind === 'head') headPath(x);
-  else handShape(x);
+  else handShape(x, POSES.open);
   x.fill();
   x.globalCompositeOperation = 'source-in';
   if (palette === 'heat') {
@@ -120,11 +187,24 @@ function thermal(kind, palette = 'heat') {
       f.addColorStop(1, 'rgba(225,30,12,0)');
       x.fillStyle = f;
       x.fillRect(0, 0, w, 700);
-      const b = x.createRadialGradient(470, 960, 30, 470, 960, 300);
-      b.addColorStop(0, 'rgba(255,255,250,0.95)');
-      b.addColorStop(1, 'rgba(255,230,160,0)');
-      x.fillStyle = b;
-      x.fillRect(0, 0, w, h);
+      // white/pink shirt on the shoulders
+      x.fillStyle = 'rgba(255,236,226,0.95)';
+      x.beginPath();
+      x.moveTo(250, 940);
+      x.bezierCurveTo(300, 760, 420, 690, 560, 700);
+      x.bezierCurveTo(660, 720, 740, 800, 800, 940);
+      x.closePath();
+      x.filter = 'blur(10px)';
+      x.fill();
+      x.filter = 'none';
+      // red edge burn around the outline
+      x.globalCompositeOperation = 'source-atop';
+      x.strokeStyle = 'rgba(192,24,16,0.55)';
+      x.lineWidth = 26;
+      x.filter = 'blur(8px)';
+      headPath(x);
+      x.stroke();
+      x.filter = 'none';
     } else {
       // lit left side (cream) vs. deep orange-red right side
       const r = x.createLinearGradient(150, 0, 750, 0);
@@ -167,4 +247,4 @@ function thermal(kind, palette = 'heat') {
   return s;
 }
 
-module.exports = { headPath, handShape, thermal };
+module.exports = { headPath, handShape, thermal, thermalHand, blendPose, POSES };
