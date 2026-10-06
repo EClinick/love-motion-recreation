@@ -1,0 +1,56 @@
+{
+  "id": "iter13",
+  "label": "v13",
+  "hash": "c437219",
+  "subject": "Iteration 13: organic hand (fuller fingers, soft edges + glow, red-orange forearm edges, no seams), head intro structure, ring top row",
+  "commit_date": "2026-10-06T15:05:27-07:00",
+  "dirty": false,
+  "changelog": [
+    "vs v12: 2 source file(s) changed, +85/-29 lines (figures.js, scenes.js).",
+    "- hand: removed forearm band/seam (taller canvas, open edge strokes), wider palm and",
+    "fingers, no centre stripe, soft 2.6px edges with faint glow, deep red-orange right",
+    "edge, rounded thumb base; fist = single pointing index + thumb bump",
+    "- head: 3.75 lit crimson core -> purple edge + blue lower-right patch, 4.0 contour",
+    "bands, less intro blur; rim concentrated at face/neck; visible forelock",
+    "- ring flatter at 8.0 (top row lower); crimson hand intro; finale loop/stroke timing",
+    "Organic drawn hand (fuller fingers, soft edges + glow), head intro structure, ring top row"
+  ],
+  "note": "Organic drawn hand (fuller fingers, soft edges + glow), head intro structure, ring top row",
+  "video": "media/versions/iter13/video.mp4",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 15417481,
+  "render_date": "2026-10-06T15:14:34-07:00",
+  "v": 1791324889,
+  "sidebyside": "media/versions/iter13/sidebyside.mp4",
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 29137642,
+  "sheets": [
+    "media/versions/iter13/sheets/sheet_01.jpg",
+    "media/versions/iter13/sheets/sheet_02.jpg",
+    "media/versions/iter13/sheets/sheet_03.jpg",
+    "media/versions/iter13/sheets/sheet_04.jpg",
+    "media/versions/iter13/sheets/sheet_05.jpg",
+    "media/versions/iter13/sheets/sheet_06.jpg",
+    "media/versions/iter13/sheets/sheet_07.jpg",
+    "media/versions/iter13/sheets/sheet_08.jpg",
+    "media/versions/iter13/sheets/sheet_09.jpg"
+  ],
+  "published": "2026-10-06T15:15:02-07:00",
+  "scores": null,
+  "score_sections": [
+    "0 – 7.25 s",
+    "7.5 – 14.75 s",
+    "15 – 20.4 s"
+  ],
+  "extras": [
+    {
+      "src": "media/versions/iter13/extras/overlay_5.png",
+      "caption": "Shape overlay at 5.0 s (cyan = original, red = ours)"
+    },
+    {
+      "src": "media/versions/iter13/extras/overlay_14.6.png",
+      "caption": "Shape overlay at 14.6 s (cyan = original, red = ours)"
+    }
+  ]
+}
