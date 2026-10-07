@@ -11,7 +11,7 @@
     "Head: graded shirt heat from the source, missing intro masks traced, frame-144 contour transition; ring refit to new sprites",
     "Finale: red pen scribbles and brush ink traced from the source (trace-pen.js), fist glow, heart/vinyl/book fixes, measured dot paths"
   ],
-  "note": "Not judged yet.",
+  "note": "Judged on index-aligned exact-frame pairs.",
   "duration": 20.458,
   "resolution": "1440x1080",
   "size": 11542284,
@@ -28,6 +28,10 @@
     "media/versions/v18/sheets/sheet_08.jpg",
     "media/versions/v18/sheets/sheet_09.jpg"
   ],
-  "scores": null,
+  "scores": [
+    7.5,
+    7.0,
+    8.5
+  ],
   "extras": []
 }

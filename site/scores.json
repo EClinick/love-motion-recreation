@@ -127,6 +127,15 @@
         8.0
       ],
       "method": "exact-frame pairs, index-aligned"
+    },
+    {
+      "round": 18,
+      "scores": [
+        7.5,
+        7.0,
+        8.5
+      ],
+      "method": "exact-frame pairs, index-aligned"
     }
   ],
   "pending": "Iteration 6 (final consolidated fixes) applied after round 5; 4K final render in progress"
