@@ -1118,35 +1118,22 @@ function burst(ctx, cx, cy, q, seed, colors = ['#ece8e2', '#e8231d']) {
 
 function sceneAction(ctx, t, f) {
   fx.dark(ctx, '#141313');
-  const q = t - 8.3;
-  const pos = kf(t, [[8.3, [640, 430]], [8.4, [612, 458]], [8.45, [580, 490], 'outCubic'], [8.55, [532, 525]], [8.75, [512, 470], 'inOutCubic'], [9.0, [375, 590], 'inOutCubic'], [9.13, [360, 600]]]);
-  const rot = kf(t, [[8.3, -0.05], [8.45, -0.15, 'outCubic'], [8.55, -0.12], [8.75, 1.88, 'inOutCubic'], [9.0, -0.35, 'inOutCubic'], [9.13, -0.38]]);
-  const width = kf(t, [[8.3, 450], [8.55, 405], [8.75, 700], [9.0, 900], [9.13, 940]]);
-  const sy = kf(t, [[8.3, 1], [8.8, 1], [8.95, 0.24, 'inOutCubic'], [9.13, 0.22]]);
-  const blur = kf(t, [[8.3, 10], [8.4, 2], [8.48, 0], [8.65, 0], [8.72, 3], [8.78, 0], [8.88, 3], [8.95, 0]]);
+  const pos = kf(t, [[8.3, [575, 520]], [8.342, [567, 513]], [8.383, [553, 540]], [8.425, [540, 540]], [8.467, [527, 527]], [8.59, [513, 527]], [8.675, [527, 473], 'inOutCubic'], [8.84, [520, 473]], [8.93, [486, 513], 'inOutCubic'], [9.05, [472, 540]], [9.13, [465, 545]]]);
+  const rot = kf(t, [[8.3, -0.12], [8.383, -0.15], [8.59, -0.2], [8.675, 1.85, 'inOutCubic'], [8.84, 1.85], [8.93, -0.18, 'inOutCubic'], [9.13, -0.22]]);
+  const width = kf(t, [[8.3, 392], [8.59, 400], [8.675, 640, 'inOutCubic'], [8.84, 640], [8.93, 880, 'inOutCubic'], [9.13, 860]]);
+  const sy = kf(t, [[8.3, 1], [8.84, 1], [8.93, 0.24, 'inOutCubic'], [9.13, 0.22]]);
+  const blur = kf(t, [[8.3, 3], [8.36, 1.5], [8.383, 0.5], [8.405, 3], [8.425, 4], [8.467, 3], [8.5, 1.5], [8.55, 0.5], [8.59, 1], [8.63, 0], [8.65, 3], [8.675, 0], [8.88, 0], [8.9, 3], [8.93, 0]]);
   const [c, x] = off(0);
   x.save();
-  x.filter = 'saturate(0.6) brightness(0.95)';
+  x.filter = 'saturate(0.8)';
   drawSprite(x, 'camera', pos[0], pos[1], width, rot, 1, { sy });
-  x.globalCompositeOperation = 'screen';
-  drawSprite(x, 'camera', pos[0], pos[1], width, rot, 0.32, { sy, silhouette: '#9a9a9a' });
   x.restore();
-  // white zigzag + red slashes at the cut
-  if (q < 0.14) {
-    const zz = [[880, 420], [1000, 540], [890, 640], [1000, 760], [895, 870], [990, 1000]];
-    fx.strokePartial(x, zz, inv(8.38, 8.44, t), inv(8.3, 8.33, t), 12, CREAM);
-    x.save();
-    x.lineWidth = 12;
-    burst(x, 760, 600, q / 0.3, 8, ['#e8231d']);
-    burst(x, 760, 600, q / 0.3, 18, ['#e8231d']);
-    x.restore();
-  }
-  const st = kf(t, [[8.3, 1.0], [8.4, 0.85, 'outBack'], [8.6, 0.85], [8.75, 2.3], [9.13, 0.8]]);
-  const sxs = kf(t, [[8.6, 1], [8.75, 0.36, 'outCubic'], [8.85, 0.36], [8.95, 2.6, 'outCubic']]);
+  const st = kf(t, [[8.3, 0.9], [8.4, 0.85], [8.6, 0.85], [8.675, 2.0, 'outCubic'], [8.84, 2.0], [8.93, 1.3], [9.13, 1.1]]);
+  const sxs = kf(t, [[8.59, 1], [8.675, 0.36, 'outCubic'], [8.84, 0.36], [8.93, 2.2, 'outCubic'], [9.13, 2.2]]);
   x.save();
-  const anchor = kf(t, [[8.3, [650, 380]], [8.55, [650, 420]], [8.75, [540, 170]], [9.0, [600, 200]], [9.13, [610, 195]]]);
+  const anchor = kf(t, [[8.3, [634, 405]], [8.383, [648, 330]], [8.59, [590, 350]], [8.675, [540, 230], 'inOutCubic'], [8.84, [540, 230]], [8.93, [880, 345], 'inOutCubic'], [9.05, [840, 272]], [9.13, [830, 260]]]);
   x.translate(anchor[0], anchor[1]);
-  x.rotate(kf(t, [[8.3, 0.3], [8.6, 0.1], [8.75, 0], [9.0, -0.36]]));
+  x.rotate(kf(t, [[8.3, 0.3], [8.6, 0.1], [8.75, 0], [8.93, -0.3], [9.13, -0.36]]));
   x.scale(sxs, 1 / Math.sqrt(sxs));
   fx.starPath(x, 0, 0, 170 * st, 0, 0.1);
   x.fillStyle = '#e8231d';
@@ -1155,9 +1142,38 @@ function sceneAction(ctx, t, f) {
   x.fill();
   x.restore();
   composite(ctx, c, { blur });
-  if (t > 8.95) fx.strokePartial(ctx, [[760, 485], [960, 478]], 0, inv(8.95, 9.02, t), 4, CREAM);
+  // the cut: a white lightning scribble and thick red dabs, then thin flicks, a curl, drifting red dots
+  const dab = (pts, w) => {
+    ctx.save();
+    ctx.filter = `blur(${2 * S}px)`;
+    fx.strokePartial(ctx, pts, 0, 1, w, '#e2211b');
+    ctx.restore();
+  };
+  const white = (pts, w, b = 1.5) => {
+    ctx.save();
+    ctx.filter = `blur(${b * S}px)`;
+    fx.strokePartial(ctx, pts, 0, 1, w, 'rgba(236,232,226,0.9)');
+    ctx.restore();
+  };
+  if (t < 8.362) {
+    white([[756, 260], [800, 250], [850, 280], [900, 240], [1000, 262], [930, 330], [860, 430], [800, 560], [780, 640], [840, 700], [930, 740], [975, 790]], 7, 2);
+    [[[735, 265], [820, 70]], [[935, 430], [1115, 260]], [[745, 805], [805, 760]], [[965, 650], [1195, 850]]].forEach((p) => dab(p, 16));
+  } else if (t < 8.404) {
+    white([[742, 256], [891, 40]], 5);
+    white([[1148, 270], [1323, 121]], 5);
+    white([[1040, 702], [1180, 880], [1269, 1026], [1180, 990]], 5);
+    [[[837, 10], [860, 50]], [[1205, 185], [1280, 110]], [[880, 870], [900, 900]], [[1272, 905], [1360, 995]]].forEach((p) => dab(p, 18));
+  } else if (t < 8.446) {
+    white([[985, 445], [1080, 300], [1150, 200], [1175, 189], [1130, 230]], 6, 3);
+  }
+  if (t > 8.404 && t < 8.6) {
+    const a = 1 - inv(8.5, 8.6, t);
+    const d = (t - 8.404) * 60;
+    [[1283, 81], [940, 918], [1377, 999]].forEach(([px, py]) => dot(ctx, px + d * 0.2, py + d * 0.4, 10, `rgba(226,33,27,${a})`));
+  }
+  if (t > 8.95) fx.strokePartial(ctx, [[900, 456], [990, 452]], 0, inv(8.95, 9.02, t), 4, CREAM);
   sparks(ctx, t, 2, 7);
-  typed(ctx, 'action.', 8.3, t, 966, 540, 1300);
+  typed(ctx, 'action.', 8.32, t, 966, 530, 1300);
 }
 
 // Rows of overlapping icons (light shots between the cards). Items: [name, relX, dy, width, z]
@@ -1315,7 +1331,7 @@ function sceneIntention(ctx, t, f) {
     ctx.restore();
   }
   sparks(ctx, t, 4, 6);
-  typed(ctx, 'intention.', 9.87, t, 834, 540, 1322);
+  typed(ctx, 'intention.', 9.87, t, 834, 530, 1322);
 }
 
 const ROW_B = [
@@ -1430,7 +1446,7 @@ function sceneCuriosity(ctx, t, f) {
   if (t > 11.42) note(ctx, 'eighth', 630 - 140 * nd, 815, pop(11.42) * 1.9, 0.15 + 0.1 * nd + noise1(t, 3) * 0.08);
   ctx.restore();
   sparks(ctx, t, 6, 5);
-  typed(ctx, 'curiosity.', 10.9, t, 804 + pan, 536, 1323 + pan, 0.17);
+  typed(ctx, 'curiosity.', 10.9, t, 804 + pan, 526, 1323 + pan, 0.17);
 }
 
 // =====================================================================
