@@ -1200,13 +1200,37 @@ const ROW_A = [
   ['cat', 2080, 0, 350, 1],
 ];
 
+// The light strips are the icon ring seen edge-on and spinning: front items big and packed,
+// side items compressed, back items small and higher, peeking out behind.
+const BELT = ['plant', 'cash', 'heart', 'cap', 'controller', 'coin', 'cat', 'camera', 'book', 'vinyl', 'skateboard', 'clapper'];
+const BELT_W = { plant: 270, cash: 430, heart: 420, cap: 400, controller: 390, coin: 360, cat: 420, camera: 330, book: 330, vinyl: 310, skateboard: 430, clapper: 350 };
+const BELT_DY = { plant: -15, cash: 0, heart: 10, cap: 5, controller: 0, coin: 5, cat: 10, camera: -5, book: 0, vinyl: -10, skateboard: 5, clapper: 5 };
+const BELT_R = { skateboard: -0.25, cash: 0.12, cap: -0.05 };
+function belt(ctx, heartDeg, t) {
+  const items = BELT.map((name, i) => {
+    const th = ((heartDeg + (i - 2) * 30) * Math.PI) / 180;
+    const c = Math.cos(th);
+    const sc = c >= 0 ? 1.15 * (0.9 + 0.1 * c) : 0.32 + 0.4 * (1 + c);
+    return { name, i, c, x: 735 + 590 * Math.sin(th) * (c >= 0 ? 1 : 0.75), y: 515 + c * 25 + (c < 0 ? -60 * -c : 0) + BELT_DY[name], sc };
+  });
+  items
+    .sort((a, b) => a.c - b.c)
+    .forEach((it) => {
+      // only the front arc (about +-66 deg) and the back half are visible; the sides are hidden
+      if (it.c >= 0 && it.c < 0.4) return;
+      if (it.c < 0 && it.c > -0.5) return;
+      if (it.x < -300 || it.x > W + 300) return;
+      drawSprite(ctx, it.name, it.x, it.y, BELT_W[it.name] * it.sc, (BELT_R[it.name] || 0) + noise1(t * 2, it.i) * 0.03);
+    });
+}
+
 function sceneStripA(ctx, t, f) {
   flat(ctx, '#e3e2e0', 'rgba(80,76,74,0.15)', W, H);
-  const ox = kf(t, [[9.13, 420], [9.6, 250, 'linear'], [9.75, -350, 'inQuad'], [9.84, -700]]);
+  const hd = kf(t, [[9.134, 93], [9.259, 41.4, 'outCubic'], [9.426, 19.8], [9.676, -9.2], [9.718, -19.6, 'inQuad'], [9.76, -37.5, 'inQuad'], [9.8, -75], [9.843, -115]]);
   const [c, x] = off(0);
-  row(x, ROW_A, ox, 560, t);
-  composite(ctx, c, { blur: t > 9.62 ? (t - 9.62) * 60 : t < 9.2 ? (9.2 - t) * 60 : 0 });
-  if (t > 9.65) speedLines(ctx, t, 7, 8);
+  belt(x, hd, t);
+  composite(ctx, c, { blur: kf(t, [[9.13, 3], [9.2, 0], [9.74, 0], [9.8, 6], [9.84, 12]]) });
+  if (t > 9.7) speedLines(ctx, t, 7, 8);
 }
 
 function sceneIntention(ctx, t, f) {
@@ -1303,14 +1327,11 @@ const ROW_B = [
 
 function sceneStripB(ctx, t, f) {
   flat(ctx, '#e3e2e0', 'rgba(80,76,74,0.15)', W, H);
-  const ox = kf(t, [[10.51, 1000], [10.58, 985], [10.75, 624, 'inOutCubic'], [11.01, 300, 'inCubic']]);
+  const hd = kf(t, [[10.51, -13.6], [10.594, -67, 'outQuad'], [10.677, -85, 'outQuad'], [10.76, -92], [10.844, -93.5], [10.9, -97], [10.969, -171, 'inCubic'], [11.01, -215]]);
   const [c, x] = off(0);
-  const catRel = kf(t, [[10.51, 100], [10.75, 466]]);
-  const camRel = kf(t, [[10.51, 900], [10.75, 610]]);
-  drawSprite(x, 'camera', ox + camRel, 540, 330, 0);
-  drawSprite(x, 'cat', ox + catRel, 560, 520, -0.15, 1, { sy: 0.75 });
-  row(x, ROW_B, ox, 560, t);
-  composite(ctx, c, { blur: t < 10.56 ? 6 : t > 10.92 ? (t - 10.92) * 50 : 0 });
+  belt(x, hd, t);
+  composite(ctx, c, { blur: kf(t, [[10.51, 2], [10.55, 0], [10.9, 0], [10.95, 10], [10.97, 16], [11.01, 22]]) });
+  if (t < 10.56 || t > 10.92) speedLines(ctx, t, 9, 4);
 }
 
 function note(ctx, kind, x, y, s, rot = 0) {
@@ -1415,7 +1436,7 @@ function sceneCuriosity(ctx, t, f) {
 // =====================================================================
 // 7. Ring again (top view) then the ink scatter.
 // =====================================================================
-const TOP_W = { clapper: 200, skateboard: 230, vinyl: 190, book: 190, camera: 190, cat: 170, coin: 210, controller: 210, cap: 210, heart: 255, cash: 260, plant: 190 };
+const TOP_W = { clapper: 225, skateboard: 255, vinyl: 210, book: 210, camera: 210, cat: 200, coin: 235, controller: 235, cap: 235, heart: 285, cash: 290, plant: 210 };
 const SCATTER = {
   vinyl: [600, 171, 135, 0],
   clapper: [174, 470, 210, 0],
@@ -1548,7 +1569,8 @@ function sceneScatter(ctx, t, f) {
   const ca = Math.cos(turn);
   const sa = Math.sin(turn);
   const orbit = (px, py) => [700 + (px - 700) * ca - (py - 560) * sa, 560 + (px - 700) * sa + (py - 560) * ca];
-  const ring = ringLayout(phi - 0.21, { tilt: 0.4, R: 405, cx: 760, cy: 545, F: 4000 });
+  const ring = ringLayout(phi - 0.21, { tilt: 0.4, R: 385, cx: 715, cy: 511, F: 4000 });
+  const RING_ROT = { skateboard: -0.5, cash: 0.4, cap: -0.15, book: 0.12 };
   ring
     .slice()
     .sort((a, b) => (burstP > 0.5 ? (a.name === 'plant' ? -1 : b.name === 'plant' ? 1 : b.z - a.z) : b.z - a.z))
@@ -1578,7 +1600,7 @@ function sceneScatter(ctx, t, f) {
       }
       const w = lerp(TOP_W[it.name], tgt[2], burstP);
       const sil = SIL[it.name] && t > SIL[it.name];
-      const r = burstP * tgt[3] * noise1(t * 1.5 + it.i, it.i) * 0.45;
+      const r = burstP * tgt[3] * noise1(t * 1.5 + it.i, it.i) * 0.45 + (1 - burstP) * (RING_ROT[it.name] || 0);
       if (it.name === 'cash' && t > 13.2) {
         // money smears into a black dab
         const q = inv(13.2, 13.35, t);
