@@ -1382,8 +1382,9 @@ function inkBall(ctx, x, y, r, trail = [], soft = 2.5) {
 }
 
 // Perspective ring fitted to the source (frame 167): centre, radii, depth k; icons scale with depth.
-const RING_BASE = { clapper: 173, skateboard: 190, vinyl: 224, book: 214, camera: 230, cat: 176, coin: 166, controller: 220, cap: 182, heart: 190, cash: 215, plant: 168 };
-const RING_ROT = { skateboard: -0.45, cash: 0.42 };
+// sizes re-fitted to the v17 sprites from the source widths at 8.008 s
+const RING_BASE = { clapper: 156, skateboard: 162, vinyl: 157, book: 165, camera: 184, cat: 176, coin: 161, controller: 176, cap: 198, heart: 188, cash: 191, plant: 131 };
+const RING_ROT = { skateboard: -0.45, cash: 0 };
 const ringSpin = (t) =>
   kf(t, [
     [6.38, -0.6],
@@ -1400,11 +1401,14 @@ const ringSpin = (t) =>
     [8.258, 4.82, 'linear'],
     [8.3, 5.22, 'linear'],
   ]);
+const RING_LATE = [0.08, 26, -25]; // spin (rad), cy (px), R (px), eased in over 7.6-8.0 s
 function ring2(t) {
-  const base = ringSpin(t);
+  // measured at 8.008 s against the v17 sprites: the ring is ~0.1 rad further round and ~20 px lower
+  const late = ease.inOutQuad(inv(7.6, 8.0, t));
+  const base = ringSpin(t) + RING_LATE[0] * late;
   const cx = kf(t, [[6.548, 700], [6.965, 709]]);
-  const cy = kf(t, [[6.548, 470], [6.756, 425], [6.965, 402], [7.76, 402], [8.13, 400], [8.217, 440], [8.3, 465]]);
-  const R = kf(t, [[6.548, 470], [6.965, 433], [8.05, 433], [8.13, 455]]);
+  const cy = kf(t, [[6.548, 470], [6.756, 425], [6.965, 402], [7.76, 402], [8.13, 400], [8.217, 440], [8.3, 465]]) + RING_LATE[1] * late;
+  const R = kf(t, [[6.548, 470], [6.965, 433], [8.05, 433], [8.13, 455]]) + (RING_LATE[2] || 0) * late;
   // the ring keeps its height until ~8.05 s, then flattens quickly (measured frames 184-195)
   const Ry = kf(t, [[6.965, 190], [7.5, 205], [7.76, 212], [8.05, 212], [8.13, 140], [8.217, 72], [8.3, 50]]);
   const grow = kf(t, [[8.13, 1], [8.258, 1.12]]);
@@ -3922,4 +3926,4 @@ function renderFrame(ctx, t, f) {
   fx.vignette(ctx, 0.1, '0,0,0', 0.6);
 }
 
-module.exports = { renderFrame, TIMELINE, setScale, preload };
+module.exports = { renderFrame, TIMELINE, setScale, preload, ring2 };
