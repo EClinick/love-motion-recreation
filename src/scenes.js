@@ -3043,7 +3043,7 @@ const toneLut = (() => {
   return lut;
 })();
 // Colour the silhouette from its traced thermal index (tone map) through the measured palette.
-function toneShade(mask, tone) {
+function toneShade(mask, tone, lift = 0) {
   if (handCache.has(tone)) return handCache.get(tone);
   const m = createCanvas(W, H);
   const mx = m.getContext('2d');
@@ -3061,7 +3061,8 @@ function toneShade(mask, tone) {
     const k = td[i + 3] ? td[i] : 160;
     const kb0 = td[i + 3] ? (td[i + 1] / 255) * 2 : 0;
     // blue-leaning (violet) tones are darker than the lit-hand palette
-    const R = Math.round(toneLut[k * 3] * lerp(1, 0.55, clamp((kb0 - 0.6) / 0.4)));
+    // `lift`: as the fist closes the pale core glows brighter than the palette's top (frames 375-379)
+    const R = Math.min(255, Math.round(toneLut[k * 3] * lerp(1, 0.55, clamp((kb0 - 0.6) / 0.4)) * (1 + lift * clamp((k - 222) / 18))));
     d[i] = R;
     d[i + 1] = Math.round((R * k) / 255);
     const kb = td[i + 3] ? (td[i + 1] / 255) * 2 : 0;
@@ -3136,9 +3137,9 @@ function handShade(mask) {
 }
 
 // Thermal shading inside a traced silhouette (screen space).
-function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0, tone = null, hotTint = '#e4e3d6') {
+function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0, tone = null, hotTint = '#e4e3d6', lift = 0) {
   const [c, x] = off(0);
-  x.drawImage(tone ? toneShade(mask, tone) : handShade(mask), 0, 0, W, H);
+  x.drawImage(tone ? toneShade(mask, tone, lift) : handShade(mask), 0, 0, W, H);
   if (pale > 0) {
     // the hand drains to a pale grey, keeping a thin orange rim on its right edge
     const pc = createCanvas(W, H);
@@ -3239,6 +3240,62 @@ function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0, tone = nu
   x.globalCompositeOperation = 'source-over';
   composite(ctx, c, { filter: filter || undefined });
 }
+// brushy white smear from (x0, y0) to (x1, y1): a few parallel hairlines, brighter toward `tip`
+function brushSmear(x, x0, y0, x1, y1, h, alpha, tipAtEnd = true) {
+  const n = Math.max(2, Math.round(h / 2.5));
+  for (let k = 0; k < n; k++) {
+    const off2 = (k / (n - 1) - 0.5) * h;
+    const g = x.createLinearGradient(x0, y0, x1, y1);
+    const lo = `rgba(238,236,234,${alpha * 0.15})`;
+    const hi = `rgba(250,250,248,${alpha * (0.6 + 0.4 * ((k * 37) % 5) / 4)})`;
+    g.addColorStop(0, tipAtEnd ? lo : hi);
+    g.addColorStop(1, tipAtEnd ? hi : lo);
+    x.strokeStyle = g;
+    x.lineWidth = 1.6;
+    x.beginPath();
+    x.moveTo(x0 + ((k * 13) % 7), y0 + off2);
+    x.quadraticCurveTo((x0 + x1) / 2, (y0 + y1) / 2 + off2 - (y1 - y0) * 0.15, x1 - ((k * 11) % 9), y1 + off2);
+    x.stroke();
+  }
+}
+function leafFleck(x, cx, cy, rot, len, wid) {
+  x.save();
+  x.translate(cx, cy);
+  x.rotate(rot);
+  x.fillStyle = 'rgba(250,249,246,0.95)';
+  x.beginPath();
+  x.ellipse(0, 0, wid / 2, len / 2, 0, 0, 7);
+  x.fill();
+  x.restore();
+}
+function handMarks(ctx, fr) {
+  const [c, x] = off(5);
+  let blur = 1.2;
+  if (fr === 375) {
+    [[765, 350, -0.3, 26, 10], [567, 452, 0.5, 24, 11], [695, 460, 0.4, 18, 8]].forEach(([a, b, r, l, w]) => leafFleck(x, a, b, r, l, w));
+    // glints on the finger
+    x.strokeStyle = 'rgba(250,248,244,0.85)';
+    x.lineWidth = 2;
+    [[[786, 518], [798, 494]], [[796, 522], [806, 500]]].forEach(([p, q]) => { x.beginPath(); x.moveTo(...p); x.lineTo(...q); x.stroke(); });
+  } else if (fr === 376) {
+    brushSmear(x, 690, 482, 602, 470, 12, 1, true);
+    brushSmear(x, 790, 446, 726, 458, 6, 0.85, true);
+    brushSmear(x, 948, 362, 768, 398, 16, 0.55, false);
+    brushSmear(x, 908, 446, 812, 482, 10, 0.8, false);
+    blur = 1.6;
+  } else if (fr === 377 || fr === 378) {
+    const pts = fr === 377 ? [[930, 365, 0.5, 18, 9], [815, 430, -0.2, 20, 9], [740, 475, 0.1, 13, 6], [945, 445, 0, 5, 4]] : [[905, 365, 0.4, 20, 10], [802, 435, -0.3, 18, 8], [915, 450, 0.2, 22, 11], [735, 470, 0.1, 16, 7]];
+    pts.forEach(([a, b, r, l, w]) => leafFleck(x, a, b, r, l, w));
+  } else if (fr === 379) {
+    // soft horizontal smears around the fingertips
+    [[635, 905, 414, 18, 0.35], [660, 716, 460, 8, 1], [735, 762, 426, 6, 0.9], [830, 880, 362, 6, 1], [826, 878, 372, 5, 0.8], [840, 862, 440, 5, 0.8]].forEach(([a, b, y, h, al]) => brushSmear(x, a, y, b, y, h, al, true));
+    blur = 2.4;
+  } else if (fr === 380) {
+    [[330, 760, 355, 6, 0.55], [100, 520, 410, 8, 0.4], [500, 830, 440, 9, 1], [200, 520, 465, 7, 0.6], [0, 150, 345, 26, 0.3]].forEach(([a, b, y, h, al]) => brushSmear(x, a, y, b, y + (b - a) * 0.02, h, al, true));
+    blur = 2.2;
+  }
+  composite(ctx, c, { blur });
+}
 function sceneHand(ctx, t, f) {
   // background warms to red-brown then mauve-grey as the hand closes (measured per frame)
   const bg = bgRamp(t, [[13.76, '#141313'], [15.52, '#161414'], [15.557, '#221417'], [15.599, '#251619'], [15.641, '#2a191b'], [15.682, '#2e1c1e'], [15.724, '#362426'], [15.766, '#3f2c2f'], [15.808, '#463437'], [15.849, '#4d3d41'], [15.89, '#524347']]);
@@ -3263,9 +3320,9 @@ function sceneHand(ctx, t, f) {
   if (traced) {
     let filt = '';
     if (settle < 1) filt = `brightness(${lerp(0.92, 1, settle)}) blur(${(1 - settle) * 10 * S}px)`;
-    else if (t > 15.3 && t <= 15.64) filt = `brightness(${kf(t, [[15.3, 1], [15.5, 0.92], [15.64, 1]])})`;
-    else if (t > 15.64) filt = `saturate(${kf(t, [[15.64, 1], [15.77, 0.85]])}) brightness(${kf(t, [[15.64, 1], [15.766, 0.8], [15.81, 0.62]])})`;
-    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0, handHotMask(t), kf(t, [[15.77, 0], [15.8, 1]]), t < 15.785 ? handToneMap(t) : null, t < 14.4 ? '#e4e3d6' : '#e3d9b6');
+    // measured per frame (372-379): the hand dims as the fist closes, the pale core keeps glowing
+    else if (t > 15.3) filt = `saturate(${kf(t, [[15.64, 1], [15.77, 0.85]])}) brightness(${kf(t, [[15.3, 1], [15.5, 0.93], [15.557, 0.92], [15.599, 0.855], [15.641, 0.84], [15.682, 0.79], [15.724, 0.74], [15.766, 0.74], [15.808, 0.67], [15.85, 0.62]])})`;
+    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0, handHotMask(t), kf(t, [[15.82, 0], [15.845, 1]]), t < 15.83 ? handToneMap(t) : null, t < 14.4 ? '#e4e3d6' : '#e3d9b6', kf(t, [[15.62, 0], [15.68, 0.3], [15.724, 0.5], [15.766, 0.35], [15.81, 0.35]]));
   }
   const hand = traced ? null : thermalHand(pose);
   const [c, x] = traced ? [null, null] : off(0);
@@ -3326,43 +3383,12 @@ function sceneHand(ctx, t, f) {
     });
     composite(ctx, ac, { blur: lerp(6, 7, q) });
   }
-  // smoky white swooshes curling off the pinch (15.66-15.72)
-  if (t > 15.65 && t < 15.74) {
-    const a = Math.sin(Math.PI * inv(15.65, 15.74, t));
-    const [sc, sx] = off(5);
-    sx.strokeStyle = `rgba(236,232,228,${0.75 * a})`;
-    sx.lineCap = 'round';
-    [[[618, 445], [700, 452], [760, 430]], [[700, 420], [780, 395], [860, 365]], [[760, 372], [830, 352], [900, 340]]].forEach((pts, k) => {
-      sx.lineWidth = [7, 4, 3][k];
-      sx.beginPath();
-      sx.moveTo(...pts[0]);
-      sx.quadraticCurveTo(...pts[1], ...pts[2]);
-      sx.stroke();
-    });
-    composite(ctx, sc, { blur: 2.5 });
-  }
-  // thin bright motion streaks shooting left as the hand drops away (15.79-15.89)
-  if (t > 15.785) {
-    const q = inv(15.79, 15.86, t);
-    const [sc, sx] = off(5);
-    [[362, 3, 860], [384, 2, 820], [404, 4, 880], [428, 2, 840], [452, 3, 780]].forEach(([y, w, xr], k) => {
-      const xl = lerp(xr - 220, k % 2 ? 60 : 0, q);
-      const g = sx.createLinearGradient(xl, 0, xr, 0);
-      g.addColorStop(0, 'rgba(240,240,240,0.15)');
-      g.addColorStop(0.6, 'rgba(244,244,244,0.85)');
-      g.addColorStop(1, 'rgba(250,250,250,0.95)');
-      sx.fillStyle = g;
-      sx.fillRect(xl, y, xr - xl, w);
-    });
-    composite(ctx, sc, { blur: 1 });
-    // soft haze trailing on the left
-    const [hc, hx] = off(6);
-    hx.fillStyle = `rgba(230,228,226,${0.35 * q})`;
-    hx.fillRect(0, 330, 420 * q + 80, 150);
-    composite(ctx, hc, { blur: 30 });
-  }
+  // white marks as the fist closes, measured per frame (375-380): leaf flecks, brushy smears,
+  // bright blobs by the fingertips, then soft horizontal smears shooting left
+  const hf = Math.round(t * C.FPS);
+  if (hf >= 375 && hf <= 380) handMarks(ctx, hf);
   // small white flecks (measured): three hanging in the air, one catching light on the index finger
-  if (t > 14.15 && t < 15.79) {
+  if (t > 14.15 && Math.round(t * C.FPS) < 375) {
     const u = inv(14.25, 15.45, t);
     [[512, 368, 512, 366, -0.25, 13], [625, 400, 650, 398, 0.2, 10], [803, 304, 772, 263, -0.35, 12], [821, 574, 828, 574, 0.15, 14]].forEach(([ax, ay, bx2, by2, rot, len], i) => {
       ctx.save();
