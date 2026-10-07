@@ -145,11 +145,11 @@
       <div class="evidence-grid">
         <figure class="card">
           <div class="media-heading"><h3>What that produced</h3><p id="motion-note">Motion warning: fast cuts and flashing imagery. Playback is opt-in.</p></div>
-          <video controls playsinline preload="none" aria-label="Archived v18 original reference versus Claude recreation" aria-describedby="motion-note video-caption" src="../media/how-we-made-this/v18/sidebyside.mp4"></video>
-          <figcaption id="video-caption"><b>v18 · original reference left, Claude recreation right.</b> This later iteration replaces the older v14 comparison on this page, not the original source. Shape, shading and motion differences remain. <a href="../media/original/original.mp4">Watch the original reference</a> or <a href="index.html#cmp">compare earlier versions in the showcase</a>.</figcaption>
+          <video controls playsinline preload="none" aria-label="Archived v18 original reference versus Claude recreation" aria-describedby="motion-note video-caption" src="../media/versions/v18/sidebyside.mp4"></video>
+          <figcaption id="video-caption"><b>v18 · original reference left, Claude recreation right.</b> This later iteration replaces the older v14 comparison on this page, not the original source. Shape, shading and motion differences remain. <a href="../media/original/original.mp4">Watch the original reference</a> or <a href="index.html#cmp">compare versions in the showcase</a>.</figcaption>
         </figure>
         <figure class="card">
-          <a href="../media/how-we-made-this/v18/pair_030.jpg" aria-label="Open full-size v18 hand comparison"><img loading="lazy" src="../media/how-we-made-this/v18/pair_030.jpg" width="1600" height="600" alt="v18 hand comparison: original reference on the left and Claude recreation on the right, both labelled 14.514500 seconds, with visible colour and texture differences."></a>
+          <a href="../media/versions/v18/pairs/pair_030.jpg" aria-label="Open full-size v18 hand comparison"><img loading="lazy" src="../media/versions/v18/pairs/pair_030.jpg" width="1600" height="600" alt="v18 hand comparison: original reference on the left and Claude recreation on the right, both labelled 14.514500 seconds, with visible colour and texture differences."></a>
           <figcaption><b>v18 · the hand, side by side.</b> An unchanged still from the later, index-aligned v18 archive. This is a visual comparison, not the older v14 silhouette overlay or a whole-video fidelity score. <a href="https://github.com/EClinick/love-motion-recreation/blob/d2546690bbaf3dcdf1c8fe79079ac10dac31de70/media/versions/v18/meta.json">Check the v18 provenance.</a></figcaption>
         </figure>
       </div>
@@ -158,7 +158,7 @@
         <aside class="callout" id="lessons" aria-labelledby="lessons-title">
           <h3 id="lessons-title">“Make it identical” was the request, not the result.</h3>
           <p>The session also found mistakes in its own comparison tools: some reference/render images paired different frames, creating misleading timing critiques. Later corrections selected and paired frames by index and re-ran the judges.</p>
-          <p><b>Archive caveat:</b> the historical sheets and v15/v16 pairs in the showcase predate that correction; they are not the later v18 comparison shown above. Historical scores also span changing judging criteria, so they are not a consistent benchmark. A failed render once left an older preview behind, too. Check frame alignment and output freshness before trusting a critique.</p>
+          <p><b>Archive caveat:</b> early comparison sheets had alignment errors. The current archive includes the corrected v15/v16 sheets and pairs, alongside v17/v18; the v18 hand still above comes from the later index-aligned set. Historical scores still span changing judging criteria, so they are not a consistent benchmark. A failed render once left an older preview behind, too. Check frame alignment and output freshness before trusting a critique.</p>
         </aside>
 
         <details id="try-it" class="reproduce">
@@ -179,8 +179,12 @@ cp media/original/original.mp4 ref/reference.mp4 &amp;&amp;
 cp media/original/original.mp3 ref/audio.mp3 &amp;&amp;
 node scripts/trace-hand.js hand &amp;&amp;
 node scripts/trace-hand.js head &amp;&amp;
-node scripts/trace-ink.js</code></pre><span class="copy-feedback" role="status"></span></div>
-          <p>The fonts and generated <code>ref/derived/</code> masks are not bundled. Without them, fallback fonts or drawn shapes can change the result. These tracing scripts are tuned to this reference, not arbitrary videos.</p>
+node scripts/trace-ink.js &amp;&amp;
+node scripts/trace-pen.js 413 431 pen soft &amp;&amp;
+node scripts/trace-pen.js 432 487 &amp;&amp;
+node scripts/trace-pen.js 413 431 dark &amp;&amp;
+node scripts/trace-pen.js 487 487 dark</code></pre><span class="copy-feedback" role="status"></span></div>
+          <p>The fonts and generated <code>ref/derived/</code> masks are not bundled. The <code>trace-pen.js</code> commands prepare the later finale’s red pen and dark brush masks. Without these inputs, fallback fonts or drawn shapes can change the result. These tracing scripts are tuned to this reference, not arbitrary videos.</p>
           <div class="snippet"><div class="snippet-header"><span>Render and verify a preview</span><button class="copy" type="button" data-copy="render-commands" aria-label="Copy preview render commands" hidden>Copy</button></div><pre><code id="render-commands">node src/render.js --workers 2 --out out/preview.mp4 &amp;&amp;
 ffprobe -v error -select_streams v:0 -count_frames \
   -show_entries stream=width,height,nb_read_frames \
@@ -205,7 +209,7 @@ ffmpeg -v error -y -i out/reference-120.png \
         <section class="provenance" id="sources" aria-labelledby="sources-title">
           <h3 id="sources-title">About this record</h3>
           <p>Checked against a read-only snapshot of the project’s Claude Code session through <time datetime="2026-10-07T15:36:40Z">7 October 2026, 15:36 UTC</time>, and the committed v1–v16 archive. Queued human instructions and the answer to Claude’s hand-source question are included; automated notifications and AI-generated conversation summaries are not treated as human prompts.</p>
-          <p>The displayed video and hand still were added from the later v18 archive, whose metadata identifies render commit <a href="https://github.com/EClinick/love-motion-recreation/commit/fda013a">fda013a</a>. They are copied unchanged from <a href="https://github.com/EClinick/love-motion-recreation/tree/d2546690bbaf3dcdf1c8fe79079ac10dac31de70/media/versions/v18">this pinned archive revision</a>; they do not extend the prompt snapshot or imply that it contains the v18 instructions.</p>
+          <p>The displayed video and hand still were added from the later v18 archive, whose metadata identifies render commit <a href="https://github.com/EClinick/love-motion-recreation/commit/fda013a">fda013a</a>. They match <a href="https://github.com/EClinick/love-motion-recreation/tree/d2546690bbaf3dcdf1c8fe79079ac10dac31de70/media/versions/v18">this pinned archive revision</a> byte for byte and are served directly from the project’s v18 media. Integrating the later main-branch archive also brings v17/v18 into the showcase. These artifacts do not extend the prompt snapshot or imply that it contains the v18 instructions.</p>
           <p>Private paths, session identifiers, raw transcripts, unrelated conversation and internal reasoning are not published. The code and commands are available to try, but neither bit-for-bit reproduction nor a perfect visual match is promised.</p>
           <p><a href="https://github.com/EClinick/love-motion-recreation">Source repository</a> · <a href="https://github.com/EClinick/love-motion-recreation/blob/main/media/README.md">Media and version notes</a> · <a href="index.html#versions">Explore every archived version</a></p>
         </section>

@@ -78,8 +78,14 @@ test('every manifest version and final media file exists', () => {
   const versions = JSON.parse(read(path.join(dir, 'versions.json')));
   const expected = fs.readdirSync(path.join(root, 'media', 'versions')).filter(n => /^v\d+$/.test(n)).length;
   assert.equal(versions.length, expected);
-  assert.ok(versions.length >= 16);
+  assert.ok(versions.length >= 18);
   const data = JSON.parse(read(path.join(dir, 'data.json')));
+  assert.equal(data.iteration, versions[0].id);
+  assert.equal(data.label, versions[0].label);
+  const v18 = versions.find(v => v.label === 'v18');
+  assert.equal(v18.hash, 'fda013a');
+  assert.deepEqual(v18.scores, [7.5, 7.0, 8.5]);
+  assert.deepEqual(versions.find(v => v.label === 'v16').scores, [6.0, 6.0, 7.5]);
   const files = [data.final.path, data.final.sidebyside];
   for (const version of versions) files.push(version.video, version.sidebyside, ...version.sheets, ...(version.extras || []).map(x => x.src));
   for (const file of files) assert.ok(fs.statSync(path.resolve(dir, file)).size > 0, file);
@@ -127,16 +133,16 @@ test('actual prompts lead, remain chronological, and precede the AI explanation'
 test('walkthrough uses genuine pinned v18 media without replacing the original reference', () => {
   const { createHash } = require('node:crypto');
   const html = read(path.join(root, 'site', 'how-we-made-this.html'));
-  const prefix = '../media/how-we-made-this/v18/';
-  assert.match(html, /<video[^>]+aria-label="Archived v18 original reference versus Claude recreation"[^>]+src="\.\.\/media\/how-we-made-this\/v18\/sidebyside\.mp4"/);
-  assert.ok(html.includes(`src="${prefix}pair_030.jpg" width="1600" height="600"`));
+  const prefix = '../media/versions/v18/';
+  assert.match(html, /<video[^>]+aria-label="Archived v18 original reference versus Claude recreation"[^>]+src="\.\.\/media\/versions\/v18\/sidebyside\.mp4"/);
+  assert.ok(html.includes(`src="${prefix}pairs/pair_030.jpg" width="1600" height="600"`));
   assert.ok(html.includes('href="../media/original/original.mp4">Watch the original reference'));
   assert.match(html, /do not extend the prompt snapshot/);
   assert.doesNotMatch(html, /(?:src|href)="[^"\n]*(?:v14|v16)[^"\n]*\.(?:mp4|png|jpg)"/);
   // Git blob hashes verified against the pinned upstream archive, not re-encoded copies.
   const expected = {
-    'media/how-we-made-this/v18/sidebyside.mp4': 'a1658642350a640d2728f994f2602b15ec69c2c1',
-    'media/how-we-made-this/v18/pair_030.jpg': 'fbf72335faca86065d8683353ba2760f433c88d0',
+    'media/versions/v18/sidebyside.mp4': 'a1658642350a640d2728f994f2602b15ec69c2c1',
+    'media/versions/v18/pairs/pair_030.jpg': 'fbf72335faca86065d8683353ba2760f433c88d0',
     'media/original/original.mp4': '1f5968622259667dbd890809c4a1889b0564548d'
   };
   for (const [file, hash] of Object.entries(expected)) {
@@ -145,6 +151,15 @@ test('walkthrough uses genuine pinned v18 media without replacing the original r
       const actual = createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
       assert.equal(actual, hash, `${directory}: ${file}`);
     }
+  }
+});
+
+test('walkthrough caveats and preparation commands reflect the merged archive', () => {
+  const html = read(path.join(root, 'site', 'how-we-made-this.html'));
+  assert.match(html, /corrected v15\/v16 sheets and pairs/);
+  assert.doesNotMatch(html, /v15\/v16 pairs in the showcase predate/);
+  for (const args of ['413 431 pen soft', '432 487', '413 431 dark', '487 487 dark']) {
+    assert.ok(html.includes(`node scripts/trace-pen.js ${args}`));
   }
 });
 
@@ -199,13 +214,15 @@ test('root and nested routes, CSS/JS, video HEAD and byte ranges serve correctly
       assert.equal(response.status, 200, `${prefix}/${name}`);
       assert.equal(await response.text(), read(path.join(root, 'site', name)));
     }
-    const media = `${base}${prefix}/media/final/claude_v14_sidebyside.mp4`;
-    const head = await fetch(media, { method: 'HEAD' });
-    assert.equal(head.status, 200);
-    assert.equal(head.headers.get('content-type'), 'video/mp4');
-    const range = await fetch(media, { headers: { Range: 'bytes=0-31' } });
-    assert.equal(range.status, 206);
-    assert.match(range.headers.get('content-range'), /^bytes 0-31\//);
-    assert.equal((await range.arrayBuffer()).byteLength, 32);
+    for (const file of ['final/claude_v14_sidebyside.mp4', 'versions/v18/sidebyside.mp4']) {
+      const media = `${base}${prefix}/media/${file}`;
+      const head = await fetch(media, { method: 'HEAD' });
+      assert.equal(head.status, 200);
+      assert.equal(head.headers.get('content-type'), 'video/mp4');
+      const range = await fetch(media, { headers: { Range: 'bytes=0-31' } });
+      assert.equal(range.status, 206);
+      assert.match(range.headers.get('content-range'), /^bytes 0-31\//);
+      assert.equal((await range.arrayBuffer()).byteLength, 32);
+    }
   }
 });

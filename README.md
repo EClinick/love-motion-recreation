@@ -1,7 +1,7 @@
 # love-motion-recreation
 
 A frame-by-frame recreation of a 20-second kinetic-typography / pixel-icon motion piece, built in
-code with `@napi-rs/canvas` (Skia) and ffmpeg, and refined over 14 iterations with a loop of
+code with `@napi-rs/canvas` (Skia) and ffmpeg, and refined over 18 iterations with a loop of
 Claude Sonnet "judge" agents comparing every version against the original.
 
 ![Original (left) vs Claude's recreation (right)](media/final/preview.jpg)
@@ -17,13 +17,14 @@ Claude Sonnet "judge" agents comparing every version against the original.
 
 ## How it was made
 
-- **Everything is drawn in code.** 14 shots on a single timeline, each a pure function of time:
-  kinetic type, handwriting scribbles, a sparkle star, original pixel-art icons (heart, coin, camera,
+- **Frames are rendered in code.** 14 shots on a single timeline, each a pure function of time:
+  kinetic type, handwriting scribbles, a sparkle star, pixel-art icons (heart, coin, camera,
   vinyl, cat, …), a 3D icon ring with a bouncing ink ball, word cards, an ink scatter and the
   L‑O‑V‑E finale. Film grain, vignettes and motion blur (temporal supersampling) are applied per frame.
 - **The hand is rotoscoped.** For the hand shot (13.8–15.6 s) the silhouette is traced from the
   source video every frame (`scripts/trace-hand.js`) and filled with the thermal shading in code.
-  The head profile, icons and everything else are drawn, tuned to measured proportions and colours.
+  Later versions also trace head silhouettes and pen/brush ink, derive tone maps, and sample
+  icons on the source's pixel grid. Procedural drawing and source-derived shapes are combined.
 - **Judged and measured.** Each iteration was rendered, turned into reference-vs-render contact
   sheets, and scored by three Sonnet judges (one per section of the video). Their notes drove the
   next version. Shape and colour were also checked numerically: `scripts/shape-compare.js` measures
@@ -47,7 +48,7 @@ Judge scores out of 10 for the three sections (0–7.25 s / 7.5–14.75 s / 15�
 | v17 | 7.0 | 7.0 | 8.0 | Redrawn sprites, ring re-fit, measured pen marks |
 | **v18** | **7.5** | **7.0** | **8.5** | **Source-grid sprites, traced pen and brush ink, graded shirt heat** |
 
-From v15 on, the judges compare larger reference/render pairs of the exact same frame, which is much stricter than the earlier contact sheets: re-judged that way, v14 scores 5.0 / 5.5 / 5.5. Earlier sheets were also shifted by 0.1–0.2 s, which is now fixed.
+From v15 on, the judges use larger reference/render pairs, a stricter method than the earlier contact sheets: re-judged that way, v14 scores 5.0 / 5.5 / 5.5. The tools also had frame-alignment errors; the current archive includes regenerated v15/v16 sheets and pairs using index alignment. Earlier archived sheets were not all regenerated, and historical scores are not a consistent benchmark.
 
 The full table, with every version's files, is in [`media/README.md`](media/README.md).
 
@@ -75,8 +76,12 @@ Put `reference.mp4` and `audio.mp3` in `ref/` (see `ref/README.md`), then:
 npm install && scripts/fetch-fonts.sh
 node scripts/trace-hand.js hand      # source-derived hand silhouettes and tone maps
 node scripts/trace-hand.js head      # source-derived head masks (v15 onward)
-node scripts/trace-ink.js            # source-derived pen ink (v16 onward)
-npm run preview                      # 1440x1080 preview, ~30 s
+node scripts/trace-ink.js            # source-derived opening ink (v16 onward)
+node scripts/trace-pen.js 413 431 pen soft  # later finale pen / brush masks
+node scripts/trace-pen.js 432 487
+node scripts/trace-pen.js 413 431 dark
+node scripts/trace-pen.js 487 487 dark
+node src/render.js --workers 2 --out out/preview.mp4  # bounded-memory preview
 npm run compare                      # contact sheets in out/compare/latest
 npm run render                       # 2880x2160 with 4-sample motion blur
 node src/render.js --stills 2.5,8.7  # single frames to out/stills
@@ -85,7 +90,7 @@ node src/render.js --stills 2.5,8.7  # single frames to out/stills
 ## Showcase at /site
 
 Run `npm run site`, then open http://127.0.0.1:8787/site/. The page includes
-the original video and soundtrack, all 16 archived renders and their side-by-side videos,
+the original video and soundtrack, all 18 archived renders and their side-by-side videos,
 the final 2880×2160 render, synchronized version comparison, scores, contact sheets,
 and shape overlays. It preserves the original showcase styling and interactions.
 
@@ -103,11 +108,13 @@ follow-ups in chronological order, preserving their wording and typos. It includ
 the visual feedback, requests for measurement and tracing, archive instructions,
 and later direction through the start of v17—not a newly written prompt template.
 An evidence-backed account of what Claude did follows the conversation, with
-existing media and optional commands to run the site or regenerate frames. It
-distinguishes the archived v14 final export from later iterations, source-derived
-tracing from procedural drawing, and historical scores from verified fidelity.
-Historical comparison images have frame-alignment limitations; the optional
-reproduction guide includes an explicit single-frame check.
+the genuine v18 side-by-side video and hand still, plus optional commands to run the
+site or regenerate frames. Those assets match the pinned upstream v18 archive;
+they do not extend the earlier prompt snapshot. The page distinguishes the archived
+v14 final export from later iterations, source-derived tracing from procedural
+drawing, and historical scores from verified fidelity. It reflects the corrected
+v15/v16 comparisons integrated from main while noting the older sheets' alignment
+limitations; the reproduction guide includes an explicit single-frame check.
 
 The article is a checkpoint, not a live session feed. No raw transcript or private
 session data is needed or included in the static build. Both pages share theme
