@@ -921,7 +921,7 @@ function sceneSparkle(ctx, t, f) {
 function sceneProfile(ctx, t, f) {
   const bg = bgRamp(t, [
     [3.82, '#151314'],
-    [5.45, '#151314'],
+    [5.52, '#151515'],
     [5.6, '#2c1d20'],
     [5.75, '#3a2c30'],
     [5.85, '#54464b'],
