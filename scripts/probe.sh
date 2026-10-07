@@ -8,7 +8,8 @@ for t in $1; do
   for r in $2; do
     IFS=: read -r n x y w h <<<"$r"
     f="scale=1440:1080,crop=$w:$h:$x:$y,scale=1:1:flags=area"
-    line="$line | $n ref $(px -ss "$t" -i ref/reference.mp4 -frames:v 1 -vf "$f") ours $(px -i "out/stills/r_$t.png" -vf "$f")"
+    fi=$(awk -v t="$t" 'BEGIN { printf "%d", t * 24000 / 1001 + 0.5 }')
+    line="$line | $n ref $(px -i ref/reference.mp4 -vf "select='eq(n\\,$fi)',$f" -frames:v 1 -fps_mode passthrough) ours $(px -i "out/stills/r_$t.png" -vf "$f")"
   done
   echo "$line"
 done
