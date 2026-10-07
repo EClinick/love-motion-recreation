@@ -120,7 +120,7 @@ a{color:var(--cyan)}
 <nav class="site-nav" aria-label="Site"><a href="index.html" aria-current="page">Showcase</a><a href="how-we-made-this.html">How we made this</a></nav>
 <nav aria-label="Page sections"><a href="#originalsec">Original</a> · <a href="#finalsec">Final render</a> · <a href="#versions">All versions</a> · <a href="#scores">Scores</a></nav>
 
-<aside class="card guide-link" aria-label="Build walkthrough"><p><b>From reference to recreation.</b><br>The prompts, the render–judge loop, and the mistakes that changed the process.</p><a href="how-we-made-this.html">Read how we made this →</a></aside>
+<aside class="card guide-link" aria-label="How we prompted this"><p><b>The conversation behind the recreation.</b><br>The original prompt, the follow-up instructions, and what Claude did with them.</p><a href="how-we-made-this.html">Read how we made this →</a></aside>
 
 <div class="feat-title"><div><span class="latest-tag" id="feat-tag">latest</span></div></div>
 <section class="card player" style="margin-top:8px" id="featplayer"></section>
@@ -188,7 +188,7 @@ a{color:var(--cyan)}
 </ol>
 
 <h2>How it is made</h2>
-<p><a href="how-we-made-this.html">Follow the full build walkthrough: prompts, evidence, lessons and commands →</a></p>
+<p><a href="how-we-made-this.html">Read the actual prompts and what Claude built in response →</a></p>
 <p><b>Renderer.</b> Node with <code>@napi-rs/canvas</code> (Skia) draws each frame across worker threads. Segments are encoded with ffmpeg and muxed with the audio. Previews render at 1440&times;1080; the final render is 2880&times;2160 with 4-sample motion blur.</p>
 <p><b>Judge loop.</b> After each render, a script builds contact sheets of the reference next to the render at 4 fps. Several Sonnet &ldquo;judge&rdquo; agents compare them, score sections out of 10 and list the biggest differences. Those notes become the next iteration&rsquo;s fixes, and the cycle repeats.</p>
 

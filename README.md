@@ -95,13 +95,17 @@ work when the repository root is served directly.
 
 ### How we made this
 
-The linked [`site/how-we-made-this.html`](site/how-we-made-this.html) walkthrough
-explains the real reference → render → critique → revision workflow, with sanitized
-user prompt excerpts, existing media, a reusable prompt, and commands to build the
-site or regenerate frames. It distinguishes the archived v14 final export from
-later iterations, source-derived tracing from procedural drawing, and historical
-judge scores from verified visual fidelity. Historical comparison images have
-frame-alignment limitations; the guide includes an explicit single-frame check.
+The linked [`site/how-we-made-this.html`](site/how-we-made-this.html) page leads
+with the actual initial prompt (local media folder redacted), then 20 selected human
+follow-ups in chronological order, preserving their wording and typos. It includes
+the visual feedback, requests for measurement and tracing, archive instructions,
+and later direction through the start of v17—not a newly written prompt template.
+An evidence-backed account of what Claude did follows the conversation, with
+existing media and optional commands to run the site or regenerate frames. It
+distinguishes the archived v14 final export from later iterations, source-derived
+tracing from procedural drawing, and historical scores from verified fidelity.
+Historical comparison images have frame-alignment limitations; the optional
+reproduction guide includes an explicit single-frame check.
 
 The article is a checkpoint, not a live session feed. No raw transcript or private
 session data is needed or included in the static build. Both pages share theme

@@ -90,12 +90,38 @@ test('walkthrough is static, labelled and free of private transcript identifiers
   assert.equal((html.match(/<h1\b/g) || []).length, 1);
   assert.match(html, /<main id="main" tabindex="-1">/);
   assert.match(html, /aria-current="page">How we made this/);
-  for (const section of ['prompts', 'workflow', 'lessons', 'try-it', 'sources']) assert.match(html, new RegExp(`id="${section}"`));
-  assert.match(html, /Suggested prompt \/ newly written/);
+  for (const section of ['prompts', 'follow-ups', 'workflow', 'lessons', 'try-it', 'sources']) assert.match(html, new RegExp(`id="${section}"`));
+  assert.doesNotMatch(html, /starter-prompt|Suggested prompt|class="steps"|class="chapter-nav"/);
   assert.match(html, /Archive caveat:/);
   assert.doesNotMatch(html, /autoplay|\/home\/|[A-Z]:\\Users\\|[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}|\.jsonl\b/);
   for (const image of html.matchAll(/<img\b[^>]*>/g)) assert.match(image[0], /alt="[^"]+"/);
   for (const [, target] of html.matchAll(/data-copy="([^"]+)"/g)) assert.ok(ids(html).includes(target));
+});
+
+test('actual prompts lead, remain chronological, and precede the AI explanation', () => {
+  const html = read(path.join(root, 'site', 'how-we-made-this.html'));
+  const initial = html.match(/<blockquote id="initial-prompt">([\s\S]*?)<\/blockquote>/)[1].replace(/<[^>]+>/g, '');
+  assert.equal(initial, '[local media folder redacted] analyze the mp4 here and use the mp3 as the video. But replicate this video from scratch, make it identical. Got all out on motion effects, transitions, icons, to mimic this video exactly. have a judge of sonnet 5.5 critics at the end analzye so you can iteratively loop until it looks the same.');
+  assert.ok(html.indexOf('id="initial-prompt"') < html.indexOf('id="follow-ups"'));
+  const thread = html.slice(html.indexOf('<ol class="prompt-thread"'), html.indexOf('</ol>'));
+  const dates = [...thread.matchAll(/datetime="([^"]+)"/g)].map(m => m[1]);
+  const quotes = [...thread.matchAll(/<blockquote>([\s\S]*?)<\/blockquote>/g)].map(m => m[1]);
+  assert.equal(quotes.length, 20);
+  assert.equal(dates.length, quotes.length);
+  assert.deepEqual(dates, [...dates].sort());
+  assert.equal(new Set(dates).size, dates.length);
+  assert.equal(quotes[6], 'Few things I noticed, the hand is off and the head shape is off, and the grainyness is off.');
+  assert.equal(quotes[7], "Hmm programmatically compare the face and hand shape it's still not there.");
+  assert.equal(quotes[9], 'No it still looks like a balloon, we should try to trace the shape of the hand in every frame and replicate that.');
+  assert.equal(quotes[10], 'no just trace the actual frames. This is my video');
+  assert.equal(quotes[11], 'This is good! No need to do anymore versions');
+  assert.equal(quotes[14], 'Okay continue iterating on judges and versions until it gets perfect');
+  assert.equal(quotes[17], 'okay run v17');
+  assert.ok(html.indexOf('</ol>') < html.indexOf('id="workflow"'));
+  assert.ok(html.indexOf('id="workflow"') < html.indexOf('<video'));
+  assert.match(thread, /Image attachment omitted\./);
+  assert.match(html, /<details id="try-it" class="reproduce">/);
+  assert.match(html, /not a finished v17/);
 });
 
 test('shared theme persists and also works when storage is denied', () => {
