@@ -29,11 +29,14 @@ const versions = fs.readdirSync(path.join(media, 'versions'))
     return v;
   });
 if (!versions.length) throw new Error('No archived versions found');
+const latest = versions[0];
 const final = {
-  path: '../media/final/claude_v14_2880x2160.mp4',
-  sidebyside: '../media/final/claude_v14_sidebyside.mp4',
-  resolution: '2880x2160',
-  duration: versions[0].duration
+  label: latest.label,
+  path: latest.video,
+  sidebyside: latest.sidebyside,
+  resolution: latest.resolution,
+  sbs_resolution: latest.sbs_resolution,
+  duration: latest.duration
 };
 final.size = stat(final.path);
 final.sbs_size = stat(final.sidebyside);
