@@ -100,6 +100,13 @@ test('every manifest version and final media file exists', () => {
   const data = JSON.parse(read(path.join(dir, 'data.json')));
   assert.equal(data.iteration, versions[0].id);
   assert.equal(data.label, versions[0].label);
+  assert.equal(data.final.label, 'v18');
+  assert.equal(data.final.path, '../media/versions/v18/render.mp4');
+  assert.equal(data.final.sidebyside, '../media/versions/v18/sidebyside.mp4');
+  assert.equal(data.final.resolution, '1440x1080');
+  assert.equal(data.final.sbs_resolution, '2880x1080');
+  assert.equal(data.final.size, versions[0].size);
+  assert.equal(data.final.sbs_size, versions[0].sbs_size);
   const v18 = versions.find(v => v.label === 'v18');
   assert.equal(v18.hash, 'fda013a');
   assert.deepEqual(v18.scores, [7.5, 7.0, 8.5]);
@@ -107,6 +114,103 @@ test('every manifest version and final media file exists', () => {
   const files = [data.final.path, data.final.sidebyside];
   for (const version of versions) files.push(version.video, version.sidebyside, ...version.sheets, ...(version.extras || []).map(x => x.src));
   for (const file of files) assert.ok(fs.statSync(path.resolve(dir, file)).size > 0, file);
+});
+
+test('showcase keeps the version archive without the numbered navigator or forced scrolling', () => {
+  const html = site('index.html');
+  assert.doesNotMatch(html, /Every version<\/h2>|id="(?:pick|strip)"|\.strip\b|\.vh\b|\$\('strip'\)|scrollIntoView|scrollTo\(/);
+  assert.match(html, /<h2>Version history<\/h2>/);
+  assert.match(html, /<div class="versions" id="versions"><\/div>/);
+  assert.match(html, /vers\.forEach\(function\(v, i\)/);
+  assert.match(html, /d\.id = 'ver-' \+ v\.label/);
+  assert.match(html, /d\.addEventListener\('toggle'/);
+  assert.match(html, /playerTabs\(ph, v\)/);
+  assert.match(html, /window\.addEventListener\('hashchange', openFromHash\)/);
+
+  // Direct version fragments still expand their target; unrelated fragments do not.
+  const handler = html.match(/function openFromHash\(\)\{[^\n]+\}/)[0];
+  const version = { tagName: 'DETAILS', open: false };
+  const section = { tagName: 'SECTION' };
+  const context = {
+    location: { hash: '#ver-v18' },
+    document: { getElementById: id => ({ 'ver-v18': version, originalsec: section })[id] }
+  };
+  vm.runInNewContext(handler + '; openFromHash();', context);
+  assert.equal(version.open, true);
+  for (const hash of ['#originalsec', '#missing', '']) {
+    context.location.hash = hash;
+    vm.runInNewContext('openFromHash();', context);
+    assert.equal(section.open, undefined);
+  }
+});
+
+test('featured player stays full-width and its container follows each video aspect ratio', () => {
+  const html = site('index.html');
+  const css = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  assert.match(css, /\.hero\{[^}]*grid-template-columns:minmax\(0,1fr\)/);
+  const heroRules = [...css.matchAll(/\.hero\{([^}]*)\}/g)].map(m => m[1]);
+  assert.equal(heroRules.filter(rule => rule.includes('grid-template-columns')).length, 1,
+    'desktop must not put the featured media back in an adjacent column');
+  const mediaRules = [...css.matchAll(/(?:#featplayer|\.screen video)\{([^}]*)\}/g)].map(m => m[1]);
+  for (const rule of mediaRules) assert.doesNotMatch(rule, /(?:min-height|max-height|height):/,
+    'featured height must come from the video, not a viewport reserve or cap');
+  assert.match(css, /#featplayer\{margin-top:0\}/);
+  assert.match(css, /video\{[^}]*width:100%;height:auto;aspect-ratio:4\/3/);
+  assert.match(css, /\.screen video\{object-fit:contain\}/);
+
+  // Exercise the actual tab handler: mode changes must set 4:3 / 8:3 on the video,
+  // never reserve a separate host height, and retain the native media controls.
+  function element(tag) {
+    return {
+      tag, children: [], style: {}, dataset: {}, attrs: {}, currentTime: 0, paused: true,
+      appendChild(child) { this.children.push(child); },
+      setAttribute(key, value) { this.attrs[key] = value; },
+      querySelectorAll(tag) { return this.children.filter(child => child.tag === tag); }
+    };
+  }
+  const context = { el: element, esc: s => s, vsrc: (v, src) => src };
+  const player = html.match(/function playerTabs\(host, v\)\{[\s\S]*?(?=\n  function getJSON)/)[0];
+  vm.runInNewContext(player, context);
+  const host = element('section');
+  const video = context.playerTabs(host, { video: 'render.mp4', sidebyside: 'sidebyside.mp4' });
+  const tabs = host.children[0].querySelectorAll('button');
+  assert.equal(video.controls, true);
+  assert.equal(video.playsInline, true);
+  assert.equal(video.style.aspectRatio, '4/3');
+  tabs[1].onclick();
+  assert.equal(video.style.aspectRatio, '8/3');
+  assert.equal(video.src, 'sidebyside.mp4');
+  tabs[0].onclick();
+  assert.equal(video.style.aspectRatio, '4/3');
+  assert.equal(video.src, 'render.mp4');
+  assert.deepEqual(host.style, {});
+});
+
+test('featured playback is side-by-side only and final presentation uses authentic result metadata', () => {
+  const html = site('index.html');
+  assert.doesNotMatch(html, /playerTabs\(\$\('featplayer'\)/);
+  assert.match(html, /aria-label="Latest version side-by-side comparison"/);
+  const featured = html.match(/var featured = el\('video'\);[\s\S]*?\$\('featplayer'\)\.appendChild\(featured\);/)[0];
+  const host = { children: [], appendChild(child) { this.children.push(child); } };
+  const context = {
+    el: tag => ({ tag, style: {} }),
+    top: { sidebyside: 'v18/sidebyside.mp4', video: 'v18/render.mp4' },
+    vsrc: (v, src) => src,
+    $: id => { assert.equal(id, 'featplayer'); return host; }
+  };
+  vm.runInNewContext(featured, context);
+  assert.equal(host.children.length, 1);
+  const video = host.children[0];
+  assert.equal(video.tag, 'video');
+  assert.equal(video.src, 'v18/sidebyside.mp4');
+  assert.equal(video.style.aspectRatio, '8/3');
+  assert.equal(video.controls, true);
+  assert.equal(video.playsInline, true);
+  assert.match(html, /var resolution = result\.resolution/);
+  assert.match(html, /var sbsResolution = result\.sbs_resolution/);
+  assert.doesNotMatch(html, /The final 2880|love-motion-final-2880/);
+  assert.match(html, /Historical v14 exports, not v18:/);
+  assert.match(html, /latest archived v18 render is 1440&times;1080/);
 });
 
 test('published session data and pages carry no private data or hidden reasoning', () => {

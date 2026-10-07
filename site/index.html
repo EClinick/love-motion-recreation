@@ -17,10 +17,10 @@
 <style>
 .wrap{max-width:1180px;margin:0 auto;padding:0 var(--gutter)}
 .hero{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;padding:44px 0 8px}
-@media (min-width:1000px){.hero{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:center;padding:56px 0 12px}}
-.screen video{max-height:64vh;object-fit:contain}
-#featplayer{min-height:min(64vh,calc((100vw - 2 * var(--gutter)) * .75))}
-@media (min-width:1000px){#featplayer{min-height:min(64vh,30vw)}}
+@media (min-width:1000px){.hero{padding:56px 0 12px}}
+/* The featured media gets the full column; each mode supplies its own aspect ratio. */
+.screen video{object-fit:contain}
+#featplayer{margin-top:0}
 h1{font-weight:900;font-size:var(--t-7);line-height:.92;letter-spacing:-.05em;margin:0 0 18px}
 .lede{font-size:var(--t-3);line-height:1.5;margin:0 0 10px;max-width:36ch}
 .muted,.note{color:var(--graphite);font-size:var(--t-1)}
@@ -29,7 +29,7 @@ h3{font-weight:900;font-size:var(--t-2);margin:20px 0 0}
 p{margin:0 0 12px}
 .mono{font-family:var(--font-mono);font-size:.85em}
 .screen{background:var(--frame);border-radius:10px;overflow:hidden;color:#E7E4DD}
-.screen .feat-title{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:var(--t-1)}
+.screen .feat-title{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:10px 14px;font-size:var(--t-1)}
 .latest-tag{font-weight:900;color:#fff}
 .screen .warn{color:#A9A49B;font-size:var(--t-0)}
 video{display:block;width:100%;height:auto;aspect-ratio:4/3;background:#000}
@@ -38,11 +38,6 @@ video{display:block;width:100%;height:auto;aspect-ratio:4/3;background:#000}
 .meta dt{font-size:var(--t-0);color:var(--graphite)}
 .meta dd{margin:2px 0 0;font-size:var(--t-1);font-weight:700;line-height:1.45;word-break:break-word}
 dl{margin:0}
-.strip{display:flex;gap:6px;overflow-x:auto;padding:4px 2px 12px;margin:16px 0 0;list-style:none}
-.strip a{flex:0 0 auto;display:grid;place-items:center;min-width:52px;height:52px;border-radius:8px;background:var(--paper-raised);border:1px solid var(--rule);font-weight:900;text-decoration:none;font-variant-numeric:tabular-nums}
-.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.strip a:hover{border-color:var(--ink)}
-.strip a[aria-current="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:inset 0 -4px 0 var(--signal)}
 .how{display:grid;gap:14px;align-items:center;background:var(--frame);color:#E7E4DD;border-radius:10px;padding:20px 22px;margin:36px 0 0}
 @media (min-width:800px){.how{grid-template-columns:minmax(0,1fr) auto}}
 .how p{margin:0;font:600 .95rem/1.6 var(--font-mono)}
@@ -133,8 +128,8 @@ audio{width:100%;max-width:520px;margin-top:8px}
     <p class="muted">18 versions so far. Every side-by-side puts the reference on the left and the recreation on the right.</p>
   </div>
   <div class="screen">
-    <div class="feat-title"><span class="latest-tag" id="feat-tag">latest</span><span class="warn">Fast cuts and flashing imagery.</span></div>
-    <section class="player" id="featplayer" aria-label="Latest version"></section>
+    <div class="feat-title"><span class="latest-tag" id="feat-tag">latest comparison</span><span class="warn">Reference left, recreation right. Fast cuts and flashing imagery.</span></div>
+    <section class="player" id="featplayer" aria-label="Latest version side-by-side comparison"></section>
   </div>
 </section>
 
@@ -152,10 +147,6 @@ audio{width:100%;max-width:520px;margin-top:8px}
   <a href="how-we-made-this.html">Read how I made this</a>
 </aside>
 
-<h2 id="pick">Every version</h2>
-<p class="note">Pick one to open its render, side-by-side, changes and judge scores below.</p>
-<nav aria-labelledby="pick"><ol class="strip" id="strip"></ol></nav>
-
 <section id="originalsec">
   <h2>Original video</h2>
   <div class="card player"><video controls playsinline preload="metadata" src="../media/original/original.mp4"></video></div>
@@ -164,8 +155,9 @@ audio{width:100%;max-width:520px;margin-top:8px}
 </section>
 
 <section id="finalsec" hidden>
-  <h2>Final render</h2>
+  <h2>Final result</h2>
   <div class="card finalbox" id="final"></div>
+  <p class="note">Historical v14 exports, not v18: <a href="../media/final/claude_v14_2880x2160.mp4">2880&times;2160 render</a> and <a href="../media/final/claude_v14_sidebyside.mp4">2880&times;1080 comparison</a>.</p>
 </section>
 
 <h2>Latest comparison sheets</h2>
@@ -212,7 +204,7 @@ audio{width:100%;max-width:520px;margin-top:8px}
 
 <h2>How it is made</h2>
 <p><a href="how-we-made-this.html">Read the actual messages and what Claude did after each one</a>, or the <a href="session.html">full session</a>.</p>
-<p><b>Renderer.</b> Node with <code>@napi-rs/canvas</code> (Skia) draws each frame across worker threads. Segments are encoded with ffmpeg and muxed with the audio. Previews render at 1440&times;1080; the final render is 2880&times;2160 with 4-sample motion blur.</p>
+<p><b>Renderer.</b> Node with <code>@napi-rs/canvas</code> (Skia) draws each frame across worker threads. Segments are encoded with ffmpeg and muxed with the audio. The latest archived v18 render is 1440&times;1080; its side-by-side comparison is 2880&times;1080. The earlier v14 export is 2880&times;2160 with 4-sample motion blur, not a high-resolution v18 result.</p>
 <p><b>Judge loop.</b> After each render, a script builds contact sheets of the reference next to the render at 4 fps. Several Sonnet &ldquo;judge&rdquo; agents compare them, score sections out of 10 and list the biggest differences. Those notes become the next iteration&rsquo;s fixes, and the cycle repeats.</p>
 
 <h2>Score progress</h2>
@@ -305,8 +297,11 @@ audio{width:100%;max-width:520px;margin-top:8px}
     var top = vers[0];
 
     // ---- featured (latest)
-    $('feat-tag').textContent = top.label + ', the latest version';
-    playerTabs($('featplayer'), top);
+    $('feat-tag').textContent = top.label + ', the latest comparison';
+    var featured = el('video');
+    featured.controls = true; featured.playsInline = true; featured.preload = 'metadata';
+    featured.style.aspectRatio = '8/3'; featured.src = vsrc(top, top.sidebyside);
+    $('featplayer').appendChild(featured);
     $('m-hash').innerHTML = hashLink(top);
     $('m-msg').textContent = top.subject || '';
     $('m-cdate').textContent = fmt(top.commit_date);
@@ -316,34 +311,32 @@ audio{width:100%;max-width:520px;margin-top:8px}
     if(data.generated) $('gen').textContent = 'Site data refreshed ' + fmt(data.generated) + '.';
     gallery($('gallery'), top);
 
-    // ---- final 4K slot: shown only if the file exists
+    // ---- authentic latest result: shown only if the archived files exist
     function head(u){ return fetch(u, {method:'HEAD', cache:'no-store'}).then(function(r){ return r.ok ? (+r.headers.get('content-length') || 1) : 0; }).catch(function(){ return 0; }); }
     var finalPath = data.final && data.final.path;
     var finalSbs = data.final && data.final.sidebyside;
     Promise.all([finalPath ? head(finalPath) : 0, finalSbs ? head(finalSbs) : 0]).then(function(r){
       var f = r[0], sb = r[1]; if(!f && !sb) return;
       var mb = function(n){ return n > 1 ? ' \u00b7 ' + (n/1048576).toFixed(0) + ' MB' : ''; };
-      var fv = (data.final && data.final.date) ? (Date.parse(data.final.date)/1000|0) : 0;
-      var h = '<p style="margin:0">The final 2880\u00d72160 render' + (sb ? ', with the reference next to it.' : '.') + '</p><div class="btnrow">';
-      if(f) h += '<a class="btn" href="' + esc(finalPath) + '" download="love-motion-final-2880x2160.mp4">Download final \u00b7 2880\u00d72160' + mb(f) + '</a>';
-      if(sb) h += '<a class="btn alt" href="' + esc(finalSbs) + '" download="love-motion-final-sidebyside.mp4">Download side-by-side' + mb(sb) + '</a>';
+      var result = data.final;
+      var label = result.label || top.label;
+      var resolution = result.resolution || top.resolution;
+      var sbsResolution = result.sbs_resolution || top.sbs_resolution;
+      var h = '<p style="margin:0">' + esc(label) + ', the latest available result. Render: ' + esc(resolution) + (sb ? '; side-by-side: ' + esc(sbsResolution) : '') + '.</p><div class="btnrow">';
+      if(f) h += '<a class="btn" href="' + esc(finalPath) + '" download="love-motion-' + esc(label) + '-' + esc(resolution) + '.mp4">Download ' + esc(label) + ' render \u00b7 ' + esc(resolution) + mb(f) + '</a>';
+      if(sb) h += '<a class="btn alt" href="' + esc(finalSbs) + '" download="love-motion-' + esc(label) + '-sidebyside.mp4">Download ' + esc(label) + ' side-by-side \u00b7 ' + esc(sbsResolution) + mb(sb) + '</a>';
       $('final').innerHTML = h + '</div>';
       if(f){
         var ph = el('div', 'ptabs'); $('final').appendChild(ph);
-        var fvid = playerTabs(ph, {label:'final', v:fv, video:finalPath, sidebyside:sb ? finalSbs : null});
+        playerTabs(ph, {label:label, video:finalPath, sidebyside:sb ? finalSbs : null});
       }
       $('finalsec').hidden = false;
     });
 
     // ---- version history
-    var box = $('versions'), strip = $('strip');
-    vers.slice().reverse().forEach(function(v){
-      var li = el('li'), a = el('a', null, '<span class="vh">Version </span>' + esc(v.label.replace(/^v/, '')) + (v === vers[0] ? '<span class="vh">, latest</span>' : ''));
-      a.href = '#ver-' + v.label;
-      if(v === vers[0]) a.setAttribute('aria-current', 'true');
-      li.appendChild(a); strip.appendChild(li);
-    });
-    function openFromHash(){ var d = location.hash && document.getElementById(location.hash.slice(1)); if(d && d.tagName === 'DETAILS'){ d.open = true; d.scrollIntoView(); } }
+    var box = $('versions');
+    // Keep direct version fragments working without forcing a second page scroll.
+    function openFromHash(){ var d = location.hash && document.getElementById(location.hash.slice(1)); if(d && d.tagName === 'DETAILS'){ d.open = true; } }
     window.addEventListener('hashchange', openFromHash);
     vers.forEach(function(v, i){
       var d = el('details', 'card ver' + (i===0 ? ' latest' : ''));

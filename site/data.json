@@ -2,11 +2,13 @@
   "iteration": "iter18",
   "label": "v18",
   "final": {
-    "path": "../media/final/claude_v14_2880x2160.mp4",
-    "sidebyside": "../media/final/claude_v14_sidebyside.mp4",
-    "resolution": "2880x2160",
+    "label": "v18",
+    "path": "../media/versions/v18/render.mp4",
+    "sidebyside": "../media/versions/v18/sidebyside.mp4",
+    "resolution": "1440x1080",
+    "sbs_resolution": "2880x1080",
     "duration": 20.458,
-    "size": 70149411,
-    "sbs_size": 29942214
+    "size": 11542284,
+    "sbs_size": 27693538
   }
 }

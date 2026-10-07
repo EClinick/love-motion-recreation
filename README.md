@@ -105,8 +105,9 @@ node src/render.js --stills 2.5,8.7  # single frames to out/stills
 
 Run `npm run site`, then open http://127.0.0.1:8787/site/. The page includes
 the original video and soundtrack, all 18 archived renders and their side-by-side videos,
-v18 as the latest version, the historical v14 2880×2160 export, synchronized version
-comparison, scores, contact sheets, and shape overlays. It preserves the original showcase
+v18 as the featured side-by-side comparison and final result (1440×1080 render,
+2880×1080 comparison), clearly labelled historical v14 export links, synchronized
+version comparison, scores, contact sheets, and shape overlays. It preserves the original showcase
 styling and interactions.
 
 `npm run site:build` creates a portable static website in `dist/` using the
