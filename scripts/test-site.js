@@ -95,7 +95,7 @@ test('walkthrough is static, labelled and free of private transcript identifiers
   const html = read(path.join(root, 'site', 'how-we-made-this.html'));
   assert.equal((html.match(/<h1\b/g) || []).length, 1);
   assert.match(html, /<main id="main" tabindex="-1">/);
-  assert.match(html, /aria-current="page">How we made this/);
+  assert.match(html, /aria-current="page">How I made this/);
   for (const section of ['prompts', 'follow-ups', 'workflow', 'lessons', 'try-it', 'sources']) assert.match(html, new RegExp(`id="${section}"`));
   assert.doesNotMatch(html, /starter-prompt|Suggested prompt|class="steps"|class="chapter-nav"/);
   assert.match(html, /Archive caveat:/);
@@ -128,6 +128,22 @@ test('actual prompts lead, remain chronological, and precede the AI explanation'
   assert.match(thread, /Image attachment omitted\./);
   assert.match(html, /<details id="try-it" class="reproduce">/);
   assert.match(html, /not a finished v17/);
+});
+
+test('singular walkthrough framing retains the existing route and historical plural quotes', () => {
+  const html = read(path.join(root, 'site', 'how-we-made-this.html'));
+  assert.match(html, /<title>How I made this · Love Motion Recreation<\/title>/);
+  assert.match(html, /<h1>How I made <span>this\.<\/span><\/h1>/);
+  assert.match(html, /<meta name="description" content="How I made Love Motion Recreation:/);
+  assert.match(html, /And then I kept directing it\./);
+  const authoredText = html.replace(/<blockquote\b[^>]*>[\s\S]*?<\/blockquote>/g, '').replace(/<[^>]+>/g, ' ');
+  assert.doesNotMatch(authoredText, /\b(?:we|our|ours|us)\b/i);
+  assert.match(html, /We should do this for every new version too\./);
+  assert.match(html, /Have sonnet do that for us while we do this<\/blockquote>/);
+  const showcase = read(path.join(root, 'site', 'index.html'));
+  assert.match(showcase, /href="how-we-made-this\.html">How I made this<\/a>/);
+  assert.match(showcase, /aria-label="How I made this"/);
+  assert.match(showcase, /href="how-we-made-this\.html">Read how I made this →<\/a>/);
 });
 
 test('walkthrough uses genuine pinned v18 media without replacing the original reference', () => {

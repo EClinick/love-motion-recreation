@@ -100,7 +100,7 @@ lives at `/site/`, and the homepage links to it. No reference downloads or
 rendering steps are needed. Generated manifests in `site/` also let the page
 work when the repository root is served directly.
 
-### How we made this
+### How I made this
 
 The linked [`site/how-we-made-this.html`](site/how-we-made-this.html) page leads
 with the actual initial prompt (local media folder redacted), then 20 selected human
