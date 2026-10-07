@@ -1899,12 +1899,75 @@ function sceneCuriosity(ctx, t, f) {
     ctx.restore();
     return;
   }
+  if (t < 11.032) {
+    // frame 264: a grainy crimson ring around the centred record, caret block only
+    const [c, x] = off(0);
+    drawSprite(x, 'vinyl', 720, 532, 461, -0.15);
+    x.fillStyle = CREAM;
+    x.fillRect(912, 490, 74, 90);
+    x.fillStyle = '#141313';
+    x.fillRect(944, 516, 16, 14);
+    composite(ctx, c, { blur: 2.5 });
+    const r = rng(264);
+    ctx.save();
+    ctx.filter = `blur(${2 * S}px)`;
+    ctx.strokeStyle = 'rgba(130,12,26,0.55)';
+    ctx.lineWidth = 30;
+    ctx.beginPath();
+    ctx.arc(722, 530, 672, 0, 7);
+    ctx.stroke();
+    ctx.restore();
+    // speckle the ring so it reads as grainy spray
+    ctx.fillStyle = '#c21a2c';
+    for (let i = 0; i < 2600; i++) {
+      const a = r() * Math.PI * 2;
+      const d = 672 + (r() + r() - 1) * 22;
+      ctx.globalAlpha = 0.35 + r() * 0.5;
+      ctx.fillRect(722 + Math.cos(a) * d, 530 + Math.sin(a) * d, 3, 3);
+    }
+    ctx.globalAlpha = 1;
+    return;
+  }
+  if (t < 11.073) {
+    // frame 265: record slides left, "curiosi" under a wide selection block, scribbled zigzags
+    const [c, x] = off(0);
+    drawSprite(x, 'vinyl', 500, 540, 468, 0.1);
+    composite(ctx, c, { blur: 1.5 });
+    fx.text(ctx, 'curiosity.', 774, 558, CARD, CREAM, { glow: 'rgba(243,239,232,0.35)', glowBlur: 6 });
+    ctx.fillStyle = CREAM;
+    ctx.fillRect(1034, 486, 326, 98);
+    const P = (pts) => pts.map(([a, b]) => [(a - 720) * 2, b * 2]);
+    [
+      [[1025, 155], [1140, 88], [1092, 168], [1298, 84], [1262, 110]],
+      [[1120, 310], [1302, 398], [1160, 402]],
+      [[1052, 362], [1068, 390], [1042, 404], [1072, 514], [986, 425]],
+      [[1132, 216], [1150, 210], [1162, 222], [1178, 218]],
+    ].forEach((pts) => fx.strokePartial(ctx, P(pts), 0, 1, 7, '#ecE8e2', false));
+    [
+      [[1070, 190], [1285, 140], 11],
+      [[1045, 355], [1185, 404], 10],
+      [[1104, 286], [1130, 283], 5],
+    ].forEach(([a, b, w]) => {
+      const [p0, p1] = P([a, b]);
+      const mx = (p0[0] + p1[0]) / 2;
+      const my = (p0[1] + p1[1]) / 2;
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.rotate(Math.atan2(p1[1] - p0[1], p1[0] - p0[0]));
+      ctx.fillStyle = '#d8141e';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / 2, w, 0, 0, 7);
+      ctx.fill();
+      ctx.restore();
+    });
+    return;
+  }
   const pan = 0;
   ctx.save();
   const vin = ease.outBack(inv(11.01, 11.15, t));
   const vx = kf(t, [[11.01, 500], [11.08, 496], [11.25, 430, 'outCubic'], [11.6, 410], [11.81, 250, 'inQuad']]);
-  drawSprite(ctx, 'vinyl', vx, 545, 400 * lerp(0.85, 1, vin), noise1(t, 9) * 0.05 - 1.5 * Math.max(0, t - 11.26));
-  if (t < 11.16) {
+  drawSprite(ctx, 'vinyl', vx, 545, 456 * lerp(0.9, 1, vin), noise1(t, 9) * 0.05 - 1.5 * Math.max(0, t - 11.26));
+  if (t < 11.115) {
     const q = inv(11.01, 11.16, t);
     const drift = q * 40;
     [[660, 330, 1050, 150], [720, 300, 940, 210], [900, 765, 1275, 675], [610, 930, 650, 900]].forEach(([a, b, c, d]) => {
@@ -1924,9 +1987,36 @@ function sceneCuriosity(ctx, t, f) {
   }
   const pop = (t0) => ease.outBack(inv(t0, t0 + 0.12, t), 2.2);
   const nd = ease.inQuad(inv(11.6, 11.81, t));
-  if (t > 11.1) note(ctx, 'quarter', 1044 - 130 * nd, 800, pop(11.1) * 1.7, -0.33 - 0.3 * nd + noise1(t, 1) * 0.08);
-  if (t > 11.35) note(ctx, 'beam', 750 - 120 * nd, 270 - 30 * nd, pop(11.35) * 1.9, -0.12 + 0.6 * nd + noise1(t, 2) * 0.08);
-  if (t > 11.42) note(ctx, 'eighth', 630 - 140 * nd, 815, pop(11.42) * 1.9, 0.15 + 0.1 * nd + noise1(t, 3) * 0.08);
+  // white pen flick above the text: a loop that tightens to a crescent, then a shrinking tick
+  const FL = [
+    [11.115, 11.157, 'loop', 945, 215, 62],
+    [11.157, 11.199, 'cres', 945, 203, 26],
+    [11.199, 11.24, 'tick', 945, 140, 14],
+    [11.24, 11.282, 'cres', 900, 138, 12],
+    [11.282, 11.365, 'dot', 815, 150, 5],
+    [11.45, 11.49, 'arc', 965, 205, 120],
+    [11.49, 11.532, 'cres', 1035, 292, 22],
+    [11.532, 11.574, 'dot', 990, 315, 4],
+  ];
+  FL.forEach(([a, b, kind, fx0, fy0, r]) => {
+    if (t < a || t >= b) return;
+    ctx.save();
+    ctx.strokeStyle = '#ece8e2';
+    ctx.fillStyle = '#ece8e2';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = kind === 'arc' ? 3 : 4;
+    ctx.beginPath();
+    if (kind === 'loop') ctx.ellipse(fx0, fy0, r * 0.55, r * 0.4, -0.5, 0.4, 6.0);
+    else if (kind === 'cres') ctx.arc(fx0, fy0, r, 0.3, 2.4);
+    else if (kind === 'tick') { ctx.moveTo(fx0, fy0 - r); ctx.quadraticCurveTo(fx0 + r * 0.6, fy0, fx0 + r * 0.2, fy0 + r); }
+    else if (kind === 'arc') ctx.arc(fx0, fy0 + r, r, -1.75, 0.35);
+    else { ctx.arc(fx0, fy0, r, 0, 7); ctx.fill(); }
+    if (kind !== 'dot') ctx.stroke();
+    ctx.restore();
+  });
+  if (t > 11.1) note(ctx, 'quarter', 955 - 130 * nd, 800, pop(11.1) * 1.7, -0.33 - 0.3 * nd + noise1(t, 1) * 0.08);
+  if (t > 11.39) note(ctx, 'beam', 710 - 120 * nd, 270 - 30 * nd, pop(11.39) * 1.75, -0.12 - 0.5 * (1 - inv(11.43, 11.47, t)) + 0.6 * nd + noise1(t, 2) * 0.08);
+  if (t > 11.57) note(ctx, 'eighth', 630 - 140 * nd, 790, pop(11.57) * 1.9, 0.15 + 0.1 * nd + noise1(t, 3) * 0.08);
   ctx.restore();
   sparks(ctx, t, 6, 5);
   typed(ctx, 'curiosity.', 10.9, t, 804 + pan, 526, 1323 + pan, 0.17);
