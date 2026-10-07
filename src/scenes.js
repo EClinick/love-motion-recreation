@@ -2949,7 +2949,7 @@ function sceneLove(ctx, t, f) {
       ctx.restore();
       return;
     }
-    const w = kf(t, [[15.91, 280], [16.08, 292], [16.14, 337, 'inQuad'], [16.19, 460, 'inQuad']]);
+    const w = kf(t, [[15.91, 270], [15.97, 300], [16.016, 307], [16.1, 311], [16.14, 350, 'inQuad'], [16.19, 470, 'inQuad']]);
     const crush = inv(16.11, 16.17, t);
     const sh = inv(16.12, 16.18, t);
     if (sh > 0) {
@@ -2971,7 +2971,7 @@ function sceneLove(ctx, t, f) {
     ctx.ellipse(735, 425, w * 0.4, w * 0.14, 0, 0, 7);
     ctx.fill();
     ctx.restore();
-    drawSprite(ctx, 'heart', 728, 545, w, 0, 1, { shadow: 'rgba(30,16,16,0.35)', shadowBlur: 14, shadowY: -8 });
+    drawSprite(ctx, 'heart', kf(t, [[15.91, 706], [15.975, 718]]), 551, w, kf(t, [[15.91, 0.17], [15.975, 0]]), 1, { sy: 0.92, shadow: 'rgba(30,16,16,0.35)', shadowBlur: 14, shadowY: -8 });
     letter(ctx, 'L', LX[0], LY, LSIZE, mixHex('#3b1d18', '#8a8888', crush));
     return;
   }
@@ -2999,7 +2999,7 @@ function sceneLove(ctx, t, f) {
       ctx.fillStyle = g;
       ctx.fillRect(600, 440, 200, 200);
     }
-    drawSprite(ctx, 'camera', 722, 540, cw, crot + noise1(t, 3) * 0.02, 1, { sx: csx });
+    drawSprite(ctx, 'camera', 722, 552, cw, crot + noise1(t, 3) * 0.02, 1, { sx: csx, sy: 1.08 });
     ctx.filter = 'none';
     letter(ctx, 'L', LX[0], LY, LSIZE, CREAM);
     if (t > 16.245) letter(ctx, 'O', LX[1], LY, LSIZE, t > 16.46 ? '#3fb7d9' : CREAM);
@@ -3015,7 +3015,7 @@ function sceneLove(ctx, t, f) {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
     fx.grain(ctx, f + 2, 0.35);
-    drawSprite(ctx, 'camera', 702, 540, 486, 0.09, 1, { shadow: 'rgba(60,0,0,0.5)', shadowBlur: 20 });
+    drawSprite(ctx, 'camera', 692, 549, 480, 0.025, 1, { sy: 0.95, shadow: 'rgba(60,0,0,0.5)', shadowBlur: 20 });
     letter(ctx, 'L', LX[0], LY, LSIZE, '#2fb2e6');
     letter(ctx, 'O', LX[1], LY, LSIZE, '#9c9c9e');
     return;
