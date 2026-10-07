@@ -1596,21 +1596,25 @@ const pathMod = require('path');
 const HAND_DIR = pathMod.join(__dirname, '..', 'ref', 'derived', 'hand');
 const HEAD_DIR = pathMod.join(__dirname, '..', 'ref', 'derived', 'head');
 const handMasks = {};
+const handHot = {};
 const headMasks = {};
 const headHot = {};
 // Image decoding is async in @napi-rs/canvas, so masks are preloaded before rendering.
 async function preload() {
   const { loadImage } = require('@napi-rs/canvas');
-  for (const [dir, into] of [[HAND_DIR, handMasks], [HEAD_DIR, headMasks]]) {
+  for (const [dir, into, hotInto] of [[HAND_DIR, handMasks, handHot], [HEAD_DIR, headMasks, headHot]]) {
     if (!fsMod.existsSync(dir)) continue;
     for (const name of fsMod.readdirSync(dir)) {
       const m = /^(f|hot)_(\d+)\.png$/.exec(name);
-      if (m) (m[1] === 'hot' ? headHot : into)[Number(m[2])] = await loadImage(fsMod.readFileSync(pathMod.join(dir, name)));
+      if (m) (m[1] === 'hot' ? hotInto : into)[Number(m[2])] = await loadImage(fsMod.readFileSync(pathMod.join(dir, name)));
     }
   }
 }
 function handMask(t) {
   return handMasks[Math.round(t * C.FPS)] || null;
+}
+function handHotMask(t) {
+  return handHot[Math.round(t * C.FPS)] || null;
 }
 // nearest traced head frame (the tracer skips a few blurred / mid-transition frames)
 function headMask(t) {
@@ -1752,10 +1756,119 @@ function silhouette(mask, color) {
   return c;
 }
 
+// Hand colouring measured from the reference: lit from the left (pale yellow on the back of the
+// hand), yellow-orange toward the wrist, red along the right edge. Crisp outline. Per mask, cached.
+const HAND_PAL = [[0, [96, 12, 6]], [0.2, [184, 36, 16]], [0.38, [212, 80, 26]], [0.55, [218, 138, 36]], [0.7, [219, 168, 52]], [0.85, [220, 194, 104]], [1, [224, 206, 128]]];
+const handLut = (() => {
+  const lut = new Uint8Array(256 * 3);
+  for (let i = 0; i < 256; i++) {
+    const v = i / 255;
+    let k = 1;
+    while (k < HAND_PAL.length - 1 && HAND_PAL[k][0] < v) k++;
+    const [a, ca] = HAND_PAL[k - 1];
+    const [b, cb] = HAND_PAL[k];
+    const u = clamp((v - a) / (b - a));
+    for (let j = 0; j < 3; j++) lut[i * 3 + j] = Math.round(ca[j] + (cb[j] - ca[j]) * u);
+  }
+  return lut;
+})();
+const handCache = new Map();
+function handShade(mask) {
+  if (handCache.has(mask)) return handCache.get(mask);
+  const m = createCanvas(W, H);
+  const mx = m.getContext('2d');
+  mx.drawImage(mask, 0, 0, W, H);
+  const blurred = (r) => {
+    // extend the bottom rows past the frame so the wrist isn't read as an edge
+    const ext = createCanvas(W, H + 100);
+    const ex = ext.getContext('2d');
+    ex.drawImage(mask, 0, 0, W, H);
+    ex.drawImage(mask, 0, H - 2, W, 2, 0, H - 2, W, 102);
+    const b = createCanvas(W, H + 100);
+    const bx = b.getContext('2d');
+    bx.filter = `blur(${r}px)`;
+    bx.drawImage(ext, 0, 0);
+    return bx.getImageData(0, 0, W, H).data;
+  };
+  const b16 = blurred(16);
+  const b8 = blurred(8);
+  const md = mx.getImageData(0, 0, W, H);
+  const d = md.data;
+  let x0 = W, x1 = 0, y0 = H, y1 = 0;
+  for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (d[(y * W + x) * 4 + 3] > 128) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  const bw = Math.max(1, x1 - x0);
+  const bh = Math.max(1, y1 - y0);
+  const hx = x0 + 0.42 * bw;
+  const hy = y0 + 0.62 * bh;
+  const hr = 0.28 * bh;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * 4;
+      const a = d[i + 3];
+      if (!a) continue;
+      d[i + 3] = Math.max(0, Math.min(255, (a - 128) * 3 + 128)); // crisp edge
+      const e = clamp((b16[i + 3] / 255 - 0.5) * 2);
+      // red only where the silhouette ends to the right / lower right (not on top or left edges)
+      const j1 = (Math.min(H - 1, y + 16) * W + Math.min(W - 1, x + 16)) * 4;
+      const j2 = (Math.min(H - 1, y + 30) * W + Math.min(W - 1, x + 44)) * 4;
+      const right = clamp(((b8[i + 3] - b8[j1 + 3]) / 255) * 1.6);
+      const right2 = clamp(((b16[i + 3] - b16[j2 + 3]) / 255) * 1.3);
+      const u = (x - x0) / bw;
+      const vv = (y - y0) / bh;
+      const q = ((x - hx) ** 2 + (y - hy) ** 2) / (hr * hr);
+      let h = 0.6 + 0.05 * Math.sqrt(e) + 0.3 * Math.exp(-q) - 0.7 * Math.max(0, u - 0.6) - 0.38 * right - 0.08 * right2 + 0.14 * clamp(1 - vv / 0.3) - 0.14 * clamp((vv - 0.72) / 0.28);
+      const v = Math.max(0, Math.min(255, Math.round(h * 255))) * 3;
+      d[i] = handLut[v];
+      d[i + 1] = handLut[v + 1];
+      d[i + 2] = handLut[v + 2];
+    }
+  }
+  mx.putImageData(md, 0, 0);
+  if (handCache.size > 8) handCache.delete(handCache.keys().next().value);
+  handCache.set(mask, m);
+  return m;
+}
+
 // Thermal shading inside a traced silhouette (screen space).
-function tracedHand(ctx, mask, filter, tint = 0) {
+function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0) {
   const [c, x] = off(0);
-  x.drawImage(mask, 0, 0, W, H);
+  x.drawImage(handShade(mask), 0, 0, W, H);
+  if (pale > 0) {
+    // the hand drains to a pale grey, keeping a thin orange rim on its right edge
+    const pc = createCanvas(W, H);
+    const px = pc.getContext('2d');
+    px.filter = 'blur(16px)';
+    px.drawImage(mask, -5, -4, W, H);
+    px.filter = 'none';
+    px.globalCompositeOperation = 'source-in';
+    px.fillStyle = '#d3cdc7';
+    px.fillRect(0, 0, W, H);
+    x.save();
+    x.globalCompositeOperation = 'source-atop';
+    x.globalAlpha = pale * 0.9;
+    x.drawImage(pc, 0, 0, W, H);
+    x.drawImage(pc, 0, 0, W, H);
+    x.restore();
+  }
+  if (hot) {
+    // white-hot highlights (lit thumb / finger)
+    const hc = createCanvas(W, H);
+    const hx = hc.getContext('2d');
+    hx.drawImage(hot, 0, 0, W, H);
+    hx.globalCompositeOperation = 'source-in';
+    hx.fillStyle = '#e4e3d6';
+    hx.fillRect(0, 0, W, H);
+    x.save();
+    x.globalCompositeOperation = 'source-atop';
+    x.drawImage(hc, 0, 0, W, H);
+    x.restore();
+  }
+  if (tint <= 0) {
+    composite(ctx, c, { filter: filter || undefined });
+    return;
+  }
+  x.globalCompositeOperation = 'source-atop';
+  if (false) {
   x.globalCompositeOperation = 'source-in';
   const g = x.createLinearGradient(0, 330, 0, H);
   g.addColorStop(0, '#ee6020');
@@ -1805,13 +1918,15 @@ function tracedHand(ctx, mask, filter, tint = 0) {
   rx.fillStyle = side;
   rx.fillRect(0, 0, W, H);
   x.drawImage(rc, 0, 0, W, H);
+  }
   if (tint > 0) {
     // intro: crimson body with violet toward the lower right
-    x.fillStyle = `rgba(160,24,40,${0.95 * tint})`;
+    x.fillStyle = `rgba(214,20,38,${0.92 * tint})`;
     x.fillRect(0, 0, W, H);
-    const v = x.createRadialGradient(900, 1000, 10, 900, 1000, 360);
-    v.addColorStop(0, `rgba(80,40,160,${0.7 * tint})`);
-    v.addColorStop(1, 'rgba(80,40,160,0)');
+    const pv = 0.8 * clamp((tint - 0.55) / 0.45);
+    const v = x.createRadialGradient(730, 720, 10, 730, 720, 240);
+    v.addColorStop(0, `rgba(112,30,150,${pv})`);
+    v.addColorStop(1, 'rgba(112,30,150,0)');
     x.fillStyle = v;
     x.fillRect(0, 0, W, H);
   }
@@ -1819,18 +1934,10 @@ function tracedHand(ctx, mask, filter, tint = 0) {
   composite(ctx, c, { filter: filter || undefined });
 }
 function sceneHand(ctx, t, f) {
-  const bg = bgRamp(t, [[13.76, '#141313'], [15.4, '#141313'], [15.55, '#2c1517'], [15.66, '#3a2a2c'], [15.8, '#5b4e51'], [15.89, '#625658']]);
+  // background warms to red-brown then mauve-grey as the hand closes (measured per frame)
+  const bg = bgRamp(t, [[13.76, '#141313'], [15.47, '#151414'], [15.557, '#221417'], [15.599, '#251619'], [15.641, '#2a191b'], [15.682, '#2e1c1e'], [15.724, '#362426'], [15.766, '#3f2c2f'], [15.808, '#463437'], [15.849, '#4d3d41'], [15.89, '#524347']]);
   fx.dark(ctx, bg);
   const fallP = inv(15.6, 15.89, t);
-  if (fallP > 0) {
-    const bandG = ctx.createLinearGradient(440, 0, 1150, 0);
-    bandG.addColorStop(0, 'rgba(255,255,255,0)');
-    bandG.addColorStop(0.2, `rgba(255,255,255,${0.08 * fallP})`);
-    bandG.addColorStop(0.8, `rgba(255,255,255,${0.08 * fallP})`);
-    bandG.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = bandG;
-    ctx.fillRect(440, 0, 710, H);
-  }
   const settle = ease.inOutCubic(inv(13.76, 14.32, t));
   const fall = ease.inOutCubic(fallP);
   let pose;
@@ -1838,12 +1945,12 @@ function sceneHand(ctx, t, f) {
   else if (t < 15.0) pose = blendPose('open', 'open', 0);
   else if (t < 15.6) pose = blendPose('open', 'curl', ease.inOutCubic(inv(15.38, 15.56, t)));
   else pose = blendPose('curl', 'fist', fall);
-  const traced = t < 15.62 ? handMask(t) : null;
+  const traced = handMask(t);
   if (traced) {
     let filt = '';
-    if (settle < 1) filt = `brightness(${lerp(0.66, 1, settle)}) blur(${(1 - settle) * 10 * S}px)`;
-    else if (fall > 0) filt = `saturate(${1 - fall * 0.85}) brightness(${1 - fall * 0.08})`;
-    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0);
+    if (settle < 1) filt = `brightness(${lerp(0.92, 1, settle)}) blur(${(1 - settle) * 10 * S}px)`;
+    else if (t > 15.64) filt = `saturate(${kf(t, [[15.64, 1], [15.77, 0.85]])}) brightness(${kf(t, [[15.64, 1], [15.77, 0.92], [15.81, 0.97]])})`;
+    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0, handHotMask(t), kf(t, [[15.77, 0], [15.8, 1]]));
   }
   const hand = traced ? null : thermalHand(pose);
   const [c, x] = traced ? [null, null] : off(0);
@@ -1884,62 +1991,93 @@ function sceneHand(ctx, t, f) {
     ctx.save();
     ctx.filter = `blur(${16 * S}px)`;
     ctx.globalAlpha = 0.75 * (1 - settle) * (1 - settle);
-    fx.strokePartial(ctx, [[800, 1080], [805, 880], [780, 700]], 0, 1, 46, '#5030a0', false);
+    if (!traced) fx.strokePartial(ctx, [[800, 1080], [805, 880], [780, 700]], 0, 1, 46, '#5030a0', false);
     ctx.restore();
   }
   // white swirl arcs during the intro
-  if (t < 14.25) {
-    const q = inv(13.76, 14.2, t);
-    for (let k = 0; k < 2; k++) {
-      const cx = k === 0 ? 360 : 690;
-      const pts = [];
-      for (let i = 0; i <= 40; i++) pts.push([cx + Math.sin((i / 40) * Math.PI) * (k ? 70 : -30), 420 + i * 8.25]);
+  // thin white orbit arcs spinning around the hand, shortening to dashes
+  if (t < 14.15) {
+    const q = inv(13.76, 14.1, t);
+    const span = lerp(0.75, 0.1, q);
+    const [ac, ax] = off(5);
+    ax.strokeStyle = `rgba(240,238,234,${0.75 * (1 - inv(14.05, 14.15, t))})`;
+    ax.lineCap = 'round';
+    ax.lineWidth = 5;
+    [[0, 1], [1.4, 0.92], [2.6, 1.05], [3.7, 0.88], [5.0, 0.97]].forEach(([a0, rk], k) => {
+      const a = a0 + t * 7 + k * 0.3;
+      ax.beginPath();
+      ax.ellipse(lerp(600, 640, q), lerp(660, 520, q), lerp(250, 200, q) * rk, lerp(400, 230, q) * rk, -0.35, a, a + span);
+      ax.stroke();
+    });
+    composite(ctx, ac, { blur: lerp(4, 2, q) });
+  }
+  // smoky white swooshes curling off the pinch (15.66-15.72)
+  if (t > 15.65 && t < 15.74) {
+    const a = Math.sin(Math.PI * inv(15.65, 15.74, t));
+    const [sc, sx] = off(5);
+    sx.strokeStyle = `rgba(236,232,228,${0.75 * a})`;
+    sx.lineCap = 'round';
+    [[[618, 445], [700, 452], [760, 430]], [[700, 420], [780, 395], [860, 365]], [[760, 372], [830, 352], [900, 340]]].forEach((pts, k) => {
+      sx.lineWidth = [7, 4, 3][k];
+      sx.beginPath();
+      sx.moveTo(...pts[0]);
+      sx.quadraticCurveTo(...pts[1], ...pts[2]);
+      sx.stroke();
+    });
+    composite(ctx, sc, { blur: 2.5 });
+  }
+  // thin bright motion streaks shooting left as the hand drops away (15.79-15.89)
+  if (t > 15.785) {
+    const q = inv(15.79, 15.86, t);
+    const [sc, sx] = off(5);
+    [[362, 3, 860], [384, 2, 820], [404, 4, 880], [428, 2, 840], [452, 3, 780]].forEach(([y, w, xr], k) => {
+      const xl = lerp(xr - 220, k % 2 ? 60 : 0, q);
+      const g = sx.createLinearGradient(xl, 0, xr, 0);
+      g.addColorStop(0, 'rgba(240,240,240,0.15)');
+      g.addColorStop(0.6, 'rgba(244,244,244,0.85)');
+      g.addColorStop(1, 'rgba(250,250,250,0.95)');
+      sx.fillStyle = g;
+      sx.fillRect(xl, y, xr - xl, w);
+    });
+    composite(ctx, sc, { blur: 1 });
+    // soft haze trailing on the left
+    const [hc, hx] = off(6);
+    hx.fillStyle = `rgba(230,228,226,${0.35 * q})`;
+    hx.fillRect(0, 330, 420 * q + 80, 150);
+    composite(ctx, hc, { blur: 30 });
+  }
+  // small white flecks (measured): three hanging in the air, one catching light on the index finger
+  if (t > 14.15 && t < 15.79) {
+    const u = inv(14.25, 15.45, t);
+    [[512, 368, 512, 366, -0.25, 13], [625, 400, 650, 398, 0.2, 10], [803, 304, 772, 263, -0.35, 12], [821, 574, 828, 574, 0.15, 14]].forEach(([ax, ay, bx2, by2, rot, len], i) => {
       ctx.save();
-      ctx.filter = `blur(${3 * S}px)`;
-      fx.strokePartial(ctx, pts, inv(0.6, 1, q), Math.min(1, q * 8), 7, 'rgba(240,236,230,0.75)');
+      ctx.translate(lerp(ax, bx2, u) + noise1(t * 2, i + 7) * 3, lerp(ay, by2, u) + noise1(t * 2, i + 11) * 3);
+      ctx.rotate(rot + noise1(t, i + 3) * 0.2);
+      ctx.shadowColor = 'rgba(255,255,255,0.6)';
+      ctx.shadowBlur = 4 * S;
+      ctx.fillStyle = 'rgba(248,246,242,0.95)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 2.2, len / 2, 0, 0, 7);
+      ctx.fill();
       ctx.restore();
-    }
+    });
   }
-  // thick blurred comet streaks converging left as the hand drops away
-  if (fall > 0) {
-    ctx.save();
-    ctx.filter = `blur(${11 * S}px)`;
-    const r = rng(90);
-    for (let i = 0; i < 5; i++) {
-      const y = 320 + r() * 160;
-      const x0 = 24 + r() * 300 + (1 - fall) * 200;
-      const g = ctx.createLinearGradient(x0, 0, x0 + 520, 0);
-      g.addColorStop(0, `rgba(245,240,236,${0.8 * fall})`);
-      g.addColorStop(1, 'rgba(245,240,236,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(x0, y, 520, 8 + r() * 10);
-    }
-    ctx.restore();
-  }
-  // a few long streaky specks drifting down
-  [[510, 366], [660, 399], [786, 270], [700, 220]].forEach(([px, py], i) => {
-    ctx.save();
-    ctx.translate(px + noise1(t, i) * 10, py + ((t * 40 + i * 30) % 90));
-    ctx.rotate(0.35);
-    ctx.fillStyle = 'rgba(240,236,230,0.85)';
-    ctx.fillRect(-2, -10, 4, 20);
-    ctx.restore();
-  });
   // text (drifts left with a horizontal smear at the end)
-  const ti = inv(13.82, 14.0, t);
+  const ti = ease.inQuad(inv(13.85, 14.17, t));
   const grey = inv(15.5, 15.75, t);
   const col = mixHex(CREAM, '#a09898', grey);
   const dx = -235 * ease.inCubic(fallP);
   const glow = { glow: 'rgba(243,239,232,0.3)', glowBlur: 6 };
-  fx.text(ctx, t < 13.95 ? 'through' : 'through ones', 215 + dx, 545, BODY, col, { blur: (1 - ti) * 8 + fallP * 3, ...glow });
-  if (t > 14.2) {
-    const word = t < 14.45 ? 'own' : t < 15.7 ? 'own ability' : 'own ability to';
-    fx.text(ctx, word, 950 + dx, 545, BODY, col, { blur: fallP * 3, ...glow });
-    if (t < 14.45) {
-      const w = fx.measure(ctx, word, BODY);
-      ctx.fillStyle = CREAM;
-      ctx.fillRect(950 + w + 60, 522, 8, 46);
-    }
+  fx.text(ctx, t < 13.87 ? 'through' : 'through ones', 215 + dx, 545, BODY, col, { blur: (1 - ti) * 8 + fallP * 3, ...glow });
+  // typing cursor (measured per frame): wide block, then "own", block shrinking to a bar
+  ctx.fillStyle = '#efe9e4';
+  if (t > 14.2 && t < 14.243) ctx.fillRect(880, 520, 166, 46);
+  else if (t >= 14.243 && t < 14.285) ctx.fillRect(1052, 520, 150, 46);
+  else if (t >= 14.285 && t < 14.327) ctx.fillRect(1110, 520, 30, 46);
+  else if (t >= 14.327 && t < 14.41) ctx.fillRect(1130, 520, 7, 46);
+  if (t >= 14.243) {
+    const word = t < 14.49 ? 'own' : t < 15.665 ? 'own ability' : 'own ability to';
+    fx.text(ctx, word, 950 + dx, 545, BODY, col, { blur: fallP * 3 + (t > 14.44 && t < 14.49 ? 4 : 0), ...glow });
   }
 }
 
@@ -1961,15 +2099,32 @@ function sceneLove(ctx, t, f) {
   if (t < 16.2) {
     ctx.fillStyle = '#e3e3e3';
     ctx.fillRect(0, 0, W, H);
-    const w = kf(t, [[15.89, 290], [16.08, 312], [16.2, 470, 'inQuad']]);
-    const crush = inv(16.1, 16.18, t);
+    if (t < 15.91) {
+      // first frame: the heart flies in as a tiny tilted red streak
+      ctx.save();
+      ctx.filter = `blur(${2 * S}px)`;
+      ctx.translate(662, 505);
+      ctx.rotate(-0.95);
+      ctx.fillStyle = 'rgba(40,24,24,0.55)';
+      ctx.beginPath();
+      ctx.ellipse(-6, 6, 38, 14, 0, 0, 7);
+      ctx.fill();
+      ctx.fillStyle = '#d0141a';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 40, 9, 0, 0, 7);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+    const w = kf(t, [[15.91, 280], [16.08, 292], [16.14, 337, 'inQuad'], [16.19, 460, 'inQuad']]);
+    const crush = inv(16.08, 16.16, t);
     if (crush > 0) {
       fx.vignette(ctx, crush * 0.97, '28,26,26', lerp(0.6, 0.12, crush), W / 2, H / 2, 0.6);
       fx.grain(ctx, f + 1, 0.3 * crush);
     }
     ctx.save();
     ctx.filter = `blur(${20 * S}px)`;
-    ctx.fillStyle = 'rgba(40,30,30,0.5)';
+    ctx.fillStyle = `rgba(40,30,30,${0.5 * inv(16.06, 16.1, t)})`;
     ctx.beginPath();
     ctx.ellipse(735, 425, w * 0.4, w * 0.14, 0, 0, 7);
     ctx.fill();
@@ -1980,17 +2135,19 @@ function sceneLove(ctx, t, f) {
   }
   if (t < 16.52) {
     fx.dark(ctx, '#141313');
-    const glow = inv(16.33, 16.42, t);
+    const glow = inv(16.33, 16.44, t);
     if (glow > 0) {
-      const g = ctx.createRadialGradient(729, 545, 0, 729, 545, 170);
-      g.addColorStop(0, `rgba(230,20,20,${glow})`);
-      g.addColorStop(1, 'rgba(200,0,0,0)');
+      // big soft red halo behind the camera
+      const g = ctx.createRadialGradient(729, 545, 0, 729, 545, 360);
+      g.addColorStop(0, `rgba(236,16,22,${glow})`);
+      g.addColorStop(0.55, `rgba(214,10,18,${0.85 * glow})`);
+      g.addColorStop(1, 'rgba(160,0,0,0)');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
     }
     drawSprite(ctx, 'camera', 729, 540, kf(t, [[16.2, 340], [16.5, 345]]), noise1(t, 3) * 0.04);
     letter(ctx, 'L', LX[0], LY, LSIZE, CREAM);
-    letter(ctx, 'O', LX[1], LY, LSIZE, CREAM);
+    letter(ctx, 'O', LX[1], LY, LSIZE, t > 16.46 ? '#3fb7d9' : CREAM);
     return;
   }
   if (t < 16.77) {
@@ -2004,17 +2161,31 @@ function sceneLove(ctx, t, f) {
     letter(ctx, 'O', LX[1], LY, LSIZE, blue);
     if (t > 16.6) letter(ctx, 'V', LX[2], LY, LSIZE, blue);
     drawSprite(ctx, 'book', 735, 546, lerp(120, 330, q), lerp(-0.4, 0.28, q), 1, { sy: 1.15, shadow: 'rgba(60,0,0,0.6)', shadowBlur: 40 });
+    const dk = inv(16.71, 16.77, t);
+    if (dk > 0) {
+      // the red closes in to black around the book
+      const g = ctx.createRadialGradient(735, 546, lerp(700, 180, dk), 735, 546, lerp(1100, 520, dk));
+      g.addColorStop(0, 'rgba(20,18,18,0)');
+      g.addColorStop(1, `rgba(20,18,18,${0.95 * dk})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
     return;
   }
   if (t < 17.18) {
     fx.dark(ctx, '#141313');
-    const q = ease.outCubic(inv(16.86, 17.0, t));
-    ctx.save();
-    ctx.filter = `blur(${1.2 * S}px)`;
-    drawSprite(ctx, 'vinyl', 729, 540, lerp(330, 350, q), 0, 1, { sx: lerp(0.38, 1, q), shadow: 'rgba(220,220,235,0.35)', shadowBlur: 26 });
-    ctx.restore();
-    if (q < 0.7) dot(ctx, 729, 540, 12, '#e0303c');
-    const lo = t > 16.92 ? '#3fb7d9' : CREAM;
+    const q = ease.outCubic(inv(16.79, 16.9, t));
+    const bloom = inv(17.08, 17.16, t);
+    if (bloom > 0) {
+      // white glow blooming out from behind the record before the cut to paper
+      const g = ctx.createRadialGradient(729, 540, 120, 729, 540, lerp(170, 380, bloom));
+      g.addColorStop(0, `rgba(236,236,236,${Math.min(1, bloom * 2)})`);
+      g.addColorStop(1, 'rgba(236,236,236,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+    drawSprite(ctx, 'vinyl', 729, 540, lerp(270, 290, q), 0, 1, { sx: lerp(0.18, 1, q), shadow: 'rgba(220,220,235,0.25)', shadowBlur: 18 });
+    const lo = CREAM;
     letter(ctx, 'L', LX[0], LY, LSIZE, lo);
     letter(ctx, 'O', LX[1], LY, LSIZE, lo);
     letter(ctx, 'V', LX[2], LY, LSIZE, CREAM);
@@ -2029,17 +2200,19 @@ function sceneLove(ctx, t, f) {
 }
 
 // Finale: letters scattered, then spinning back upright and converging. Measured from the reference.
+// Finale: letters tumble in, scatter, then spin back upright and converge. Measured per frame
+// from the reference (exact frame times; 17.31-18.1 s re-measured for v15).
 const FIN = {
-  L: [[17.25, [684, 624, -160]], [17.5, [684, 624, -160]], [17.75, [498, 846, 0]], [18.0, [444, 885, -110]], [18.25, [440, 895, -180]], [18.5, [438, 906, -140]], [18.75, [440, 900, -100]], [19.0, [444, 891, -50]], [19.25, [446, 880, -5]], [19.5, [447, 873, 0]], [19.75, [468, 843, 0]], [20.0, [513, 792, 0]], [20.46, [513, 792, 0]]],
-  O: [[17.25, [1422, 402, 0]], [17.5, [1422, 402, 0]], [17.75, [1104, 336, 0]], [18.0, [942, 288, 0]], [18.5, [825, 264, 0]], [19.0, [807, 255, 0]], [19.5, [801, 273, 0]], [19.75, [798, 282, 0]], [20.0, [792, 330, 0]], [20.46, [792, 330, 0]]],
-  V: [[17.25, [666, 369, 150]], [17.5, [666, 369, 150]], [17.75, [813, 45, 0]], [18.0, [573, 150, 180]], [18.25, [450, 205, 190]], [18.5, [354, 249, 270]], [18.75, [338, 252, 285]], [19.0, [330, 255, 300]], [19.25, [340, 262, 345]], [19.5, [348, 267, 360]], [19.75, [369, 276, 360]], [20.0, [429, 324, 360]], [20.46, [429, 324, 360]]],
-  E: [[17.25, [537, 264, 180]], [17.5, [537, 264, 180]], [17.75, [888, 609, 0]], [18.0, [1053, 759, 120]], [18.25, [1134, 834, 170]], [18.5, [1173, 870, 170]], [18.75, [1185, 880, 150]], [19.0, [1188, 885, 50]], [19.25, [1176, 878, 40]], [19.5, [1164, 873, 0]], [19.75, [1149, 843, 0]], [20.0, [1101, 810, 0]], [20.46, [1101, 810, 0]]],
+  L: [[17.35, [650, 770, 40]], [17.47, [903, 400, -30]], [17.56, [745, 566, 0]], [17.64, [648, 680, -90]], [17.77, [542, 788, -30]], [17.93, [464, 860, 45]], [18.02, [454, 881, -90]], [18.1, [443, 886, -150]], [18.25, [440, 895, -180]], [18.5, [438, 906, -140]], [18.75, [440, 900, -100]], [19.0, [444, 891, -50]], [19.25, [446, 880, -5]], [19.5, [447, 873, 0]], [19.75, [468, 843, 0]], [20.0, [513, 792, 0]], [20.15, [513, 792, 0]], [20.187, [524, 736, 0]], [20.229, [540, 690, 0]], [20.27, [580, 640, 0]], [20.3, [640, 580, 0]]],
+  O: [[17.31, [530, 950, 0]], [17.35, [750, 970, 0]], [17.39, [929, 821, 0]], [17.47, [1190, 611, 0]], [17.56, [1372, 460, 0]], [17.64, [1372, 384, 0]], [17.77, [1190, 346, 0]], [17.93, [1035, 309, 0]], [18.02, [983, 298, 0]], [18.1, [940, 287, 0]], [18.5, [825, 264, 0]], [19.0, [807, 255, 0]], [19.5, [801, 273, 0]], [19.75, [798, 282, 0]], [20.0, [792, 330, 0]], [20.15, [792, 330, 0]], [20.187, [770, 350, 0]], [20.229, [760, 370, 0]], [20.27, [740, 410, 0]], [20.3, [760, 520, 0]]],
+  V: [[17.35, [140, 730, -120]], [17.47, [417, 745, -200]], [17.56, [588, 475, 10]], [17.64, [719, 281, 180]], [17.77, [855, 43, 110]], [17.93, [713, 80, 60]], [18.02, [626, 119, 90]], [18.1, [562, 151, 150]], [18.25, [450, 205, 190]], [18.5, [354, 249, 270]], [18.75, [338, 252, 285]], [19.0, [330, 255, 300]], [19.25, [340, 262, 345]], [19.5, [348, 267, 360]], [19.75, [369, 276, 360]], [20.0, [429, 324, 360]], [20.15, [429, 324, 360]], [20.187, [460, 340, 360]], [20.229, [490, 360, 360]], [20.27, [550, 400, 360]], [20.3, [690, 500, 360]]],
+  E: [[17.31, [700, 1000, 200]], [17.47, [313, 76, 300]], [17.56, [447, 162, 90]], [17.64, [620, 339, -90]], [17.77, [799, 518, -60]], [17.93, [955, 659, -50]], [18.02, [1009, 713, 90]], [18.1, [1050, 756, 120]], [18.25, [1134, 834, 170]], [18.5, [1173, 870, 170]], [18.75, [1185, 880, 150]], [19.0, [1188, 885, 50]], [19.25, [1176, 878, 40]], [19.5, [1164, 873, 0]], [19.75, [1149, 843, 0]], [20.0, [1101, 810, 0]], [20.15, [1101, 810, 0]], [20.187, [1040, 770, 0]], [20.229, [1000, 730, 0]], [20.27, [930, 670, 0]], [20.3, [800, 560, 0]]],
 };
 const DOTS = [
   // keyframes, radius
-  [[[17.25, [159, 348]], [17.75, [165, 405]], [18.0, [747, 327]], [18.5, [735, 306]], [19.5, [702, 273]], [19.75, [672, 279]], [20.0, [657, 381]]], 11, 6],
-  [[[17.25, [822, 609]], [17.75, [750, 333]], [18.0, [1284, 645]], [18.5, [1224, 390]], [19.5, [1218, 282]], [19.75, [1227, 261]], [20.0, [1146, 360]]], 8, 10],
-  [[[17.25, [1311, 675]], [17.75, [1299, 672]], [18.0, [243, 717]], [18.5, [240, 696]], [19.5, [213, 702]], [19.75, [213, 672]], [20.0, [360, 579]]], 7, 7],
+  [[[17.47, [864, 579]], [17.56, [836, 616]], [17.64, [821, 609]], [17.8, [790, 470]], [17.93, [750, 326]], [18.02, [741, 324]], [18.5, [735, 306]], [19.5, [702, 273]], [19.75, [672, 279]], [20.0, [657, 381]], [20.15, [657, 381]], [20.187, [666, 396]], [20.229, [660, 416]], [20.27, [650, 436]]], 11, 6],
+  [[[17.47, [1307, 706]], [17.56, [1311, 680]], [17.64, [1307, 670]], [17.77, [1302, 654]], [17.93, [1294, 659]], [18.02, [1290, 650]], [18.1, [1281, 644]], [18.5, [1224, 390]], [19.5, [1218, 282]], [19.75, [1227, 261]], [20.0, [1146, 360]], [20.15, [1146, 360]], [20.187, [1116, 372]], [20.229, [1080, 392]], [20.27, [990, 340]]], 8, 10],
+  [[[17.47, [173, 287]], [17.56, [166, 335]], [17.64, [158, 356]], [17.77, [156, 389]], [17.9, [200, 600]], [18.02, [233, 750]], [18.1, [242, 717]], [18.5, [240, 696]], [19.5, [213, 702]], [19.75, [213, 672]], [20.0, [360, 579]], [20.15, [360, 579]], [20.187, [390, 566]], [20.229, [420, 554]], [20.27, [426, 526]]], 7, 7],
 ];
 const LOOPS = [
   // letter, start, dur, rx, ry, seed, turns, dx, dy
@@ -2059,6 +2232,19 @@ const LOOPS = [
   ['O', 19.7, 0.25, 12, 52, 13, 1.1, 2, -50],
   ['L', 19.6, 0.15, 30, 18, -35, 1.05, -30, 25],
   ['E', 19.74, 0.25, 34, 30, 15, 1.3, 0, 0],
+];
+// Red pen loops, measured: [letter, start, end, angle deg, length, width]. Single elongated loops
+// and flicks leaving each letter (not scribbled circles).
+const FIN_PEN = [
+  ['E', 17.43, 17.6, -120, 70, 34], ['L', 17.43, 17.52, -40, 115, 26], ['V', 17.43, 17.52, 110, 115, 8], ['O', 17.44, 17.52, 130, 95, 6],
+  ['V', 17.52, 17.6, 180, 32, 26], ['L', 17.52, 17.6, -20, 42, 20], ['O', 17.53, 17.6, 180, 22, 22],
+  ['V', 17.6, 17.7, -80, 62, 30], ['E', 17.6, 17.68, -170, 60, 6], ['O', 17.6, 17.7, 140, 62, 20], ['L', 17.6, 17.68, 0, 42, 16],
+  ['V', 17.72, 17.82, 190, 62, 20], ['E', 17.72, 17.82, -150, 52, 40], ['O', 17.72, 17.82, -90, 72, 15], ['L', 17.72, 17.82, -95, 72, 15],
+  ['V', 19.2, 19.32, 0, 52, 26], ['O', 19.2, 19.34, -95, 125, 4], ['O', 19.22, 19.34, 60, 62, 30], ['E', 19.22, 19.32, 110, 62, 6], ['L', 19.22, 19.32, -120, 32, 20],
+  ['V', 19.44, 19.58, -60, 42, 26], ['O', 19.44, 19.58, -110, 36, 20], ['L', 19.44, 19.58, -50, 32, 20], ['E', 19.42, 19.6, -40, 82, 40],
+  ['V', 19.68, 19.84, 150, 62, 20], ['O', 19.7, 19.84, 95, 72, 25], ['L', 19.68, 19.86, 120, 100, 30], ['E', 19.66, 19.86, -150, 170, 110], ['E', 19.72, 19.84, 40, 40, 20],
+  ['V', 19.88, 20.0, 10, 42, 32], ['O', 19.88, 20.0, -88, 95, 30], ['L', 19.88, 20.0, 118, 160, 40], ['E', 19.88, 20.0, 0, 40, 26],
+  ['O', 20.03, 20.16, 100, 62, 8], ['E', 20.03, 20.16, 180, 82, 30], ['V', 20.05, 20.16, 0, 40, 20],
 ];
 const FINAL_LOOPS = [
   ['O', 6, 80, -2, 1.0, 2, -10],
@@ -2082,6 +2268,120 @@ function smoothLoop(rx, ry, turns, seed, n = 160) {
   return pts;
 }
 
+// Catmull-Rom through control points -> dense polyline
+function spline(ctrl, n = 18) {
+  const out = [];
+  for (let i = 0; i < ctrl.length - 1; i++) {
+    const p0 = ctrl[Math.max(0, i - 1)];
+    const p1 = ctrl[i];
+    const p2 = ctrl[i + 1];
+    const p3 = ctrl[Math.min(ctrl.length - 1, i + 2)];
+    for (let k = 0; k < n; k++) {
+      const u = k / n;
+      const u2 = u * u;
+      const u3 = u2 * u;
+      out.push([0, 1].map((j) => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * u + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * u2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * u3)));
+    }
+  }
+  out.push(ctrl[ctrl.length - 1]);
+  return out;
+}
+const BRUSH = [
+  // [until t, core strokes [ctrl, width], grey halo strokes [ctrl, width], core blur, halo blur, halo offset]
+  [17.246, [
+    [[[510, -20], [445, 300], [380, 600]], 34],
+    [[[510, -20], [780, 510], [990, 960], [1440, 660]], 36],
+    [[[280, 1040], [530, 780], [780, 510]], 30],
+  ], [
+    [[[60, 340], [160, 270], [260, 285]], 44],
+    [[[1120, 160], [1200, 300], [1100, 420], [900, 460]], 40],
+    [[[540, 480], [600, 470], [660, 475]], 30],
+    [[[360, 600], [380, 620]], 40],
+  ], 10, 14, [0, 0]],
+  [17.288, [
+    [[[460, 390], [260, 480], [140, 660], [190, 880], [320, 920], [460, 840]], 12],
+    [[[350, 780], [540, 80], [640, 240], [700, 300]], 11],
+    [[[840, 830], [1280, 80], [1420, 660]], 12],
+    [[[820, 190], [940, 300], [860, 520]], 10],
+    [[[120, 470], [300, 400], [470, 385]], 26],
+  ], [
+    [[[200, 300], [700, 180], [1200, 120], [1400, 200]], 44],
+    [[[220, 960], [600, 900], [900, 560]], 40],
+    [[[1180, 200], [1300, 500], [1250, 860]], 40],
+  ], 2.5, 12, [14, 10]],
+  [17.33, [
+    [[[410, 260], [540, 330], [410, 460], [560, 680]], 7],
+    [[[830, 220], [940, 330], [1140, 380], [1120, 500], [1020, 450]], 7],
+    [[[770, 730], [1000, 700], [1120, 840], [1280, 950], [1380, 880]], 7],
+  ], [
+    [[[360, 190], [220, 130], [160, 220], [220, 340], [80, 400]], 34],
+    [[[380, 250], [510, 320], [380, 450], [530, 670]], 34],
+    [[[800, 200], [910, 310], [1110, 360], [1090, 480]], 34],
+    [[[750, 700], [980, 670], [1100, 810], [1260, 920]], 34],
+  ], 0.8, 6, [-22, -16]],
+  [17.372, [
+    [[[300, 200], [340, 215], [320, 250], [350, 290]], 7],
+    [[[940, 470], [975, 450], [1000, 462]], 6],
+    [[[1280, 800], [1300, 830], [1318, 840]], 6],
+    [[[140, 1010], [160, 990]], 5],
+  ], [], 1.2, 0, [0, 0]],
+];
+function brushCut(ctx, t) {
+  const fr = BRUSH.find(([until]) => t < until);
+  if (!fr) return;
+  const [, cores, halos, cb, hb, [ox, oy]] = fr;
+  if (halos.length) {
+    const [hc, hx] = off(1);
+    halos.forEach(([ctrl, w]) => fx.strokePartial(hx, spline(ctrl).map(([a, b]) => [a + ox, b + oy]), 0, 1, w, 'rgba(70,68,68,0.32)', true));
+    composite(ctx, hc, { blur: hb });
+  }
+  const [cc, cx] = off(2);
+  cores.forEach(([ctrl, w]) => fx.strokePartial(cx, spline(ctrl), 0, 1, w, '#151313', cb < 5));
+  composite(ctx, cc, { blur: cb });
+}
+
+// Pen 'petal' loop: an elongated loop leaving (ax, ay) at angle `ang` and coming back, drawn twice.
+function petal(ax, ay, ang, len, wid, seed) {
+  const pts = [];
+  const r = rng(seed + 300);
+  const w2 = 0.8 + r() * 0.4;
+  for (let i = 0; i <= 120; i++) {
+    const a = (i / 120) * Math.PI * 2.15;
+    const lx = (len * (1 - Math.cos(a))) / 2;
+    const ly = (wid / 2) * Math.sin(a) * (i > 60 ? w2 : 1) + noise1(i * 0.15, seed) * wid * 0.12;
+    pts.push([ax + lx * Math.cos(ang) - ly * Math.sin(ang), ay + lx * Math.sin(ang) + ly * Math.cos(ang)]);
+  }
+  return pts;
+}
+// Measured per frame (484-486): each frame shows a fresh set of big pen loops around the letters.
+const PETALS = [
+  [20.207, [['V', -95, 260, 170], ['O', 88, 330, 50], ['L', -60, 260, 60], ['E', -92, 250, 50], ['E', 95, 170, 45]]],
+  [20.249, [['O', -90, 220, 40], ['V', 55, 330, 70], ['L', -80, 220, 50], ['E', -128, 290, 10], ['L', 100, 90, 70]]],
+  [20.29, [['V', 185, 300, 60], ['O', -82, 260, 90], ['O', -30, 400, 70], ['E', -12, 360, 75], ['L', 95, 300, 190], ['O', 60, 300, 30], ['V', -120, 140, 40]]],
+];
+function finalePetals(ctx, t, pos) {
+  const set = PETALS.find(([until]) => t < until);
+  if (!set) return;
+  set[1].forEach(([ch, ang, len, wid], k) => {
+    const [ax, ay] = pos[ch];
+    fx.strokePartial(ctx, petal(ax, ay, ang * D, len, wid, k + Math.round(set[0] * 100)), 0, 1, 2, '#e0402e');
+  });
+}
+// Last frame: the letters slam together into a black block with thick ink hooks and big loops.
+function finaleCollapse(ctx) {
+  [[-125, 400, 130], [-95, 420, 70], [-15, 440, 120], [40, 400, 110], [95, 260, 80], [-150, 260, 60]].forEach(([ang, len, wid], k) => {
+    fx.strokePartial(ctx, petal(700, 500, ang * D, len, wid, 90 + k), 0, 1, 2, '#e0402e');
+  });
+  ctx.fillStyle = '#141010';
+  ctx.fillRect(630, 430, 150, 140);
+  [['L', 655, 565, -0.05], ['V', 680, 485, 0.08], ['E', 760, 560, -0.06], ['O', 722, 515, 0]].forEach(([ch, x, y, r]) => letter(ctx, ch, x, y, 150, '#141010', r));
+  fx.strokePartial(ctx, spline([[675, 315], [600, 300], [535, 340], [510, 430], [485, 520], [462, 535]], 10), 0, 1, 22, '#141010');
+  fx.strokePartial(ctx, spline([[832, 664], [824, 520], [821, 380], [850, 325], [911, 315], [945, 360]], 10), 0, 1, 22, '#141010');
+  [[690, 470, 60, 30, 20], [760, 580, 70, 40, -30]].forEach(([x, y, rx, ry, a], k) => {
+    fx.strokePartial(ctx, petal(x, y, a * D, rx * 2, ry, 120 + k), 0, 1, 2, '#e0402e');
+  });
+}
+
 function sceneFinale(ctx, t, f) {
   ctx.fillStyle = '#dededd';
   ctx.fillRect(0, 0, W, H);
@@ -2090,82 +2390,52 @@ function sceneFinale(ctx, t, f) {
   gg.addColorStop(1, 'rgba(120,120,135,0.18)');
   ctx.fillStyle = gg;
   ctx.fillRect(0, 0, W, H);
-  // huge motion-blurred ink strokes at the cut, collapsing into the letters
-  if (t < 17.44) {
-    const q = inv(17.2, 17.44, t);
-    const sh = ease.inOutCubic(inv(17.26, 17.32, t));
-    const fade = 1 - inv(17.38, 17.44, t);
-    const [haloC, halo] = off(1);
-    const [coreC, core] = off(2);
-    [[0, 160, 120, 324, 222, 640, 2.4], [1, 520, 560, 969, 507, 560, 1.6], [2, 900, 160, 1293, 822, 520, 2.0], [3, 980, 820, 1299, 72, 420, 1.8]].forEach(([k, ox, oy, tx2, ty2, len, curl]) => {
-      const big = fx.wanderPoints(500 + k, len, curl, 60);
-      const L2 = k === 3 ? 80 : 115;
-      const rot2 = k * 1.3 + 0.4;
-      const pts = big.map(([a, b], i) => {
-        const u = i / (big.length - 1);
-        // S-shaped short stroke at the target position
-        let sxp = (u - 0.5) * L2;
-        let syp = Math.sin(u * Math.PI * 2) * L2 * 0.16;
-        if (k === 0 || k === 1) {
-          // '?' hook: a curl that drops into a short tail
-          const a = Math.PI * (1.1 - u * 1.6);
-          sxp = u < 0.65 ? Math.cos(a) * L2 * 0.35 : (u - 0.65) * L2 * 0.2;
-          syp = u < 0.65 ? -Math.sin(a) * L2 * 0.35 : (u - 0.65) * L2 * 2.0;
-        }
-        const tx3 = tx2 + sxp * Math.cos(rot2) - syp * Math.sin(rot2);
-        const ty3 = ty2 + sxp * Math.sin(rot2) + syp * Math.cos(rot2);
-        return [lerp(a + ox, tx3, sh), lerp(b + oy, ty3, sh)];
-      });
-      // draw unfiltered into layers, then blur each layer once (per-segment filters are far too slow at 4K)
-      fx.strokePartial(halo, pts, q * 0.3, 0.7 + q * 0.3, lerp(70, 18, sh), 'rgba(60,58,58,0.45)');
-      fx.strokePartial(core, pts, q * 0.3 * (1 - sh), 0.7 + q * 0.3 + sh, lerp(32, 12, sh), sh > 0.5 ? '#505050' : '#1a1818', true);
-    });
-    composite(ctx, haloC, { blur: lerp(16, 8, sh), alpha: fade * lerp(1, 0.4, sh) });
-    composite(ctx, coreC, { blur: lerp(5, 10, sh), alpha: fade * lerp(1, 0.7, sh) });
-    if (sh > 0) {
-      [[114, 717, 60, 40], [654, 732, 40, 75], [744, 957, 50, 30]].forEach(([a, b, rx, ry], k) => {
-        const pts = fx.loopPoints(700 + k, rx, ry, 2.6, 200).map(([u, v], i) => [u + a + noise1(i * 0.2, k) * 14, v + b + noise1(i * 0.2, k + 5) * 14]);
-        fx.strokePartial(ctx, pts, 0, sh, 1.6, `rgba(224,64,46,${0.7 * fade})`);
-      });
-    }
-  }
+  // ink-brush strokes at the cut to paper (frames 413-416, measured): huge and blurred, then
+  // sharpening and shrinking into small hooks as the letters scatter in
+  if (t < 17.372) brushCut(ctx, t);
   const grow = ease.inOutCubic(inv(19.75, 20.05, t));
-  const size = lerp(56, 74, grow);
+  const size = t < 20.15 ? lerp(56, 74, grow) : kf(t, [[20.15, 74], [20.187, 83], [20.229, 111], [20.27, 139], [20.3, 190]]);
+  if (t >= 20.29) {
+    finaleCollapse(ctx);
+    return;
+  }
   const pos = {};
   Object.keys(FIN).forEach((ch) => {
     const keys = [];
-    FIN[ch].forEach(([tt, v], i) => {
-      keys.push([tt, v, 'inOutCubic']);
-      if (tt < 18.0 && i < FIN[ch].length - 1) keys.push([tt + 0.09, v, 'linear']);
-    });
+    FIN[ch].forEach(([tt, v]) => keys.push([tt, v, tt < 18.1 ? 'linear' : 'inOutCubic']));
     const [x, y, r] = kf(t, keys);
     pos[ch] = [x, y];
+    if (t < FIN[ch][0][0] - 0.02) return;
+    const fly = 1 - inv(17.42, 17.6, t);
+    if (fly > 0) {
+      ctx.save();
+      ctx.filter = `blur(${3.5 * fly * S}px)`;
+    }
     letter(ctx, ch, x, y - 13 * grow, size, '#3a1a16', r * D);
+    if (fly > 0) ctx.restore();
   });
   DOTS.forEach(([k, r0, r1]) => {
-    if (t > 18.9 && t < 19.2) return;
     const hk = [];
-    k.forEach(([tt, v], i) => {
-      hk.push([tt, v, 'inOutCubic']);
-      if (tt < 18.0 && i < k.length - 1) hk.push([tt + 0.09, v, 'linear']);
-    });
+    if (t < k[0][0] - 0.03) return;
+    k.forEach(([tt, v]) => hk.push([tt, v, tt < 18.1 ? 'linear' : 'inOutCubic']));
     const [x, y] = kf(t, hk);
+    if (t > 20.25 && r0 !== 11) {
+      // the outer dots smear into small black squiggles
+      const sq = r0 === 8 ? [[x - 22, y + 4], [x - 8, y - 10], [x + 6, y + 6], [x + 22, y - 6], [x + 30, y + 10]] : [[x - 10, y - 2], [x - 2, y + 6], [x + 8, y - 4], [x + 12, y + 2]];
+      fx.strokePartial(ctx, spline(sq, 8), 0, 1, r0 === 8 ? 9 : 6, '#1a1212', true);
+      return;
+    }
     const r = t < 17.9 ? 4 : r0 === 11 ? kf(t, [[18.0, 11], [18.4, 4], [18.75, 7], [19.5, 6], [20.0, 7]]) : r0 === 8 ? kf(t, [[18.0, 8], [18.25, 4], [18.5, 10], [18.75, 4], [19.5, 6], [19.8, 9]]) : lerp(r0, r1, inv(19.2, 19.7, t));
     dot(ctx, x, y, r * (t > 19.2 && t < 19.4 ? 0.5 : 1) * lerp(1, 1.1, grow), '#2a1714');
   });
-  LOOPS.forEach(([ch, s, d, rx, ry, seed, turns, dx, dy]) => {
-    if (t < s || t > s + d + 0.28) return;
+  FIN_PEN.forEach(([ch, t0, t1, ang, len, wid], k) => {
+    if (t < t0 || t > t1 + 0.05) return;
     const [ax, ay] = pos[ch];
-    const messy = s < 18 || ch === 'V' || (s > 19.6 && ch === 'E');
-    const pts = (messy ? fx.loopPoints(seed, rx * (s < 18 ? 0.8 : ch === 'V' ? 0.95 : 1.15), ry * (s < 18 ? 0.8 : ch === 'V' ? 0.95 : 1.15), 2.6, 200).map(([a, b], i) => [a + noise1(i * 0.2, seed) * 10, b + noise1(i * 0.2, seed + 4) * 10]) : smoothLoop(rx * 1.7, ry * 1.7, turns, seed)).map(([a, b]) => [a + ax + dx, b + ay + dy]);
-    fx.strokePartial(ctx, pts, inv(s + d + 0.12, s + d + 0.28, t), inv(s, s + d, t), messy ? 1.3 : 1.6, '#e0402e');
+    const d = len < 90 ? 0.04 : 0.07;
+    fx.strokePartial(ctx, petal(ax, ay, ang * D, len, wid, k + 40), inv(t1, t1 + 0.05, t), inv(t0, t0 + d, t), 1.7, '#e0402e');
   });
-  if (t > 19.95) {
-    FINAL_LOOPS.forEach(([ch, rx, ry, seed, turns, dx, dy]) => {
-      const [ax, ay] = pos[ch];
-      const pts = smoothLoop(rx, ry, turns, seed).map(([a, b]) => [a + ax + dx, b + ay + dy]);
-      fx.strokePartial(ctx, pts, 0, inv(19.95, 20.1, t), 1.6, '#e0402e');
-    });
+  if (t > 20.165) finalePetals(ctx, t, pos);
+  if (t > 19.95 && t < 20.165) {
     // diagonal pen tail from the upper left into the L
     const [lx, ly] = pos.L;
     const tail = Array.from({ length: 24 }, (_, i) => { const u = i / 23; return [lerp(lx - 140, lx + 4, u) + Math.sin(u * Math.PI) * 30, lerp(ly - 120, ly + 18, u)]; });
@@ -2209,8 +2479,8 @@ const TIMELINE = [
   [11.01, 11.85, sceneCuriosity],
   [11.85, 13.76, sceneScatter],
   [13.76, 15.89, sceneHand],
-  [15.89, 17.23, sceneLove],
-  [17.23, 99, sceneFinale],
+  [15.89, 17.2, sceneLove],
+  [17.2, 99, sceneFinale],
 ];
 
 function renderFrame(ctx, t, f) {

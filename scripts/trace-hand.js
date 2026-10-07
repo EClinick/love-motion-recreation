@@ -15,6 +15,7 @@ const NAME = process.argv[2] ?? 'hand';
 const DEF = { hand: [13.76, 15.89], head: [3.82, 6.3] }[NAME];
 const t0 = Number(process.argv[3] ?? DEF[0]);
 const t1 = Number(process.argv[4] ?? DEF[1]);
+const fLast = NAME === 'hand' ? 380 : Infinity; // frame 381 is already the white heart shot
 const outDir = path.join(ROOT, 'ref', 'derived', NAME);
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -50,7 +51,7 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
 (async () => {
   const f0 = Math.round(t0 * FPS);
   const f1 = Math.round(t1 * FPS);
-  for (let f = f0; f <= f1; f++) {
+  for (let f = f0; f <= Math.min(f1, fLast); f++) {
     const t = f / FPS;
     const buf = execFileSync('ffmpeg', ['-v', 'error', '-ss', String(t), '-i', path.join(ROOT, 'ref', 'reference.mp4'), '-frames:v', '1', '-vf', `scale=${W}:${H}`, '-f', 'image2pipe', '-vcodec', 'png', '-'], { maxBuffer: 1 << 27 });
     const img = await loadImage(buf);
@@ -75,7 +76,11 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       const warm = mx > 70 && mx - mn > 45;
       const cream = mx > 170 && r >= b && mx - mn > 18; // pale lit skin (text is greyer)
       const white = NAME === 'head' && (r + g + b) / 3 > 150; // blown-out shirt / shoulder
-      m[i] = darkOnLight ? ((r + g + b) / 3 < 120 && i % W > 560 ? 1 : 0) : pale ? ((r + g + b) / 3 > 130 ? 1 : 0) : warm || cream || white ? 1 : 0;
+      // hand: the white-lit thumb (14.1-14.35 s); skip the typing-cursor block to its right
+      const px = i % W;
+      const py = (i / W) | 0;
+      const whiteHand = NAME === 'hand' && !pale && (r + g + b) / 3 > 190 && !(px > 860 && px < 1220 && py > 500 && py < 590);
+      m[i] = darkOnLight ? ((r + g + b) / 3 < 120 && i % W > 560 ? 1 : 0) : pale ? (warm || ((r + g + b) / 3 > 105 && !(px > 880 && py > 505 && py < 590 && mx - mn < 40)) ? 1 : 0) : warm || cream || white || whiteHand ? 1 : 0;
     }
     largestComponent(m);
     // fill interior holes: anything the outside background can't reach is inside the hand
@@ -131,7 +136,7 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       process.stdout.write(` [skip f${f} implausible head bbox]`);
       continue;
     }
-    if (area < 20000) {
+    if (area < (NAME === 'hand' && t > 15.5 ? 6000 : 20000)) {
       // too little of the hand is visible (heavy blur): leave no mask, renderer falls back
       process.stdout.write(` [skip f${f} area ${area}]`);
       continue;
@@ -175,6 +180,27 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       sx.filter = 'blur(4px)';
       sx.drawImage(mc, 0, 0);
       fs.writeFileSync(path.join(outDir, `hot_${String(f).padStart(4, '0')}.png`), sm.toBuffer('image/png'));
+    }
+    if (NAME === 'hand' && !pale) {
+      // white-hot highlights on the hand (the lit thumb / finger early in the shot)
+      const hi = mx2.createImageData(W, H);
+      let n = 0;
+      for (let i = 0; i < W * H; i++) {
+        const r = d[i * 4];
+        const g = d[i * 4 + 1];
+        const b = d[i * 4 + 2];
+        const hot = m[i] && (r + g + b) / 3 > 200 && Math.max(r, g, b) - Math.min(r, g, b) < 70;
+        n += hot ? 1 : 0;
+        hi.data[i * 4] = hi.data[i * 4 + 1] = hi.data[i * 4 + 2] = 255;
+        hi.data[i * 4 + 3] = hot ? 255 : 0;
+      }
+      if (n > 400) {
+        mx2.putImageData(hi, 0, 0);
+        sx.clearRect(0, 0, W, H);
+        sx.filter = 'blur(3px)';
+        sx.drawImage(mc, 0, 0);
+        fs.writeFileSync(path.join(outDir, `hot_${String(f).padStart(4, '0')}.png`), sm.toBuffer('image/png'));
+      }
     }
     process.stdout.write(`\r${f - f0 + 1}/${f1 - f0 + 1}`);
   }
