@@ -4,16 +4,30 @@ A frame-by-frame recreation of a 20-second kinetic-typography / pixel-icon motio
 code with `@napi-rs/canvas` (Skia) and ffmpeg, and refined over 18 iterations with a loop of
 Claude Sonnet "judge" agents comparing every version against the original.
 
-![Original (left) vs Claude's recreation (right)](media/final/preview.jpg)
+![Original (left) vs Claude's v18 recreation (right), hand comparison at 14.5145 s](media/versions/v18/pairs/pair_030.jpg)
 
-## Final result (v14)
+## Latest result (v18)
+
+v18 is the latest archived recreation and the version featured on the showcase site.
+Its [version record](media/versions/v18/meta.json) identifies source commit `fda013a`.
 
 | | |
 |---|---|
-| Final render, 2880×2160 with motion blur | [`media/final/claude_v14_2880x2160.mp4`](media/final/claude_v14_2880x2160.mp4) |
-| Original vs Claude, side by side | [`media/final/claude_v14_sidebyside.mp4`](media/final/claude_v14_sidebyside.mp4) |
+| v18 render, 1440×1080 | [`media/versions/v18/render.mp4`](media/versions/v18/render.mp4) |
+| Original vs v18, side by side, 2880×1080 | [`media/versions/v18/sidebyside.mp4`](media/versions/v18/sidebyside.mp4) |
 | The original video and soundtrack | [`media/original/original.mp4`](media/original/original.mp4), [`media/original/original.mp3`](media/original/original.mp3) |
 | Every version's render, side-by-side and comparison sheets | [`media/`](media/README.md) |
+
+### Historical v14 exports
+
+The files in `media/final/` are the earlier v14 exports, not v18 renders.
+The archive contains no v18 2880×2160 export; the latest v18 render is linked above.
+
+| | |
+|---|---|
+| v14 render, 2880×2160 with motion blur | [`media/final/claude_v14_2880x2160.mp4`](media/final/claude_v14_2880x2160.mp4) |
+| Original vs v14, side by side, 2880×1080 | [`media/final/claude_v14_sidebyside.mp4`](media/final/claude_v14_sidebyside.mp4) |
+| Historical v14 comparison preview | [`media/final/preview.jpg`](media/final/preview.jpg) |
 
 ## How it was made
 
@@ -66,7 +80,7 @@ The full table, with every version's files, is in [`media/README.md`](media/READ
 | `scripts/trace-hand.js` | Rotoscopes hand silhouettes from the source video into `ref/derived/hand/` |
 | `scripts/shape-compare.js`, `scripts/region-color.js` | Silhouette IoU and region-colour measurements |
 | `site/`, `scripts/publish-site.sh` | Versioned showcase page with the complete media archive |
-| `media/` | Web-encoded videos, sheets and overlays for every version, the original, and the final |
+| `media/` | Web-encoded videos, sheets and overlays for all 18 versions, the original, and historical v14 exports |
 
 ## Rebuilding
 
@@ -91,8 +105,9 @@ node src/render.js --stills 2.5,8.7  # single frames to out/stills
 
 Run `npm run site`, then open http://127.0.0.1:8787/site/. The page includes
 the original video and soundtrack, all 18 archived renders and their side-by-side videos,
-the final 2880×2160 render, synchronized version comparison, scores, contact sheets,
-and shape overlays. It preserves the original showcase styling and interactions.
+v18 as the latest version, the historical v14 2880×2160 export, synchronized version
+comparison, scores, contact sheets, and shape overlays. It preserves the original showcase
+styling and interactions.
 
 `npm run site:build` creates a portable static website in `dist/` using the
 committed `media/` archive. Deploy that directory to static hosting; the showcase
