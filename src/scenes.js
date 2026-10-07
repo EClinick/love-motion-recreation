@@ -188,13 +188,13 @@ function sceneOpen(ctx, t, f) {
   if (t >= 0.48) {
     // the line collapses: chunky pixel type, tiny blurred pixel type, then dashes
     if (t < 0.521) {
-      pixelText(ctx, 'do.you.communicate', 0, 622, 272, 15, '#141010', { thr: 90 });
+      pixelText(ctx, 'do.you.communicate', 0, 582, 272, 21, '#141010', { thr: 100 });
     } else if (t < 0.563) {
       const [c, x] = off(0);
-      pixelText(x, 'how.do.you.communicate', 220, 556, 64, 8, '#1e1a1a', { thr: 60 });
+      pixelText(x, 'how.do.you.communicate', 220, 552, 52, 11, '#1e1a1a', { thr: 105 });
       x.fillStyle = '#141010';
       x.fillRect(640, 536, 160, 12);
-      composite(ctx, c, { blur: 6 });
+      composite(ctx, c, { blur: 4 });
     } else {
       const k = t < 0.605 ? 0 : t < 0.646 ? 1 : 2;
       const [c, x] = off(0);
@@ -695,12 +695,12 @@ function sceneSparkle(ctx, t, f) {
   }
   if (t < 2.022) {
     // frame 48: yellow flash with a big defocused star, streaks and icons
-    ctx.fillStyle = '#dea51a';
+    ctx.fillStyle = '#e6b01c';
     ctx.fillRect(0, 0, W, H);
     const [c, x] = off(0);
     fx.words(x, sentenceParts(1.9, '#3a2410', '#3a2410').slice(0, 8), 20, 540, BODY);
-    x.fillStyle = '#f2f23c';
-    armStar(x, 616, 444, [-1.26, 0.04, 1.72, 3.22], [410, 390, 560, 616], 0.06);
+    x.fillStyle = '#e6f532';
+    armStar(x, 580, 380, [-1.414, 0.288, 1.855, 3.107], [385, 563, 500, 580], 0.06);
     x.fill();
     [[180, 202, 1080, 315], [500, 120, 1000, 260], [430, 860, 1250, 640], [650, 1000, 1300, 760]].forEach(([a, b, c2, d]) => fx.strokePartial(x, [[a, b], [c2, d]], 0, 1, 12, 'rgba(250,244,230,0.85)', false));
     [['book', 945, 416, 70, -0.3], ['clapper', 1113, 427, 70, 0.3], ['coin', 1068, 607, 60, 0], ['camera', 1158, 720, 70, 0.4]].forEach(([n, a, b, w, r]) => drawSprite(x, n, a, b, w, r));
