@@ -3976,7 +3976,7 @@ function sceneFinale(ctx, t, f) {
       ctx.save();
       ctx.filter = `blur(${(t < 17.44 ? 6 : 3.5 * fly) * S}px)`;
     }
-    letter(ctx, ch, x, y, size, '#3a1a16', r * D);
+    letter(ctx, ch, x, y, size, '#42201b', r * D); // measured letter ink (~#41201a)
     if (fly > 0) ctx.restore();
   });
   DOTS.forEach(([k, r0, r1]) => {
