@@ -763,12 +763,15 @@ function sceneSparkle(ctx, t, f) {
     ctx.fillStyle = '#e6b01c';
     ctx.fillRect(0, 0, W, H);
     const [c, x] = off(0);
-    fx.words(x, sentenceParts(1.9, '#3a2410', '#3a2410').slice(0, 8), 20, 540, BODY);
     x.fillStyle = '#e6f532';
-    // centre and arm tips re-measured on a grid (core ~95 px lower than before)
-    armStar(x, 555, 495, [-1.37, 0.275, 1.82, 3.27], [459, 478, 600, 500], 0.0);
+    // tips measured on frame 48: all four arms ~510 px from (518, 540), fat near the core
+    armStar(x, 518, 540, [-1.31, 0.267, 1.795, 3.39], [513, 512, 508, 511], 0.14);
     x.fill();
-    [[180, 202, 1080, 315], [500, 120, 1000, 260], [430, 860, 1250, 640], [650, 1000, 1300, 760]].forEach(([a, b, c2, d]) => fx.strokePartial(x, [[a, b], [c2, d]], 0, 1, 12, 'rgba(250,244,230,0.85)', false));
+    [[180, 202, 1080, 315], [230, 230, 900, 420], [832, 56, 1035, 180], [700, 150, 880, 200], [427, 866, 1215, 810], [450, 855, 967, 720], [1057, 979, 1260, 832]].forEach(([a, b, c2, d]) => fx.strokePartial(x, [[a, b], [c2, d]], 0, 1, 12, 'rgba(250,244,230,0.85)', false));
+    // the sentence sits in front of the star
+    fx.words(x, sentenceParts(1.9, '#3a2410', '#3a2410').slice(0, 8), 20, 540, BODY);
+    x.fillStyle = 'rgba(42,26,16,0.8)';
+    x.fillRect(1246, 191, 6, 664);
     [['book', 945, 416, 70, -0.3], ['clapper', 1113, 427, 70, 0.3], ['coin', 1068, 607, 60, 0], ['camera', 1158, 720, 70, 0.4]].forEach(([n, a, b, w, r]) => drawSprite(x, n, a, b, w, r));
     // the word 'change?' still stood on end from frame 47, defocused
     x.save();
