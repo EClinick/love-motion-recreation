@@ -1598,23 +1598,24 @@ function burst(ctx, cx, cy, q, seed, colors = ['#ece8e2', '#e8231d']) {
 
 function sceneAction(ctx, t, f) {
   fx.dark(ctx, '#141313');
-  const pos = kf(t, [[8.3, [575, 520]], [8.342, [567, 513]], [8.383, [553, 540]], [8.425, [540, 540]], [8.467, [527, 527]], [8.59, [513, 527]], [8.675, [527, 473], 'inOutCubic'], [8.84, [520, 473]], [8.93, [486, 513], 'inOutCubic'], [9.05, [472, 540]], [9.13, [465, 545]]]);
-  const rot = kf(t, [[8.3, -0.12], [8.383, -0.15], [8.59, -0.2], [8.675, 1.85, 'inOutCubic'], [8.84, 1.85], [8.93, -0.18, 'inOutCubic'], [9.13, -0.22]]);
-  const width = kf(t, [[8.3, 392], [8.59, 400], [8.675, 640, 'inOutCubic'], [8.84, 640], [8.93, 880, 'inOutCubic'], [9.13, 860]]);
-  const sy = kf(t, [[8.3, 1], [8.84, 1], [8.93, 0.24, 'inOutCubic'], [9.13, 0.22]]);
-  const blur = kf(t, [[8.3, 3], [8.36, 1.5], [8.383, 0.5], [8.405, 6], [8.425, 9], [8.467, 8], [8.5, 4], [8.55, 0.5], [8.59, 1], [8.63, 0], [8.65, 3], [8.675, 0], [8.88, 0], [8.9, 3], [8.93, 0]]);
+  const pos = kf(t, [[8.3, [575, 520]], [8.342, [567, 513]], [8.383, [553, 540]], [8.425, [540, 540]], [8.467, [527, 527]], [8.655, [513, 527]], [8.675, [527, 473], 'inOutCubic'], [8.895, [520, 473]], [8.915, [486, 513], 'inOutCubic'], [9.05, [478, 552]], [9.0924, [405, 575], 'inQuad'], [9.13, [400, 580]]]);
+  const rot = kf(t, [[8.3, -0.12], [8.383, -0.15], [8.655, -0.2], [8.675, -1.29, 'inOutCubic'], [8.895, -1.29], [8.915, -0.18, 'inOutCubic'], [9.05, -0.19], [9.0924, -0.28, 'inQuad'], [9.13, -0.3]]);
+  const width = kf(t, [[8.3, 392], [8.655, 400], [8.675, 680, 'inOutCubic'], [8.895, 680], [8.915, 880, 'inOutCubic'], [9.13, 860]]);
+  const sy = kf(t, [[8.3, 1], [8.655, 1], [8.675, 0.78], [8.895, 0.78], [8.915, 0.24, 'inOutCubic'], [9.13, 0.22]]);
+  const blur = kf(t, [[8.3, 3], [8.36, 1.5], [8.383, 0.5], [8.405, 6], [8.425, 9], [8.467, 8], [8.5, 4], [8.55, 0.5], [8.59, 1], [8.63, 0], [8.65, 3], [8.675, 0], [8.893, 0], [8.905, 3], [8.915, 0]]);
   const [c, x] = off(0);
   x.save();
   x.filter = 'saturate(0.8)';
   drawSprite(x, 'camera', pos[0], pos[1], width, rot, 1, { sy });
   x.restore();
-  const st = kf(t, [[8.3, 0.9], [8.4, 0.85], [8.6, 0.85], [8.675, 2.0, 'outCubic'], [8.84, 2.0], [8.93, 1.3], [9.13, 1.1]]);
-  const sxs = kf(t, [[8.59, 1], [8.675, 0.36, 'outCubic'], [8.84, 0.36], [8.93, 2.2, 'outCubic'], [9.13, 2.2]]);
+  const st = kf(t, [[8.3, 0.9], [8.4, 0.85], [8.655, 0.85], [8.675, 2.0, 'outCubic'], [8.895, 2.0], [8.915, 1.3], [9.13, 1.1]]);
+  const sxs = kf(t, [[8.655, 1], [8.675, 0.36, 'outCubic'], [8.895, 0.36], [8.915, 2.0, 'outCubic'], [9.13, 2.0]]);
+  const ysq = kf(t, [[8.895, 1], [8.915, 0.62]]);
   x.save();
-  const anchor = kf(t, [[8.3, [634, 405]], [8.383, [648, 330]], [8.59, [590, 350]], [8.675, [540, 230], 'inOutCubic'], [8.84, [540, 230]], [8.93, [880, 345], 'inOutCubic'], [9.05, [840, 272]], [9.13, [830, 260]]]);
+  const anchor = kf(t, [[8.3, [634, 405]], [8.383, [648, 330]], [8.655, [590, 350]], [8.675, [540, 230], 'inOutCubic'], [8.895, [540, 230]], [8.915, [880, 345], 'inOutCubic'], [9.0, [900, 315]], [9.05, [898, 312]], [9.0924, [510, 225], 'inQuad'], [9.13, [480, 215]]]);
   x.translate(anchor[0], anchor[1]);
-  x.rotate(kf(t, [[8.3, 0.3], [8.6, 0.1], [8.75, 0], [8.93, -0.3], [9.13, -0.36]]));
-  x.scale(sxs, 1 / Math.sqrt(sxs));
+  x.rotate(kf(t, [[8.3, 0.3], [8.6, 0.1], [8.75, 0], [8.915, -0.3], [9.05, -0.3], [9.0924, -0.5, 'inQuad'], [9.13, -0.55]]));
+  x.scale(sxs, ysq / Math.sqrt(sxs));
   fx.starPath(x, 0, 0, 170 * st, 0, 0.1);
   x.fillStyle = '#e8231d';
   x.shadowColor = 'rgba(255,40,30,0.6)';
@@ -1651,7 +1652,9 @@ function sceneAction(ctx, t, f) {
     const d = (t - 8.404) * 60;
     [[1283, 81], [940, 918], [1377, 999]].forEach(([px, py]) => dot(ctx, px + d * 0.2, py + d * 0.4, 10, `rgba(226,33,27,${a})`));
   }
-  if (t > 8.95) fx.strokePartial(ctx, [[900, 456], [990, 452]], 0, inv(8.95, 9.02, t), 4, CREAM);
+  // white streak above the star as the camera tips away
+  if (t > 9.03 && t < 9.072) fx.strokePartial(ctx, [[924, 218], [1005, 214]], 0, 1, 5, CREAM);
+  else if (t >= 9.072) fx.strokePartial(ctx, [[690, 228], [945, 222]], 0, 1, 6, CREAM);
   sparks(ctx, t, 2, 7);
   const soft = kf(t, [[8.39, 0], [8.425, 6], [8.467, 5], [8.51, 0]]);
   ctx.save();
@@ -1736,46 +1739,26 @@ function sceneStripA(ctx, t, f) {
 function sceneIntention(ctx, t, f) {
   fx.dark(ctx, '#141313');
   const [c, x] = off(1);
-  // ribbon: thin tail from bottom-left into the book; small wedge first, then a wide beam to the top
-  const spine = (u) => {
-    const p0 = [-60, 1000];
-    const p1 = [300, 640];
-    const p2 = [1250, -200];
-    const a = (1 - u) * (1 - u);
-    const b = 2 * (1 - u) * u;
-    const cc = u * u;
-    return [a * p0[0] + b * p1[0] + cc * p2[0], a * p0[1] + b * p1[1] + cc * p2[1]];
+  // red shapes riding with the book (measured on frames 237-250): a thin tail from the book's
+  // lower left to the bottom-left edge, a short flag behind its top (242-246), then a wide band
+  // from the book to the top-right corner (247 on)
+  const bp = kf(t, [[9.84, [720, 560]], [9.885, [500, 560]], [9.926, [440, 548], 'outCubic'], [10.18, [422, 532]], [10.51, [410, 528]]]);
+  const shape = (pts) => {
+    x.beginPath();
+    pts.forEach(([a, b], i) => (i ? x.lineTo(bp[0] + a, bp[1] + b) : x.moveTo(bp[0] + a, bp[1] + b)));
+    x.closePath();
+    x.fill();
   };
-  const u1 = kf(t, [[9.84, 0.3], [10.0, 0.62, 'outCubic'], [10.18, 0.66], [10.28, 1.0, 'inOutCubic']]);
-  const u0 = lerp(0, 0.2, ease.inCubic(inv(10.1, 10.51, t)));
-  const wmax = kf(t, [[9.84, 60], [10.0, 200], [10.18, 220], [10.28, 900, 'inOutCubic']]);
   x.save();
-  // the ribbon rides in attached to the book
   x.translate(kf(t, [[9.84, 270], [9.926, 0, 'outCubic']]), kf(t, [[9.84, -40], [9.926, 0]]));
   x.fillStyle = '#e2211b';
-  x.beginPath();
-  const N = 50;
-  const wAt = (k) => lerp(36, wmax, Math.pow(k, 1.6));
-  for (let i = 0; i <= N; i++) {
-    const k = i / N;
-    const [px, py] = spine(lerp(u0, u1, k));
-    const w = wAt(k);
-    if (i === 0) x.moveTo(px - w * 0.55, py - w * 0.35);
-    else x.lineTo(px - w * 0.55, py - w * 0.35);
-  }
-  for (let i = N; i >= 0; i--) {
-    const k = i / N;
-    const [px, py] = spine(lerp(u0, u1, k));
-    const w = wAt(k);
-    x.lineTo(px + w * 0.25, py + w * 0.15);
-  }
-  x.closePath();
   x.shadowColor = 'rgba(255,40,30,0.45)';
   x.shadowBlur = 25 * S;
-  x.fill();
+  shape([[-110, 94], [-340, 200], [-460, 320], [-460, 380], [-310, 240], [-80, 140]]);
+  if (t > 10.073 && t < 10.28) shape([[-40, -130], [104, -280], [270, -110], [180, -74]]);
+  if (t >= 10.28) shape([[-30, -200], [460, -560], [1100, -560], [1100, -470], [190, -110]]);
   x.shadowBlur = 0;
   x.restore();
-  const bp = kf(t, [[9.84, [720, 560]], [9.885, [500, 580]], [9.926, [445, 575], 'outCubic'], [10.51, [425, 570]]]);
   const bw = kf(t, [[9.84, 470], [10.1, 500], [10.51, 520]]);
   if (t < 9.87) x.filter = 'brightness(0.85)';
   drawSprite(x, 'book', bp[0], bp[1], bw, kf(t, [[9.84, -0.25], [10.0, -0.06]]) + noise1(t * 2, 4) * 0.04, 1, { shadow: 'rgba(255,40,30,0.25)', shadowBlur: 30 });
@@ -1900,12 +1883,75 @@ function sceneCuriosity(ctx, t, f) {
     ctx.restore();
     return;
   }
+  if (t < 11.032) {
+    // frame 264: a grainy crimson ring around the centred record, caret block only
+    const [c, x] = off(0);
+    drawSprite(x, 'vinyl', 720, 532, 461, -0.15);
+    x.fillStyle = CREAM;
+    x.fillRect(912, 490, 74, 90);
+    x.fillStyle = '#141313';
+    x.fillRect(944, 516, 16, 14);
+    composite(ctx, c, { blur: 2.5 });
+    const r = rng(264);
+    ctx.save();
+    ctx.filter = `blur(${2 * S}px)`;
+    ctx.strokeStyle = 'rgba(130,12,26,0.55)';
+    ctx.lineWidth = 30;
+    ctx.beginPath();
+    ctx.arc(722, 530, 672, 0, 7);
+    ctx.stroke();
+    ctx.restore();
+    // speckle the ring so it reads as grainy spray
+    ctx.fillStyle = '#c21a2c';
+    for (let i = 0; i < 2600; i++) {
+      const a = r() * Math.PI * 2;
+      const d = 672 + (r() + r() - 1) * 22;
+      ctx.globalAlpha = 0.35 + r() * 0.5;
+      ctx.fillRect(722 + Math.cos(a) * d, 530 + Math.sin(a) * d, 3, 3);
+    }
+    ctx.globalAlpha = 1;
+    return;
+  }
+  if (t < 11.073) {
+    // frame 265: record slides left, "curiosi" under a wide selection block, scribbled zigzags
+    const [c, x] = off(0);
+    drawSprite(x, 'vinyl', 500, 540, 468, 0.1);
+    composite(ctx, c, { blur: 1.5 });
+    fx.text(ctx, 'curiosity.', 774, 558, CARD, CREAM, { glow: 'rgba(243,239,232,0.35)', glowBlur: 6 });
+    ctx.fillStyle = CREAM;
+    ctx.fillRect(1034, 486, 326, 98);
+    const P = (pts) => pts.map(([a, b]) => [(a - 720) * 2, b * 2]);
+    [
+      [[1025, 155], [1140, 88], [1092, 168], [1298, 84], [1262, 110]],
+      [[1120, 310], [1302, 398], [1160, 402]],
+      [[1052, 362], [1068, 390], [1042, 404], [1072, 514], [986, 425]],
+      [[1132, 216], [1150, 210], [1162, 222], [1178, 218]],
+    ].forEach((pts) => fx.strokePartial(ctx, P(pts), 0, 1, 7, '#ecE8e2', false));
+    [
+      [[1070, 190], [1285, 140], 11],
+      [[1045, 355], [1185, 404], 10],
+      [[1104, 286], [1130, 283], 5],
+    ].forEach(([a, b, w]) => {
+      const [p0, p1] = P([a, b]);
+      const mx = (p0[0] + p1[0]) / 2;
+      const my = (p0[1] + p1[1]) / 2;
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.rotate(Math.atan2(p1[1] - p0[1], p1[0] - p0[0]));
+      ctx.fillStyle = '#d8141e';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / 2, w, 0, 0, 7);
+      ctx.fill();
+      ctx.restore();
+    });
+    return;
+  }
   const pan = 0;
   ctx.save();
   const vin = ease.outBack(inv(11.01, 11.15, t));
   const vx = kf(t, [[11.01, 500], [11.08, 496], [11.25, 430, 'outCubic'], [11.6, 410], [11.81, 250, 'inQuad']]);
-  drawSprite(ctx, 'vinyl', vx, 545, 400 * lerp(0.85, 1, vin), noise1(t, 9) * 0.05 - 1.5 * Math.max(0, t - 11.26));
-  if (t < 11.16) {
+  drawSprite(ctx, 'vinyl', vx, 545, 456 * lerp(0.9, 1, vin), noise1(t, 9) * 0.05 - 1.5 * Math.max(0, t - 11.26));
+  if (t < 11.115) {
     const q = inv(11.01, 11.16, t);
     const drift = q * 40;
     [[660, 330, 1050, 150], [720, 300, 940, 210], [900, 765, 1275, 675], [610, 930, 650, 900]].forEach(([a, b, c, d]) => {
@@ -1925,9 +1971,36 @@ function sceneCuriosity(ctx, t, f) {
   }
   const pop = (t0) => ease.outBack(inv(t0, t0 + 0.12, t), 2.2);
   const nd = ease.inQuad(inv(11.6, 11.81, t));
-  if (t > 11.1) note(ctx, 'quarter', 1044 - 130 * nd, 800, pop(11.1) * 1.7, -0.33 - 0.3 * nd + noise1(t, 1) * 0.08);
-  if (t > 11.35) note(ctx, 'beam', 750 - 120 * nd, 270 - 30 * nd, pop(11.35) * 1.9, -0.12 + 0.6 * nd + noise1(t, 2) * 0.08);
-  if (t > 11.42) note(ctx, 'eighth', 630 - 140 * nd, 815, pop(11.42) * 1.9, 0.15 + 0.1 * nd + noise1(t, 3) * 0.08);
+  // white pen flick above the text: a loop that tightens to a crescent, then a shrinking tick
+  const FL = [
+    [11.115, 11.157, 'loop', 945, 215, 62],
+    [11.157, 11.199, 'cres', 945, 203, 26],
+    [11.199, 11.24, 'tick', 945, 140, 14],
+    [11.24, 11.282, 'cres', 900, 138, 12],
+    [11.282, 11.365, 'dot', 815, 150, 5],
+    [11.45, 11.49, 'arc', 965, 205, 120],
+    [11.49, 11.532, 'cres', 1035, 292, 22],
+    [11.532, 11.574, 'dot', 990, 315, 4],
+  ];
+  FL.forEach(([a, b, kind, fx0, fy0, r]) => {
+    if (t < a || t >= b) return;
+    ctx.save();
+    ctx.strokeStyle = '#ece8e2';
+    ctx.fillStyle = '#ece8e2';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = kind === 'arc' ? 3 : 4;
+    ctx.beginPath();
+    if (kind === 'loop') ctx.ellipse(fx0, fy0, r * 0.55, r * 0.4, -0.5, 0.4, 6.0);
+    else if (kind === 'cres') ctx.arc(fx0, fy0, r, 0.3, 2.4);
+    else if (kind === 'tick') { ctx.moveTo(fx0, fy0 - r); ctx.quadraticCurveTo(fx0 + r * 0.6, fy0, fx0 + r * 0.2, fy0 + r); }
+    else if (kind === 'arc') ctx.arc(fx0, fy0 + r, r, -1.75, 0.35);
+    else { ctx.arc(fx0, fy0, r, 0, 7); ctx.fill(); }
+    if (kind !== 'dot') ctx.stroke();
+    ctx.restore();
+  });
+  if (t > 11.1) note(ctx, 'quarter', 955 - 130 * nd, 800, pop(11.1) * 1.7, -0.33 - 0.3 * nd + noise1(t, 1) * 0.08);
+  if (t > 11.39) note(ctx, 'beam', 710 - 120 * nd, 270 - 30 * nd, pop(11.39) * 1.75, -0.12 - 0.5 * (1 - inv(11.43, 11.47, t)) + 0.6 * nd + noise1(t, 2) * 0.08);
+  if (t > 11.57) note(ctx, 'eighth', 630 - 140 * nd, 790, pop(11.57) * 1.9, 0.15 + 0.1 * nd + noise1(t, 3) * 0.08);
   ctx.restore();
   sparks(ctx, t, 6, 5);
   typed(ctx, 'curiosity.', 10.9, t, 804 + pan, 526, 1323 + pan, 0.17);
@@ -1968,10 +2041,10 @@ function sprayBlob(ctx, cx, cy, r, seed, sy = 1) {
   ctx.fill();
   ctx.filter = 'none';
   const g = rng(seed);
-  const n = Math.round(r * 9);
+  const n = Math.round(r * 5);
   for (let i = 0; i < n; i++) {
     const a = g() * Math.PI * 2;
-    const d = r * (0.8 + Math.pow(g(), 2) * 0.45);
+    const d = r * (0.84 + Math.pow(g(), 2) * 0.24);
     const sz = 1.5 + g() * 3.5;
     ctx.globalAlpha = 0.5 + g() * 0.5;
     ctx.fillRect(cx + Math.cos(a) * d - sz / 2, cy + Math.sin(a) * d * sy - sz / 2, sz, sz);
@@ -2054,10 +2127,10 @@ const arcPts = (cx, cy, rx, ry, a0, a1, rot = 0) =>
   });
 
 function sceneScatter(ctx, t, f) {
-  ctx.fillStyle = '#e2e2e2';
+  ctx.fillStyle = '#ededed';
   ctx.fillRect(0, 0, W, H);
   const spin = inv(11.85, 12.03, t);
-  const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.388, 0.36, 'linear'], [12.43, 0.75, 'inQuad'], [12.47, 1.9, 'inQuad']]);
+  const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.388, 0.36, 'linear'], [12.45, 0.75, 'inQuad'], [12.49, 1.9, 'inQuad']]);
   const burstP = ease.inOutCubic(inv(12.49, 12.555, t));
   const z = kf(t, [[12.6, 1], [13.47, 0.95, 'linear'], [13.68, 0.88, 'inQuad'], [13.722, 0.7], [13.76, 0.62]]);
   const turn = kf(t, [[12.6, 0], [13.47, 0.21, 'linear'], [13.68, 0.65, 'inQuad'], [13.722, 1.0, 'inQuad'], [13.76, 1.3]]);
@@ -2070,7 +2143,7 @@ function sceneScatter(ctx, t, f) {
   const ca = Math.cos(turn);
   const sa = Math.sin(turn);
   const orbit = (px, py) => [700 + z * ((px - 700) * ca - (py - 560) * sa), 560 + z * ((px - 700) * sa + (py - 560) * ca)];
-  const ring = ringLayout(phi - 0.21, { tilt: 0.4, R: 385, cx: 715, cy: 511, F: 4000 });
+  const ring = ringLayout(phi - 0.21, { tilt: 0.4, R: 385, cx: 715, cy: 511, F: 4000, xs: 0.9 });
   const RING_ROT = { skateboard: -0.5, cash: 0.4, cap: -0.15, book: 0.12 };
   ring
     .slice()
@@ -2119,10 +2192,19 @@ function sceneScatter(ctx, t, f) {
       drawSprite(x, it.name, px, py, w, r, 1, sil ? { silhouette: '#121010' } : {});
     });
   if (t < 12.45) {
-    const keys = [[11.85, [1300, 560]], [11.887, [664, 564]], [11.928, [330, 650]], [11.97, [240, 760]], [12.012, [460, 290]], [12.054, [700, 500]], [12.1, [740, 540]], [12.45, [750, 545]]];
-    const trail = [];
-    for (let i = 0; i <= 12; i++) trail.push(kf(Math.max(11.85, t - i * 0.006), keys));
-    inkBall(x, trail[0][0], trail[0][1], 50, trail, 15);
+    const keys = [[11.85, [1300, 560]], [11.887, [664, 564]], [11.928, [330, 650]], [11.97, [240, 760]], [12.012, [460, 290]], [12.054, [700, 500]], [12.095, [697, 480]], [12.25, [730, 520]], [12.45, [750, 545]]];
+    if (t < 12.075) {
+      const trail = [];
+      for (let i = 0; i <= 12; i++) trail.push(kf(Math.max(11.85, t - i * 0.006), keys));
+      inkBall(x, trail[0][0], trail[0][1], 50, trail, 15);
+    } else {
+      // once parked the ball is a crisp ink drop with a sprayed rim
+      const [bx, by] = kf(t, keys);
+      x.save();
+      if (t > 12.11) x.filter = `blur(${2 * S}px)`;
+      sprayBlob(x, bx, by, t < 12.11 ? 54 : 40, 3, 0.95);
+      x.restore();
+    }
   }
   if (t > 12.93) {
     // the blot drops from the top right onto the coin and swallows it
@@ -2252,15 +2334,16 @@ function sceneScatter(ctx, t, f) {
   x.restore();
   // motion-blur flashes on the ink hits, then the whip into the hand shot
   const flashBlur = kf(t, [[12.5, 0], [12.535, 6], [12.575, 0], [12.73, 0], [12.76, 4], [12.79, 0], [12.97, 0], [13.01, 8], [13.05, 0], [13.7, 0], [13.722, 1.5], [13.76, 4]]);
-  composite(ctx, c, { blur: spin < 1 ? (1 - spin) * 14 : flashBlur });
+  const cutBlur = kf(t, [[11.85, 2], [11.887, 2], [11.928, 5], [11.97, 2], [12.012, 0]]);
+  composite(ctx, c, { blur: spin < 1 ? cutBlur : flashBlur });
   if (t > 13.69) {
     // thin black speed arcs sweeping with the turn
     const k = inv(13.69, 13.76, t);
     [[560, 620, 330, 240, 3.0, 4.3], [620, 660, 430, 330, 1.75, 2.85], [780, 600, 380, 230, -0.35, 0.6], [470, 440, 120, 160, 3.5, 4.6]].forEach(([cx, cy, rx, ry, a0, a1]) =>
       ribbon(ctx, arcPts(cx, cy, rx, ry, a0 + k * 0.4, a1 + k * 0.4), 0, Math.min(1, k * 3), 8, 'rgba(20,18,18,0.9)', 1.2));
   }
-  // symmetric vignette that deepens through the shot (corners #a3 -> #83 -> #58)
-  const va = kf(t, [[11.85, 0.26], [12.6, 0.28], [13.47, 0.42], [13.68, 0.61], [13.722, 0.78], [13.76, 0.85]]);
+  // symmetric vignette: none while the ring settles, then deepening (measured corners #e3 -> #c5 -> #a9 -> #97 -> #85 -> #58)
+  const va = kf(t, [[11.85, 0], [12.035, 0], [12.137, 0.16], [12.262, 0.22], [12.387, 0.265], [12.512, 0.28], [12.763, 0.33], [13.013, 0.37], [13.263, 0.4], [13.513, 0.45], [13.68, 0.61], [13.722, 0.78], [13.76, 0.85]]);
   const vg = ctx.createRadialGradient(W / 2, H / 2, 260, W / 2, H / 2, 900);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
   vg.addColorStop(0.5, `rgba(0,0,0,${va * 0.32})`);
