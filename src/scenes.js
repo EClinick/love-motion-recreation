@@ -1270,6 +1270,104 @@ function inkBall(ctx, x, y, r, trail = [], soft = 2.5) {
   ctx.restore();
 }
 
+// Perspective ring fitted to the source (frame 167): centre, radii, depth k; icons scale with depth.
+const RING_BASE = { clapper: 173, skateboard: 190, vinyl: 224, book: 214, camera: 230, cat: 176, coin: 166, controller: 220, cap: 182, heart: 205, cash: 215, plant: 168 };
+const RING_ROT = { skateboard: -0.45, cash: 0.42 };
+const ringSpin = (t) =>
+  kf(t, [
+    [6.38, -0.6],
+    [6.548, 0.55, 'linear'],
+    [6.673, 1.571, 'linear'],
+    [6.756, 2.23, 'linear'],
+    [6.84, 2.62, 'outQuad'],
+    [6.965, 2.788, 'linear'],
+    [7.17, 2.95, 'linear'],
+    [7.76, 3.2, 'linear'],
+    [8.13, 3.67, 'inQuad'],
+    [8.3, 3.8, 'linear'],
+  ]);
+function ring2(t) {
+  const base = ringSpin(t);
+  const cx = kf(t, [[6.548, 700], [6.965, 709]]);
+  const cy = kf(t, [[6.548, 470], [6.756, 425], [6.965, 402], [7.76, 402], [8.13, 400]]);
+  const R = kf(t, [[6.548, 470], [6.965, 433], [7.76, 433], [8.13, 480]]);
+  const Ry = kf(t, [[6.965, 190], [7.76, 195], [8.13, 140]]);
+  const k = 0.495;
+  return RING.map((name, i) => {
+    const a = base + (i * Math.PI) / 6;
+    const s = 1 / (1 - k * Math.sin(a));
+    return { name, i, x: cx + R * Math.cos(a) * s, y: cy + Ry * Math.sin(a) * s, s, w: 1.25 * RING_BASE[name] * Math.pow(s, 0.8) };
+  });
+}
+const ring2Pos = (t, name) => {
+  const it = ring2(t).find((o) => o.name === name);
+  return [it.x, it.y];
+};
+const HITS2 = [
+  [7.132, 'cap'],
+  [7.341, 'heart'],
+  [7.549, 'cash'],
+  [7.799, 'plant'],
+];
+
+function drawRing2(x, t, tint = null) {
+  const hitAmt = (name) => {
+    let a = 0;
+    HITS2.forEach(([ht, n]) => {
+      if (n === name && t > ht - 0.02) a = Math.max(a, 1 - (t - ht) / 0.12);
+    });
+    return clamp(a);
+  };
+  ring2(t)
+    .sort((a, b) => a.s - b.s)
+    .forEach((it) => {
+      const rot = noise1(t * 2 + it.i, it.i) * 0.04 + (RING_ROT[it.name] || 0);
+      drawSprite(x, it.name, it.x, it.y, it.w, rot);
+      const hit = tint ? 0 : hitAmt(it.name);
+      if (hit > 0) drawSprite(x, it.name, it.x, it.y, it.w, rot, hit * 0.75, { silhouette: '#f0a030' });
+    });
+}
+
+// soft, sprayed ink blob
+function inkBlob(ctx, x, y, rx, ry, rot = 0, soft = 3) {
+  ctx.save();
+  ctx.filter = `blur(${soft * S}px)`;
+  ctx.fillStyle = '#0e0c0c';
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, rot, 0, 7);
+  ctx.fill();
+  ctx.restore();
+}
+function inkTrail(ctx, pts, lw, alpha = 0.55, blur = 10) {
+  ctx.save();
+  ctx.filter = `blur(${blur * S}px)`;
+  fx.strokePartial(ctx, smoothPts(pts, 8), 0, 1, lw, `rgba(40,36,36,${alpha})`, false);
+  ctx.restore();
+}
+function inkStroke(ctx, pts, lw) {
+  ctx.save();
+  ctx.filter = `blur(${1.5 * S}px)`;
+  fx.strokePartial(ctx, smoothPts(pts, 8), 0, 1, lw, '#0e0c0c');
+  ctx.restore();
+}
+function spikes(ctx, x, y, seed, n = 6, col = '#e8a020') {
+  const r = rng(seed);
+  ctx.save();
+  ctx.fillStyle = col;
+  for (let i = 0; i < n; i++) {
+    const an = r() * Math.PI * 2;
+    const d0 = 90 + r() * 60;
+    const d1 = d0 + 50 + r() * 90;
+    const wd = 4 + r() * 5;
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(an) * d0 + Math.cos(an + 1.57) * wd, y + Math.sin(an) * d0 + Math.sin(an + 1.57) * wd);
+    ctx.lineTo(x + Math.cos(an) * d1, y + Math.sin(an) * d1);
+    ctx.lineTo(x + Math.cos(an) * d0 - Math.cos(an + 1.57) * wd, y + Math.sin(an) * d0 - Math.sin(an + 1.57) * wd);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 function sceneRing(ctx, t, f) {
   // 6.30-6.38: grey gradient, then fire wipe rising from the bottom
   if (t < 6.32) {
@@ -1283,7 +1381,7 @@ function sceneRing(ctx, t, f) {
     ctx.fillRect(0, 0, W, H);
     return;
   }
-  if (t < 6.37) {
+  if (t < 6.36) {
     ctx.fillStyle = '#121112';
     ctx.fillRect(0, 0, W, H);
     const g = ctx.createLinearGradient(0, 600, 0, H);
@@ -1296,106 +1394,150 @@ function sceneRing(ctx, t, f) {
     ctx.fillRect(0, 600, W, H - 600);
     return;
   }
-  if (!BALL) BALL = ballKeys();
-  flat(ctx, '#e2e1df', 'rgba(80,76,74,0.18)', W, H);
-  const zoom = kf(t, [
-    [6.37, 1.7],
-    [6.9, 1.0, 'outCubic'],
-    [8.0, 1.06, 'inOutQuad'],
-    [8.3, 2.4, 'inExpo'],
-  ]);
-  const camX = kf(t, [[8.0, 0], [8.3, -560, 'inExpo']]);
-  const camR = kf(t, [[6.37, 0.35], [6.9, 0, 'outCubic']]);
-  const [sx, sy] = shake(t, 3, 1, 33);
-
-  const [c, x] = off(0);
-  x.save();
-  camera(x, { x: sx + camX - 180 * (1 - inv(6.5, 7.0, t)), y: sy - 60 * (1 - inv(6.5, 7.0, t)), z: zoom, r: camR, cx: 770, cy: 600 });
-  const items = ringAt(t);
-  const hitAmt = (name) => {
-    let a = 0;
-    HITS.forEach(([ht, n]) => {
-      if (n === name) a = Math.max(a, 1 - Math.abs(t - ht - 0.03) / (n === 'heart' || n === 'cap' ? 0.1 : 0.06));
-    });
-    return clamp(a);
-  };
-  items
-    .slice()
-    .sort((a, b) => b.z - a.z)
-    .forEach((it) => {
-      const w = RING_W[it.name] * it.s;
-      const hit = hitAmt(it.name);
-      const rot = noise1(t * 2 + it.i, it.i) * 0.06 + (it.name === 'skateboard' ? -0.45 : 0);
-      drawSprite(x, it.name, it.x, it.y, w * (1 + hit * 0.1), rot);
-      if (hit > 0) drawSprite(x, it.name, it.x, it.y, w * (1 + hit * 0.1), rot, hit * 0.8, { silhouette: '#ff7a20' });
-    });
-  HITS.forEach(([ht, n], k) => {
-    const [px, py] = iconPos(ht, n);
-    flash(x, px, py, 1 - Math.abs(t - ht - 0.02) / 0.07, k + 3);
-  });
-  // black ink scribble dragged across the heart after its hit
-  if (t > 7.3 && t < 7.52) {
-    const [hx, hy] = iconPos(7.31, 'heart');
-    const pts = [];
-    for (let i = 0; i <= 40; i++) pts.push([hx - 190 + i * 9.5, hy - 85 + Math.sin(i * 0.55) * 22]);
-    fx.strokePartial(x, pts, inv(7.46, 7.52, t), inv(7.3, 7.33, t), 60, '#141010', true);
-  }
-  if (t > 6.8 && t < 7.28) {
-    const arc = [];
-    for (let i = 0; i <= 40; i++) {
-      const u = i / 40;
-      arc.push([lerp(580, 1060, u), 450 - Math.sin(u * Math.PI) * 60]);
-    }
-    fx.strokePartial(x, arc, inv(7.2, 7.28, t), inv(6.8, 6.98, t), 18, 'rgba(26,22,22,0.85)', true);
-  }
-  if (t > 7.42 && t < 7.85) {
-    const arc = [];
-    for (let i = 0; i <= 50; i++) {
-      const u = i / 50;
-      arc.push([lerp(430, 1120, u), 330 - Math.sin(u * Math.PI) * 120]);
-    }
-    const [ac, ax] = off(3);
-    fx.strokePartial(ax, arc, inv(7.65, 7.85, t), inv(7.42, 7.6, t), 30, 'rgba(30,28,28,0.6)', true);
-    x.save();
-    x.setTransform(S, 0, 0, S, 0, 0);
-    composite(x, ac, { blur: 5 });
-    x.restore();
-  }
-  if (t > 7.48 && t < 7.6) {
-    const [cx2, cy2] = iconPos(7.5, 'cash');
-    const r = rng(17);
-    x.save();
-    x.strokeStyle = '#1a1414';
-    x.lineCap = 'round';
-    for (let i = 0; i < 4; i++) {
-      const an = -1.2 + r() * 1.4;
-      x.lineWidth = 6 + r() * 4;
-      x.beginPath();
-      x.moveTo(cx2 + 120 + Math.cos(an) * 40, cy2 + Math.sin(an) * 40);
-      x.lineTo(cx2 + 120 + Math.cos(an) * 170, cy2 + Math.sin(an) * 170);
-      x.stroke();
-    }
-    x.restore();
-  }
-  if (t > 7.55 && t < 7.85) {
-    const [cx2, cy2] = iconPos(7.75, 'cash');
-    flash(x, cx2, cy2, 0.6 * (1 - inv(7.7, 7.85, t)), 99);
-  }
-  if (t > 6.5) {
-    const pos = kf(t, BALL);
-    const trail = [];
-    for (let i = 0; i <= 10; i++) trail.push(kf(t - i * 0.022, BALL));
-    inkBall(x, pos[0], pos[1], 26, trail);
-  }
-  x.restore();
-  const tr = inv(6.37, 6.5, t);
-  if (tr < 1) {
-    ctx.fillStyle = '#2a2827';
+  const fr = Math.round(t * C.FPS);
+  if (t < 6.52) {
+    // 6.38-6.50: the ring arrives as chunky thermal pixels on dark, then goes grey
+    ctx.fillStyle = bgRamp(t, [[6.38, '#141414'], [6.42, '#2c2a2a'], [6.46, '#585656'], [6.5, '#9a9898']]);
     ctx.fillRect(0, 0, W, H);
-    mosaic(ctx, c, lerp(40, 8, tr), { blur: lerp(24, 4, tr), alpha: lerp(0.8, 1, tr) });
+    const [c, x] = off(0);
+    x.save();
+    camera(x, { z: kf(t, [[6.38, 2.2], [6.42, 1.15, 'outCubic'], [6.5, 1.0]]), cx: 760, cy: 760 });
+    drawRing2(x, t, true);
+    x.restore();
+    const block = t < 6.48 ? 14 : 10;
+    const sw = Math.round(W / block);
+    const sh = Math.round(H / block);
+    const sm = createCanvas(sw, sh);
+    const smx = sm.getContext('2d');
+    smx.drawImage(c, 0, 0, sw, sh);
+    const id = smx.getImageData(0, 0, sw, sh);
+    const d = id.data;
+    const grey = t >= 6.48;
+    for (let i = 0; i < d.length; i += 4) {
+      if (!d[i + 3]) continue;
+      const l = (0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]) / 255;
+      if (grey) {
+        const v = Math.round(40 + l * 120);
+        d[i] = d[i + 1] = d[i + 2] = v;
+      } else {
+        const v = Math.min(255, Math.round((0.35 + l * 0.75) * 255)) * 3;
+        d[i] = ironLut[v];
+        d[i + 1] = ironLut[v + 1];
+        d[i + 2] = ironLut[v + 2];
+      }
+    }
+    smx.putImageData(id, 0, 0);
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.filter = `blur(${(grey ? 2 : 3) * S}px)`;
+    ctx.globalAlpha = t < 6.4 ? 0.85 : 1;
+    ctx.drawImage(sm, 0, 0, W, H);
+    ctx.restore();
     return;
   }
-  composite(ctx, c, { blur: t > 8.15 ? (t - 8.15) * 60 : 0 });
+
+  flat(ctx, '#e4e3e3', 'rgba(80,76,74,0.14)', W, H);
+  // push in on the controller and coin at the end
+  const zoom = kf(t, [[8.13, 1.0], [8.17, 1.45, 'inQuad'], [8.21, 2.1, 'linear'], [8.3, 3.2, 'linear']]);
+  const [sx, sy] = shake(t, 3, 0.8, 33);
+  const [c, x] = off(0);
+  x.save();
+  camera(x, { x: sx, y: sy, z: zoom, cx: 1040, cy: 560 });
+  drawRing2(x, t);
+
+  // hits: orange glow, sparks and a splat of ink on the struck icon
+  HITS2.forEach(([ht, n], k2) => {
+    const a = 1 - (t - ht) / 0.12;
+    if (t < ht - 0.02 || a <= 0) return;
+    const [px, py] = ring2Pos(ht, n);
+    const g = x.createRadialGradient(px, py, 0, px, py, 220);
+    g.addColorStop(0, `rgba(255,170,50,${0.75 * a})`);
+    g.addColorStop(1, 'rgba(255,160,50,0)');
+    x.fillStyle = g;
+    x.fillRect(px - 240, py - 240, 480, 480);
+    if (t < ht + 0.065) spikes(x, px, py, k2 * 7 + 3, 6);
+  });
+  const hitPos = (n) => ring2Pos(HITS2.find((h) => h[1] === n)[0], n);
+
+  // the ink ball, frame by frame as in the source
+  if (fr === 167) inkBlob(x, 697, 427, 22, 34, 0.5);
+  if (fr === 168) inkBlob(x, 652, 450, 22, 34, 0.7);
+  if (fr === 169) {
+    inkTrail(x, [[607, 472], [700, 300], [810, 67]], 34, 0.4, 12);
+    inkStroke(x, [[675, 90], [600, 180], [562, 270], [575, 380], [607, 472]], 26);
+  }
+  if (fr === 170) {
+    inkTrail(x, [[630, 202], [700, 140], [855, 112], [980, 220], [1060, 430]], 26, 0.5, 8);
+    inkStroke(x, [[980, 300], [1040, 400], [1070, 470]], 18);
+  }
+  if (fr === 171) {
+    const [px, py] = hitPos('cap');
+    inkStroke(x, [[px - 110, py - 40], [px - 60, py - 10], [px - 20, py + 5]], 30);
+  }
+  if (fr === 172) {
+    const [px, py] = hitPos('cap');
+    inkTrail(x, [[495, 180], [700, 260], [900, 380], [px - 60, py - 30]], 30, 0.5, 10);
+  }
+  if (fr === 173) inkBlob(x, 675, 99, 14, 16, 0, 2);
+  if (fr === 174) inkBlob(x, 720, 112, 16, 18, 0, 2);
+  if (fr === 175) {
+    inkTrail(x, [[800, 160], [806, 450], [810, 760]], 30, 0.45, 14);
+    inkStroke(x, [[787, 90], [800, 140], [810, 200]], 26);
+  }
+  if (fr === 176) {
+    const [px, py] = hitPos('heart');
+    const pts = [];
+    for (let i = 0; i <= 30; i++) pts.push([px - 150 + i * 10, py - 70 + Math.sin(i * 0.6) * 18]);
+    inkStroke(x, pts, 40);
+  }
+  if (fr === 177) {
+    const [px, py] = hitPos('heart');
+    inkTrail(x, [[180, 90], [450, 330], [px, py - 60]], 30, 0.5, 10);
+    inkStroke(x, [[px - 60, py - 140], [px - 20, py - 90]], 10);
+  }
+  if (fr === 178) inkBlob(x, 360, 90, 22, 20, 0, 3);
+  if (fr === 179) inkBlob(x, 427, 90, 22, 20, 0, 3);
+  if (fr === 180) {
+    inkTrail(x, [[607, 90], [520, 200], [450, 400], [400, 520]], 28, 0.5, 10);
+    inkStroke(x, [[560, 120], [500, 220], [470, 300]], 14);
+  }
+  if (fr === 181) {
+    const [px, py] = hitPos('cash');
+    inkBlob(x, px - 20, py - 20, 34, 26, 0.3, 3);
+  }
+  if (fr === 182) {
+    const [px, py] = hitPos('cash');
+    inkTrail(x, [[px, py - 30], [px + 120, py - 200], [px + 200, py - 320]], 24, 0.45, 10);
+    inkStroke(x, [[px + 40, py - 60], [px + 110, py - 180]], 10);
+  }
+  if (fr === 183) inkBlob(x, 1035, 135, 26, 20, 0.3, 3);
+  if (fr === 184) inkBlob(x, 1057, 157, 22, 18, 0.3, 3);
+  if (fr === 185) inkBlob(x, 1057, 180, 22, 18, 0.3, 3);
+  if (fr === 186) {
+    inkTrail(x, [[1046, 180], [800, 300], [600, 380], [405, 450]], 30, 0.45, 12);
+    inkStroke(x, [[1040, 130], [1050, 180], [1040, 230]], 22);
+  }
+  if (fr === 187) {
+    const [px, py] = hitPos('plant');
+    inkBlob(x, px + 30, py - 10, 34, 40, 0.2, 3);
+  }
+  if (fr === 188) {
+    const [px, py] = hitPos('plant');
+    inkTrail(x, [[px + 40, py - 20], [px + 300, py - 120], [px + 420, py - 100]], 26, 0.45, 10);
+    inkStroke(x, [[px + 60, py - 40], [px + 120, py - 140]], 10);
+  }
+  if (fr === 189) {
+    inkTrail(x, [[560, 470], [720, 495]], 20, 0.4, 8);
+    inkBlob(x, 720, 495, 20, 20, 0, 2);
+  }
+  if (fr === 190) inkBlob(x, 720, 495, 22, 22, 0, 2);
+  if (fr >= 191 && fr <= 195) {
+    const r = lerp(28, 66, (fr - 191) / 4);
+    inkBlob(x, lerp(675, 675, (fr - 191) / 4), lerp(450, 495, (fr - 191) / 4), r, r, 0, 4);
+  }
+  if (fr >= 196) inkBlob(x, 900, 450, 70, 70, 0, 6);
+  x.restore();
+  composite(ctx, c, { blur: t > 8.15 ? (t - 8.15) * 40 : 0 });
 }
 
 // =====================================================================
