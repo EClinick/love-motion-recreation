@@ -3855,19 +3855,19 @@ function paperTexture() {
   const x = c.getContext('2d');
   x.scale(S, S);
   const r = rng(515);
-  for (let i = 0; i < 17000; i++) {
+  for (let i = 0; i < 20000; i++) {
     const px = r() * W;
     const py = r() * H;
     const cl = 0.5 + 0.5 * noise1(px * 0.01 + py * 0.007, 9);
     if (r() > cl) continue;
-    x.fillStyle = `rgba(70,62,66,${0.017 + r() * 0.017})`;
+    x.fillStyle = `rgba(70,62,66,${0.02 + r() * 0.022})`;
     x.beginPath();
-    x.ellipse(px, py, 1.8 + r() * 1.8, 1.5 + r() * 1.4, r() * 3, 0, 7);
+    x.ellipse(px, py, 1.1 + r() * 1.3, 0.9 + r() * 1.0, r() * 3, 0, 7);
     x.fill();
   }
   const b = createCanvas(W * S, H * S);
   const bx = b.getContext('2d');
-  bx.filter = `blur(${1.2 * S}px)`;
+  bx.filter = `blur(${0.7 * S}px)`;
   bx.drawImage(c, 0, 0);
   return (paperSpecks = b);
 }
