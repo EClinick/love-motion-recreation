@@ -2281,18 +2281,22 @@ const handHot = {};
 const headMasks = {};
 const headHot = {};
 // Image decoding is async in @napi-rs/canvas, so masks are preloaded before rendering.
+const handTone = {};
 async function preload() {
   const { loadImage } = require('@napi-rs/canvas');
   for (const [dir, into, hotInto] of [[HAND_DIR, handMasks, handHot], [HEAD_DIR, headMasks, headHot]]) {
     if (!fsMod.existsSync(dir)) continue;
     for (const name of fsMod.readdirSync(dir)) {
-      const m = /^(f|hot)_(\d+)\.png$/.exec(name);
-      if (m) (m[1] === 'hot' ? hotInto : into)[Number(m[2])] = await loadImage(fsMod.readFileSync(pathMod.join(dir, name)));
+      const m = /^(f|hot|tone)_(\d+)\.png$/.exec(name);
+      if (m) (m[1] === 'hot' ? hotInto : m[1] === 'tone' ? handTone : into)[Number(m[2])] = await loadImage(fsMod.readFileSync(pathMod.join(dir, name)));
     }
   }
 }
 function handMask(t) {
   return handMasks[Math.round(t * C.FPS)] || null;
+}
+function handToneMap(t) {
+  return handTone[Math.round(t * C.FPS)] || null;
 }
 function handHotMask(t) {
   return handHot[Math.round(t * C.FPS)] || null;
@@ -2454,6 +2458,57 @@ const handLut = (() => {
   return lut;
 })();
 const handCache = new Map();
+const TONE_PAL = [[0.02, [154, 11, 21]], [0.104, [162, 17, 21]], [0.146, [172, 25, 21]], [0.188, [178, 34, 22]], [0.229, [183, 42, 22]], [0.271, [189, 51, 23]], [0.313, [193, 61, 23]], [0.354, [197, 70, 23]], [0.396, [199, 79, 23]], [0.438, [202, 89, 23]], [0.479, [203, 97, 23]], [0.521, [206, 107, 23]], [0.563, [207, 117, 23]], [0.604, [209, 126, 23]], [0.646, [210, 135, 24]], [0.688, [212, 145, 27]], [0.729, [214, 155, 38]], [0.771, [215, 165, 53]], [0.813, [215, 175, 69]], [0.854, [218, 186, 89]], [0.896, [219, 196, 108]], [0.938, [220, 205, 138]], [0.98, [220, 214, 170]]];
+const toneLut = (() => {
+  const lut = new Uint8Array(256 * 3);
+  for (let i = 0; i < 256; i++) {
+    const v = i / 255;
+    let k = 1;
+    while (k < TONE_PAL.length - 1 && TONE_PAL[k][0] < v) k++;
+    const [a, ca] = TONE_PAL[k - 1];
+    const [b, cb] = TONE_PAL[k];
+    const u = clamp((v - a) / (b - a));
+    for (let j = 0; j < 3; j++) lut[i * 3 + j] = Math.round(ca[j] + (cb[j] - ca[j]) * u);
+  }
+  return lut;
+})();
+// Colour the silhouette from its traced thermal index (tone map) through the measured palette.
+function toneShade(mask, tone) {
+  if (handCache.has(tone)) return handCache.get(tone);
+  const m = createCanvas(W, H);
+  const mx = m.getContext('2d');
+  mx.drawImage(mask, 0, 0, W, H);
+  const md = mx.getImageData(0, 0, W, H);
+  const tc = createCanvas(W, H);
+  const tx = tc.getContext('2d');
+  tx.drawImage(tone, 0, 0, W, H);
+  const td = tx.getImageData(0, 0, W, H).data;
+  const d = md.data;
+  for (let i = 0; i < W * H * 4; i += 4) {
+    const a = d[i + 3];
+    if (!a) continue;
+    d[i + 3] = Math.max(0, Math.min(255, (a - 128) * 3 + 128)); // crisp edge
+    const k = td[i + 3] ? td[i] : 160;
+    const kb0 = td[i + 3] ? (td[i + 1] / 255) * 2 : 0;
+    // blue-leaning (violet) tones are darker than the lit-hand palette
+    const R = Math.round(toneLut[k * 3] * lerp(1, 0.55, clamp((kb0 - 0.6) / 0.4)));
+    d[i] = R;
+    d[i + 1] = Math.round((R * k) / 255);
+    const kb = td[i + 3] ? (td[i + 1] / 255) * 2 : 0;
+    d[i + 2] = td[i + 3] ? Math.min(255, Math.round(R * kb)) : toneLut[k * 3 + 2];
+    if (kb > 1) {
+      // blue-dominant: the dark violet fingers of the intro
+      const u = clamp((kb - 1) / 0.3);
+      d[i] = Math.round(d[i] + (36 - d[i]) * u);
+      d[i + 1] = Math.round(d[i + 1] + (17 - d[i + 1]) * u);
+      d[i + 2] = Math.round(d[i + 2] + (52 - d[i + 2]) * u);
+    }
+  }
+  mx.putImageData(md, 0, 0);
+  if (handCache.size > 8) handCache.delete(handCache.keys().next().value);
+  handCache.set(tone, m);
+  return m;
+}
 function handShade(mask) {
   if (handCache.has(mask)) return handCache.get(mask);
   const m = createCanvas(W, H);
@@ -2511,9 +2566,9 @@ function handShade(mask) {
 }
 
 // Thermal shading inside a traced silhouette (screen space).
-function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0) {
+function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0, tone = null) {
   const [c, x] = off(0);
-  x.drawImage(handShade(mask), 0, 0, W, H);
+  x.drawImage(tone ? toneShade(mask, tone) : handShade(mask), 0, 0, W, H);
   if (pale > 0) {
     // the hand drains to a pale grey, keeping a thin orange rim on its right edge
     const pc = createCanvas(W, H);
@@ -2544,7 +2599,7 @@ function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0) {
     x.drawImage(hc, 0, 0, W, H);
     x.restore();
   }
-  if (tint <= 0) {
+  if (tint <= 0 || tone) {
     composite(ctx, c, { filter: filter || undefined });
     return;
   }
@@ -2631,7 +2686,7 @@ function sceneHand(ctx, t, f) {
     let filt = '';
     if (settle < 1) filt = `brightness(${lerp(0.92, 1, settle)}) blur(${(1 - settle) * 10 * S}px)`;
     else if (t > 15.64) filt = `saturate(${kf(t, [[15.64, 1], [15.77, 0.85]])}) brightness(${kf(t, [[15.64, 1], [15.77, 0.92], [15.81, 0.97]])})`;
-    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0, handHotMask(t), kf(t, [[15.77, 0], [15.8, 1]]));
+    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0, handHotMask(t), kf(t, [[15.77, 0], [15.8, 1]]), t < 15.6 ? handToneMap(t) : null);
   }
   const hand = traced ? null : thermalHand(pose);
   const [c, x] = traced ? [null, null] : off(0);
@@ -2679,18 +2734,18 @@ function sceneHand(ctx, t, f) {
   // thin white orbit arcs spinning around the hand, shortening to dashes
   if (t < 14.15) {
     const q = inv(13.76, 14.1, t);
-    const span = lerp(0.75, 0.1, q);
+    const span = lerp(1.1, 0.2, q);
     const [ac, ax] = off(5);
     ax.strokeStyle = `rgba(240,238,234,${0.75 * (1 - inv(14.05, 14.15, t))})`;
     ax.lineCap = 'round';
-    ax.lineWidth = 5;
+    ax.lineWidth = 8;
     [[0, 1], [1.4, 0.92], [2.6, 1.05], [3.7, 0.88], [5.0, 0.97]].forEach(([a0, rk], k) => {
       const a = a0 + t * 7 + k * 0.3;
       ax.beginPath();
       ax.ellipse(lerp(600, 640, q), lerp(660, 520, q), lerp(250, 200, q) * rk, lerp(400, 230, q) * rk, -0.35, a, a + span);
       ax.stroke();
     });
-    composite(ctx, ac, { blur: lerp(4, 2, q) });
+    composite(ctx, ac, { blur: lerp(6, 3, q) });
   }
   // smoky white swooshes curling off the pinch (15.66-15.72)
   if (t > 15.65 && t < 15.74) {

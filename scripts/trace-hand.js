@@ -53,7 +53,7 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
   const f1 = Math.round(t1 * FPS);
   for (let f = f0; f <= Math.min(f1, fLast); f++) {
     const t = f / FPS;
-    const buf = execFileSync('ffmpeg', ['-v', 'error', '-ss', String(t), '-i', path.join(ROOT, 'ref', 'reference.mp4'), '-frames:v', '1', '-vf', `scale=${W}:${H}`, '-f', 'image2pipe', '-vcodec', 'png', '-'], { maxBuffer: 1 << 27 });
+    const buf = execFileSync('ffmpeg', ['-v', 'error', '-ss', String(t - 0.02), '-i', path.join(ROOT, 'ref', 'reference.mp4'), '-frames:v', '1', '-vf', `scale=${W}:${H}`, '-f', 'image2pipe', '-vcodec', 'png', '-'], { maxBuffer: 1 << 27 });
     const img = await loadImage(buf);
     const c = createCanvas(W, H);
     const x = c.getContext('2d');
@@ -79,8 +79,10 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       // hand: the white-lit thumb (14.1-14.35 s); skip the typing-cursor block to its right
       const px = i % W;
       const py = (i / W) | 0;
+      // dark violet fingers in the crimson intro (too dark for the warm rule)
+      const violet = NAME === 'hand' && t < 14.0 && b > 35 && b > r + 8 && b > g + 14;
       const whiteHand = NAME === 'hand' && !pale && (r + g + b) / 3 > 190 && !(px > 860 && px < 1220 && py > 500 && py < 590);
-      m[i] = darkOnLight ? ((r + g + b) / 3 < 120 && i % W > 560 ? 1 : 0) : pale ? (warm || ((r + g + b) / 3 > 105 && !(px > 880 && py > 505 && py < 590 && mx - mn < 40)) ? 1 : 0) : warm || cream || white || whiteHand ? 1 : 0;
+      m[i] = darkOnLight ? ((r + g + b) / 3 < 120 && i % W > 560 ? 1 : 0) : pale ? (warm || ((r + g + b) / 3 > 105 && !(px > 880 && py > 505 && py < 590 && mx - mn < 40)) ? 1 : 0) : warm || cream || white || whiteHand || violet ? 1 : 0;
     }
     largestComponent(m);
     // fill interior holes: anything the outside background can't reach is inside the hand
@@ -180,6 +182,30 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       sx.filter = 'blur(4px)';
       sx.drawImage(mc, 0, 0);
       fs.writeFileSync(path.join(outDir, `hot_${String(f).padStart(4, '0')}.png`), sm.toBuffer('image/png'));
+    }
+    if (NAME === 'hand') {
+      // tone map: the hand's thermal index (g/r, plus b/r for the crimson/violet intro) averaged
+      // over the silhouette with a small blur, so it carries colour regions rather than grain.
+      // The renderer maps it through a palette measured from the source.
+      const tc = createCanvas(W, H);
+      const tx = tc.getContext('2d');
+      const ti = tx.createImageData(W, H);
+      for (let i = 0; i < W * H; i++) {
+        if (!m[i]) continue;
+        const r = Math.max(30, d[i * 4]);
+        ti.data[i * 4] = Math.round(Math.min(1, d[i * 4 + 1] / r) * 255);
+        ti.data[i * 4 + 1] = Math.round(Math.min(1, d[i * 4 + 2] / r / 2) * 255);
+        ti.data[i * 4 + 3] = 255;
+      }
+      tx.putImageData(ti, 0, 0);
+      const tb = createCanvas(W, H);
+      const tbx = tb.getContext('2d');
+      tbx.filter = 'blur(4px)';
+      tbx.drawImage(tc, 0, 0);
+      const bd = tbx.getImageData(0, 0, W, H);
+      for (let i = 0; i < W * H; i++) bd.data[i * 4 + 3] = m[i] ? 255 : 0;
+      tbx.putImageData(bd, 0, 0);
+      fs.writeFileSync(path.join(outDir, `tone_${String(f).padStart(4, '0')}.png`), tb.toBuffer('image/png'));
     }
     if (NAME === 'hand' && !pale) {
       // white-hot highlights on the hand (the lit thumb / finger early in the shot)
