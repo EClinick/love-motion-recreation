@@ -1,28 +1,33 @@
 #!/usr/bin/env node
 // Dependency-free static-site regression checks. Run from any directory.
+// The build goes to a temporary directory so tests never touch a live dist/.
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { pathToFileURL, fileURLToPath } = require('node:url');
 const { spawn, execFileSync } = require('node:child_process');
 const net = require('node:net');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
-const dist = path.join(root, 'dist');
-const pages = ['index.html', 'how-we-made-this.html'];
-const assets = ['theme.css', 'theme.js', 'how-we-made-this.css', 'how-we-made-this.js'];
+const dist = fs.mkdtempSync(path.join(os.tmpdir(), 'lmr-site-'));
+const pages = ['index.html', 'how-we-made-this.html', 'session.html'];
+const assets = ['theme.css', 'theme.js', 'replay.css', 'how-we-made-this.css', 'how-we-made-this.js', 'full-session.css', 'full-session.js'];
 const read = file => fs.readFileSync(file, 'utf8');
+const site = name => read(path.join(root, 'site', name));
+const messages = JSON.parse(read(path.join(__dirname, 'session-messages.json')));
+const session = JSON.parse(site('session.json'));
 let server, base;
 
 before(async () => {
-  execFileSync(process.execPath, [path.join(__dirname, 'build-site.js')], { cwd: root });
+  execFileSync(process.execPath, [path.join(__dirname, 'build-site.js'), dist], { cwd: root });
   const reservation = net.createServer();
   await new Promise(resolve => reservation.listen(0, '127.0.0.1', resolve));
   const port = reservation.address().port;
   await new Promise(resolve => reservation.close(resolve));
-  // Serving the checkout also exposes dist/ as a nested hosting prefix.
-  server = spawn(process.execPath, [path.join(__dirname, 'serve-site.js'), String(port), root], { stdio: ['ignore', 'pipe', 'pipe'] });
+  // Serving the checkout's parent of site/ and the temporary build exercises both layouts.
+  server = spawn(process.execPath, [path.join(__dirname, 'serve-site.js'), String(port), dist], { stdio: ['ignore', 'pipe', 'pipe'] });
   base = `http://127.0.0.1:${port}`;
   await new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('Static server did not start')), 5000);
@@ -37,6 +42,7 @@ after(async () => {
     server.kill();
     await exited;
   }
+  fs.rmSync(dist, { recursive: true, force: true });
 });
 
 function markup(file) {
@@ -44,12 +50,24 @@ function markup(file) {
   return read(file).replace(/(<script\b[^>]*>)[\s\S]*?<\/script>/gi, '$1</script>');
 }
 function ids(html) { return [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]); }
+const text = html => html.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+const prompts = html => [...html.matchAll(/<h[23] class="t-prompt" id="m(\d+)">[\s\S]*?<span class="t-ptext">([\s\S]*?)<\/span><time datetime="([^"]+)"/g)].map(m => ({ n: +m[1], text: text(m[2]), t: m[3] }));
 
-test('both pages and shared assets are copied byte-for-byte', () => {
-  for (const name of [...pages, ...assets]) {
-    assert.equal(read(path.join(dist, 'site', name)), read(path.join(root, 'site', name)), name);
+test('pages, styles, scripts and stills are copied byte-for-byte', () => {
+  for (const name of [...pages, ...assets]) assert.equal(read(path.join(dist, 'site', name)), site(name), name);
+  for (const still of fs.readdirSync(path.join(root, 'site', 'stills'))) {
+    assert.deepEqual(fs.readFileSync(path.join(dist, 'site', 'stills', still)), fs.readFileSync(path.join(root, 'site', 'stills', still)));
   }
   assert.match(read(path.join(dist, 'index.html')), /href="site\/"/);
+});
+
+test('committed replay HTML is exactly what the renderer produces from session.json', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lmr-render-'));
+  try {
+    for (const name of ['session.json', 'how-we-made-this.html', 'session.html']) fs.copyFileSync(path.join(root, 'site', name), path.join(tmp, name));
+    require('./session-render.js').renderInto(tmp);
+    for (const name of ['how-we-made-this.html', 'session.html']) assert.equal(read(path.join(tmp, name)), site(name), `${name} is stale: run npm run site:build`);
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });
 
 test('all static local links, fragments and media resolve in checkout and portable build', () => {
@@ -59,7 +77,7 @@ test('all static local links, fragments and media resolve in checkout and portab
       const html = markup(file);
       const allIds = ids(html);
       assert.equal(new Set(allIds).size, allIds.length, `duplicate IDs in ${name}`);
-      for (const [, attr, value] of html.matchAll(/\b(href|src)="([^"]+)"/g)) {
+      for (const [, attr, value] of html.matchAll(/\b(href|src|poster)="([^"]+)"/g)) {
         if (/^(?:https?:|data:|mailto:)/.test(value)) continue;
         assert.ok(!value.startsWith('/'), `${name}: ${attr} must be portable: ${value}`);
         const url = new URL(value.replace(/&amp;/g, '&'), pathToFileURL(file));
@@ -91,71 +109,97 @@ test('every manifest version and final media file exists', () => {
   for (const file of files) assert.ok(fs.statSync(path.resolve(dir, file)).size > 0, file);
 });
 
-test('walkthrough is static, labelled and free of private transcript identifiers', () => {
-  const html = read(path.join(root, 'site', 'how-we-made-this.html'));
-  assert.equal((html.match(/<h1\b/g) || []).length, 1);
-  assert.match(html, /<main id="main" tabindex="-1">/);
-  assert.match(html, /aria-current="page">How I made this/);
-  for (const section of ['prompts', 'follow-ups', 'workflow', 'lessons', 'try-it', 'sources']) assert.match(html, new RegExp(`id="${section}"`));
-  assert.doesNotMatch(html, /starter-prompt|Suggested prompt|class="steps"|class="chapter-nav"/);
-  assert.match(html, /Archive caveat:/);
-  assert.doesNotMatch(html, /autoplay|\/home\/|[A-Z]:\\Users\\|[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}|\.jsonl\b/);
-  for (const image of html.matchAll(/<img\b[^>]*>/g)) assert.match(image[0], /alt="[^"]+"/);
-  for (const [, target] of html.matchAll(/data-copy="([^"]+)"/g)) assert.ok(ids(html).includes(target));
+test('published session data and pages carry no private data or hidden reasoning', () => {
+  const { BANNED, check } = require('./session-extract.js');
+  check(JSON.stringify(session));
+  assert.throws(() => check('/home/someone/dev'), /banned/);
+  assert.throws(() => check('see 100.64.1.2'), /banned/);
+  assert.throws(() => check('Authorization: Bearer abc'), /banned/);
+  const files = [...pages, ...assets].map(name => path.join(dist, 'site', name)).concat(path.join(root, 'site', 'session.json'));
+  for (const file of files) {
+    const body = read(file);
+    for (const re of BANNED) assert.doesNotMatch(body, re, `${path.basename(file)} matches ${re}`);
+    assert.doesNotMatch(body, /\.jsonl\b|signature"|"thinking"/, path.basename(file));
+  }
+  assert.ok(!fs.existsSync(path.join(dist, 'site', 'session.json')), 'raw session data is not part of the public build');
+  for (const e of session.events) assert.ok(['human', 'say', 'tool', 'omit', 'compact', 'slash'].includes(e.k), `unexpected event kind ${e.k}`);
 });
 
-test('actual prompts lead, remain chronological, and precede the AI explanation', () => {
-  const html = read(path.join(root, 'site', 'how-we-made-this.html'));
-  const initial = html.match(/<blockquote id="initial-prompt">([\s\S]*?)<\/blockquote>/)[1].replace(/<[^>]+>/g, '');
-  assert.equal(initial, '[local media folder redacted] analyze the mp4 here and use the mp3 as the video. But replicate this video from scratch, make it identical. Got all out on motion effects, transitions, icons, to mimic this video exactly. have a judge of sonnet 5.5 critics at the end analzye so you can iteratively loop until it looks the same.');
-  assert.ok(html.indexOf('id="initial-prompt"') < html.indexOf('id="follow-ups"'));
-  const thread = html.slice(html.indexOf('<ol class="prompt-thread"'), html.indexOf('</ol>'));
-  const dates = [...thread.matchAll(/datetime="([^"]+)"/g)].map(m => m[1]);
-  const quotes = [...thread.matchAll(/<blockquote>([\s\S]*?)<\/blockquote>/g)].map(m => m[1]);
-  assert.equal(quotes.length, 20);
-  assert.equal(dates.length, quotes.length);
-  assert.deepEqual(dates, [...dates].sort());
-  assert.equal(new Set(dates).size, dates.length);
-  assert.equal(quotes[6], 'Few things I noticed, the hand is off and the head shape is off, and the grainyness is off.');
-  assert.equal(quotes[7], "Hmm programmatically compare the face and hand shape it's still not there.");
-  assert.equal(quotes[9], 'No it still looks like a balloon, we should try to trace the shape of the hand in every frame and replicate that.');
-  assert.equal(quotes[10], 'no just trace the actual frames. This is my video');
-  assert.equal(quotes[11], 'This is good! No need to do anymore versions');
-  assert.equal(quotes[14], 'Okay continue iterating on judges and versions until it gets perfect');
-  assert.equal(quotes[17], 'okay run v17');
-  assert.ok(html.indexOf('</ol>') < html.indexOf('id="workflow"'));
-  assert.ok(html.indexOf('id="workflow"') < html.indexOf('<video'));
-  assert.match(thread, /Image attachment omitted\./);
-  assert.match(html, /<details id="try-it" class="reproduce">/);
-  assert.match(html, /not a finished v17/);
+test('my 21 approved messages appear verbatim, in order, in the replay and the full session', () => {
+  for (const name of ['how-we-made-this.html', 'session.html']) {
+    const found = prompts(site(name));
+    assert.equal(found.length, messages.approved.length, name);
+    found.forEach((p, i) => {
+      assert.equal(p.n, i + 1);
+      assert.equal(p.text, messages.approved[i].text, `${name} message ${i + 1}`);
+      assert.equal(p.t, messages.approved[i].t);
+    });
+    assert.deepEqual(found.map(p => p.t), found.map(p => p.t).sort());
+  }
+  const first = prompts(site('how-we-made-this.html'))[0].text;
+  assert.equal(first, '[local media folder redacted] analyze the mp4 here and use the mp3 as the video. But replicate this video from scratch, make it identical. Got all out on motion effects, transitions, icons, to mimic this video exactly. have a judge of sonnet 5.5 critics at the end analzye so you can iteratively loop until it looks the same.');
+  assert.equal(messages.approved.filter(m => m.via === 'queued').length, (site('how-we-made-this.html').match(/Claude Code queued it\./g) || []).length);
 });
 
-test('singular walkthrough framing retains the existing route and historical plural quotes', () => {
-  const html = read(path.join(root, 'site', 'how-we-made-this.html'));
-  assert.match(html, /<title>How I made this · Love Motion Recreation<\/title>/);
-  assert.match(html, /<h1>How I made <span>this\.<\/span><\/h1>/);
-  assert.match(html, /<meta name="description" content="How I made Love Motion Recreation:/);
-  assert.match(html, /And then I kept directing it\./);
-  const authoredText = html.replace(/<blockquote\b[^>]*>[\s\S]*?<\/blockquote>/g, '').replace(/<[^>]+>/g, ' ');
-  assert.doesNotMatch(authoredText, /\b(?:we|our|ours|us)\b/i);
-  assert.match(html, /We should do this for every new version too\./);
-  assert.match(html, /Have sonnet do that for us while we do this<\/blockquote>/);
-  const showcase = read(path.join(root, 'site', 'index.html'));
-  assert.match(showcase, /href="how-we-made-this\.html">How I made this<\/a>/);
-  assert.match(showcase, /aria-label="How I made this"/);
-  assert.match(showcase, /href="how-we-made-this\.html">Read how I made this →<\/a>/);
+test('the replay is labelled as a rebuilt record, readable without JS, and complete in the full session', () => {
+  const how = site('how-we-made-this.html'), full = site('session.html');
+  for (const html of [how, full]) {
+    assert.match(html, /Rebuilt from the session record\. Not a live terminal\./);
+    assert.match(html, /Claude Code<\/b> 2\.1\.285/);
+    assert.match(html, /Context compacted\./);
+    assert.match(html, /Left out of this replay\./);
+    assert.doesNotMatch(html, /<input[^>]+class="t-|Thinking…|esc to interrupt/);
+  }
+  const tools = session.events.filter(e => e.k === 'tool').length, replies = session.events.filter(e => e.k === 'say').length;
+  assert.equal((full.match(/class="t-line t-tool/g) || []).length, tools);
+  assert.equal((full.match(/class="t-line t-say"/g) || []).length, replies);
+  assert.ok((how.match(/class="t-line t-tool/g) || []).length < tools / 2, 'the condensed replay is a selection');
+  // Every condensed gap is counted and links to a real step in the full session.
+  const gaps = [...how.matchAll(/<a class="gap" href="session\.html#(e\d+)">⋮ (\d+) more steps?/g)];
+  assert.ok(gaps.length > 20);
+  for (const [, id] of gaps) assert.ok(ids(full).includes(id), id);
+  const shown = (how.match(/id="e\d+"/g) || []).length;
+  assert.equal(shown + gaps.reduce((n, g) => n + Number(g[2]), 0), session.events.filter(e => e.k !== 'human' && e.k !== 'slash').length);
+});
+
+test('old walkthrough anchors still land on the matching message or section', () => {
+  const how = site('how-we-made-this.html');
+  for (const id of ['prompts', 'initial-prompt', 'follow-ups', 'workflow', 'lessons', 'try-it', 'sources', 'prompt-measure', 'prompt-trace', 'prompt-archive']) assert.ok(ids(how).includes(id), id);
+  const before = (anchor, n) => assert.match(how, new RegExp(`id="${anchor}"></span>(?:<span class="anchor" id="[^"]+"></span>)*<h3 class="t-prompt" id="m${n}"`));
+  before('initial-prompt', 1); before('follow-ups', 2); before('prompt-measure', 9); before('prompt-trace', 11); before('prompt-archive', 14);
+  assert.match(prompts(how)[8].text, /programmatically compare/);
+  assert.match(prompts(how)[10].text, /looks like a balloon/);
+  assert.match(prompts(how)[13].text, /web sendable mp4s/);
+  assert.match(site('index.html'), /href="how-we-made-this\.html#lessons"/);
+});
+
+test('singular framing, route, labels and navigation are kept on every page', () => {
+  const how = site('how-we-made-this.html');
+  assert.match(how, /<title>How I made this · Love Motion Recreation<\/title>/);
+  assert.equal((how.match(/<h1\b/g) || []).length, 1);
+  assert.match(how, /<h1 id="title">How I made <span class="nowrap">this<span class="cursor"/);
+  assert.match(how, /<meta name="description" content="How I made Love Motion Recreation:/);
+  const authored = how.replace(/<!-- replay:start -->[\s\S]*?<!-- replay:end -->/, '').replace(/<!-- messages:start -->[\s\S]*?<!-- messages:end -->/, '').replace(/<pre\b[\s\S]*?<\/pre>/g, '').replace(/<[^>]+>/g, ' ');
+  assert.doesNotMatch(authored, /\b(?:we|our|ours|us)\b/i);
+  for (const name of pages) {
+    const html = site(name);
+    assert.match(html, /<a href="how-we-made-this\.html"(?: aria-current="page")?>How I made this<\/a>/, name);
+    assert.match(html, /<a href="session\.html"(?: aria-current="page")?>Full session<\/a>/, name);
+    assert.match(html, /<a class="skip-link" href="#[^"]+">/, name);
+    assert.doesNotMatch(html, /prefers-color-scheme/, name);
+  }
+  assert.match(site('index.html'), /aria-label="How I made this"/);
+  assert.doesNotMatch(how + site('session.html') + site('index.html'), /autoplay/);
 });
 
 test('walkthrough uses genuine pinned v18 media without replacing the original reference', () => {
   const { createHash } = require('node:crypto');
-  const html = read(path.join(root, 'site', 'how-we-made-this.html'));
-  const prefix = '../media/versions/v18/';
-  assert.match(html, /<video[^>]+aria-label="Archived v18 original reference versus Claude recreation"[^>]+src="\.\.\/media\/versions\/v18\/sidebyside\.mp4"/);
-  assert.ok(html.includes(`src="${prefix}pairs/pair_030.jpg" width="1600" height="600"`));
+  const html = site('how-we-made-this.html');
+  assert.match(html, /<video[^>]+poster="\.\.\/media\/versions\/v18\/pairs\/pair_030\.jpg"[^>]+aria-label="Archived v18 original reference versus Claude recreation"[^>]+src="\.\.\/media\/versions\/v18\/sidebyside\.mp4"/);
   assert.ok(html.includes('href="../media/original/original.mp4">Watch the original reference'));
   assert.match(html, /do not extend the prompt snapshot/);
-  assert.doesNotMatch(html, /(?:src|href)="[^"\n]*(?:v14|v16)[^"\n]*\.(?:mp4|png|jpg)"/);
-  // Git blob hashes verified against the pinned upstream archive, not re-encoded copies.
+  assert.doesNotMatch(html, /(?:src|href)="\.\.\/media\/[^"\n]*(?:v14|v16)[^"\n]*\.(?:mp4|png|jpg)"/);
+  for (const v of ['v01', 'v08', 'v10', 'v14']) assert.ok(html.includes(`src="stills/hand-${v}.jpg"`), v);
   const expected = {
     'media/versions/v18/sidebyside.mp4': 'a1658642350a640d2728f994f2602b15ec69c2c1',
     'media/versions/v18/pairs/pair_030.jpg': 'fbf72335faca86065d8683353ba2760f433c88d0',
@@ -171,26 +215,33 @@ test('walkthrough uses genuine pinned v18 media without replacing the original r
 });
 
 test('walkthrough caveats and preparation commands reflect the merged archive', () => {
-  const html = read(path.join(root, 'site', 'how-we-made-this.html'));
+  const html = site('how-we-made-this.html');
+  assert.match(html, /Archive caveat:/);
   assert.match(html, /corrected v15\/v16 sheets and pairs/);
-  assert.doesNotMatch(html, /v15\/v16 pairs in the showcase predate/);
-  for (const args of ['413 431 pen soft', '432 487', '413 431 dark', '487 487 dark']) {
-    assert.ok(html.includes(`node scripts/trace-pen.js ${args}`));
-  }
+  assert.match(html, /not a finished v17/);
+  assert.match(html, /<details id="try-it" class="reproduce">/);
+  for (const args of ['413 431 pen soft', '432 487', '413 431 dark', '487 487 dark']) assert.ok(html.includes(`node scripts/trace-pen.js ${args}`));
+  for (const [, target] of html.matchAll(/data-copy="([^"]+)"/g)) assert.ok(ids(html).includes(target));
+  for (const image of markup(path.join(root, 'site', 'how-we-made-this.html')).matchAll(/<img\b[^>]*>/g)) assert.match(image[0], /alt="[^"]+"/);
 });
 
-test('shared theme persists and also works when storage is denied', () => {
+test('theme defaults to off-white, persists a choice, and works when storage is denied', () => {
   function boot(saved, denied = false) {
-    const attrs = new Map();
-    const button = { hidden: true };
+    const attrs = new Map(), battrs = new Map();
+    const button = { hidden: true, setAttribute: (k, v) => battrs.set(k, v) };
     const storage = { value: saved, getItem() { if (denied) throw new Error('denied'); return this.value; }, setItem(key, value) { if (denied) throw new Error('denied'); this.value = value; } };
     const context = {
       document: { documentElement: { setAttribute: (k, v) => attrs.set(k, v), getAttribute: k => attrs.get(k), hasAttribute: k => attrs.has(k) }, getElementById: () => button },
-      localStorage: storage, matchMedia: () => ({ matches: false })
+      localStorage: storage, matchMedia: () => ({ matches: true })
     };
-    vm.runInNewContext(read(path.join(root, 'site', 'theme.js')), context);
-    return { attrs, button, storage };
+    vm.runInNewContext(site('theme.js'), context);
+    return { attrs, button, battrs, storage };
   }
+  const fresh = boot(null);
+  assert.equal(fresh.attrs.get('data-theme'), undefined, 'no theme attribute means off-white, even if the system prefers dark');
+  fresh.button.onclick();
+  assert.equal(fresh.attrs.get('data-theme'), 'dark');
+  assert.equal(fresh.battrs.get('aria-pressed'), 'true');
   const first = boot('dark');
   assert.equal(first.attrs.get('data-theme'), 'dark');
   assert.equal(first.button.hidden, false);
@@ -212,7 +263,7 @@ test('copy buttons enhance static text and handle denied clipboard access', asyn
     navigator: { clipboard: { writeText: async text => { copied = text; } } },
     window: { getSelection: () => ({ removeAllRanges() {}, addRange() {} }) }
   };
-  vm.runInNewContext(read(path.join(root, 'site', 'how-we-made-this.js')), context);
+  vm.runInNewContext(site('how-we-made-this.js'), context);
   assert.equal(button.hidden, false);
   await handler();
   assert.equal(copied, source.textContent);
@@ -223,22 +274,20 @@ test('copy buttons enhance static text and handle denied clipboard access', asyn
   assert.match(status.textContent, /Text selected/);
 });
 
-test('root and nested routes, CSS/JS, video HEAD and byte ranges serve correctly', async () => {
-  for (const prefix of ['', '/dist']) {
-    for (const name of [...pages, ...assets]) {
-      const response = await fetch(`${base}${prefix}/site/${name}`);
-      assert.equal(response.status, 200, `${prefix}/${name}`);
-      assert.equal(await response.text(), read(path.join(root, 'site', name)));
-    }
-    for (const file of ['final/claude_v14_sidebyside.mp4', 'versions/v18/sidebyside.mp4']) {
-      const media = `${base}${prefix}/media/${file}`;
-      const head = await fetch(media, { method: 'HEAD' });
-      assert.equal(head.status, 200);
-      assert.equal(head.headers.get('content-type'), 'video/mp4');
-      const range = await fetch(media, { headers: { Range: 'bytes=0-31' } });
-      assert.equal(range.status, 206);
-      assert.match(range.headers.get('content-range'), /^bytes 0-31\//);
-      assert.equal((await range.arrayBuffer()).byteLength, 32);
-    }
+test('pages, CSS/JS, stills, video HEAD and byte ranges serve correctly', async () => {
+  for (const name of [...pages, ...assets, 'stills/hand-v14.jpg']) {
+    const response = await fetch(`${base}/site/${name}`);
+    assert.equal(response.status, 200, name);
+    if (!name.endsWith('.jpg')) assert.equal(await response.text(), site(name));
+  }
+  for (const file of ['final/claude_v14_sidebyside.mp4', 'versions/v18/sidebyside.mp4']) {
+    const media = `${base}/media/${file}`;
+    const head = await fetch(media, { method: 'HEAD' });
+    assert.equal(head.status, 200);
+    assert.equal(head.headers.get('content-type'), 'video/mp4');
+    const range = await fetch(media, { headers: { Range: 'bytes=0-31' } });
+    assert.equal(range.status, 206);
+    assert.match(range.headers.get('content-range'), /^bytes 0-31\//);
+    assert.equal((await range.arrayBuffer()).byteLength, 32);
   }
 });

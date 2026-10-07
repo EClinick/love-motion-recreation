@@ -1,0 +1,17 @@
+.page{max-width:1180px;margin:0 auto;padding:0 var(--gutter)}
+.intro{padding:48px 0 28px;max-width:64ch}
+h1{font-weight:900;font-size:var(--t-6);line-height:1;letter-spacing:-.04em;margin:0 0 16px}
+.intro p{margin:0 0 10px}
+.muted{color:var(--graphite);font-size:var(--t-1)}
+.tools{display:none}
+.js .tools{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:16px;margin:0 0 16px;background:var(--paper-raised);border:1px solid var(--rule);border-radius:10px}
+@media (min-width:900px){.js .tools{grid-template-columns:minmax(0,1.2fr) minmax(0,1.6fr) minmax(0,1.2fr);align-items:end}}
+.tools label,.tools legend{font-weight:700;font-size:var(--t-1);display:block;margin-bottom:6px;padding:0}
+.tools input[type=search],.tools select{width:100%;font:500 var(--t-2) var(--font-sans);padding:9px 11px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink);min-height:44px}
+.tools fieldset{border:0;margin:0;padding:0;min-width:0}
+.tools .checks{display:flex;flex-wrap:wrap;gap:4px 16px}
+.tools .checks label{font-weight:500;display:inline-flex;align-items:center;gap:6px;margin:0;min-height:36px}
+.tools input[type=checkbox]{width:18px;height:18px;accent-color:var(--signal)}
+.count{grid-column:1/-1;color:var(--graphite);font-size:var(--t-0);margin:0}
+.hide-say .t-say,.hide-tool .t-tool,.hide-out .t-out,.hide-out .t-more{display:none}
+.term .nomatch{display:none}

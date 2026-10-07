@@ -4,128 +4,141 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
+<meta name="description" content="Love Motion Recreation: a 20.5-second motion piece rebuilt in code by Claude Code, with every version, side-by-side comparisons and judge scores.">
 <title>Love Motion Recreation</title>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@500,700,900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&amp;display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css">
+<script>document.documentElement.classList.add('js')</script>
 <script src="theme.js" defer></script>
 <style>
-.wrap{max-width:980px;margin:0 auto;padding:0 16px 64px}
-header{padding:40px 0 8px;display:flex;gap:16px;justify-content:space-between;align-items:flex-start}
-h1{font-weight:900;font-size:clamp(2rem,7vw,3.4rem);line-height:1.05;margin:0 0 12px;letter-spacing:-.02em}
-h1 span{color:var(--accent)}
-h2{font-weight:800;font-size:1.35rem;margin:48px 0 12px;letter-spacing:-.01em}
-p{margin:0 0 12px} .lede{font-size:1.1rem;color:var(--muted);max-width:62ch}
-.mono,code{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.85em}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
-.player{padding:0;overflow:hidden;margin-top:24px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 var(--gutter)}
+.hero{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;padding:44px 0 8px}
+@media (min-width:1000px){.hero{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:center;padding:56px 0 12px}}
+.screen video{max-height:64vh;object-fit:contain}
+#featplayer{min-height:min(64vh,calc((100vw - 2 * var(--gutter)) * .75))}
+@media (min-width:1000px){#featplayer{min-height:min(64vh,30vw)}}
+h1{font-weight:900;font-size:var(--t-7);line-height:.92;letter-spacing:-.05em;margin:0 0 18px}
+.lede{font-size:var(--t-3);line-height:1.5;margin:0 0 10px;max-width:36ch}
+.muted,.note{color:var(--graphite);font-size:var(--t-1)}
+h2{font-weight:900;font-size:var(--t-5);letter-spacing:-.03em;line-height:1.1;margin:64px 0 8px}
+h3{font-weight:900;font-size:var(--t-2);margin:20px 0 0}
+p{margin:0 0 12px}
+.mono{font-family:var(--font-mono);font-size:.85em}
+.screen{background:var(--frame);border-radius:10px;overflow:hidden;color:#E7E4DD}
+.screen .feat-title{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:var(--t-1)}
+.latest-tag{font-weight:900;color:#fff}
+.screen .warn{color:#A9A49B;font-size:var(--t-0)}
 video{display:block;width:100%;height:auto;aspect-ratio:4/3;background:#000}
-.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);margin-top:16px;overflow:hidden}
-.meta div{background:var(--surface);padding:12px 16px}
-.meta dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.meta dd{margin:2px 0 0;font-weight:600;word-break:break-word}
-.meta{margin-bottom:0}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0;margin:12px 0 0;border-top:1px solid var(--rule)}
+.meta div{padding:10px 0;border-bottom:1px solid var(--rule);padding-right:14px}
+.meta dt{font-size:var(--t-0);color:var(--graphite)}
+.meta dd{margin:2px 0 0;font-size:var(--t-1);font-weight:700;line-height:1.45;word-break:break-word}
 dl{margin:0}
-.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:0;list-style:none;margin:16px 0 0;counter-reset:s}
-.shots li{counter-increment:s;padding:12px 14px;font-size:.92rem;color:var(--muted)}
-.shots li::before{content:counter(s,decimal-leading-zero);font-family:"JetBrains Mono",monospace;color:var(--accent);margin-right:8px;font-weight:600}
-.shots b{color:var(--ink);font-weight:600}
-.table-wrap{overflow-x:auto;padding:4px 0}
+.strip{display:flex;gap:6px;overflow-x:auto;padding:4px 2px 12px;margin:16px 0 0;list-style:none}
+.strip a{flex:0 0 auto;display:grid;place-items:center;min-width:52px;height:52px;border-radius:8px;background:var(--paper-raised);border:1px solid var(--rule);font-weight:900;text-decoration:none;font-variant-numeric:tabular-nums}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.strip a:hover{border-color:var(--ink)}
+.strip a[aria-current="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:inset 0 -4px 0 var(--signal)}
+.how{display:grid;gap:14px;align-items:center;background:var(--frame);color:#E7E4DD;border-radius:10px;padding:20px 22px;margin:36px 0 0}
+@media (min-width:800px){.how{grid-template-columns:minmax(0,1fr) auto}}
+.how p{margin:0;font:600 .95rem/1.6 var(--font-mono)}
+.how .caret{color:#8E8A82}
+.how a{color:#fff;font-weight:900;font-size:var(--t-2)}
+.card{background:var(--paper-raised);border:1px solid var(--rule);border-radius:10px}
+.player{overflow:hidden;margin-top:16px;background:var(--frame);border:0}
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;padding:0;list-style:none;margin:16px 0 0;counter-reset:s}
+.shots li{counter-increment:s;padding:12px 14px;font-size:var(--t-1);color:var(--graphite)}
+.shots li::before{content:counter(s);font-weight:900;color:var(--ink);margin-right:10px;font-variant-numeric:tabular-nums}
+.shots b{color:var(--ink)}
+.table-wrap{overflow-x:auto;padding:4px 0;margin-top:12px}
 table{border-collapse:collapse;width:100%;min-width:480px}
-th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--line)}
+th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--rule)}
 th:first-child,td:first-child{text-align:left}
-th{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+th{font-size:var(--t-0);color:var(--graphite);font-weight:700}
 tr:last-child td{border-bottom:0}
-td.num{font-family:"JetBrains Mono",monospace}
-td.up{color:var(--good)} .bar{display:inline-block;height:6px;border-radius:3px;background:var(--cyan);vertical-align:middle;margin-left:8px}
-tr.pending td{color:var(--muted);font-style:italic}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:16px}
-.gallery button{padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);cursor:zoom-in;position:relative;display:block}
+td.num{font-variant-numeric:tabular-nums}
+td.up{color:var(--ink);font-weight:900}
+.bar{display:inline-block;height:6px;border-radius:3px;background:var(--ink);opacity:.35;vertical-align:middle;margin-left:8px}
+tr.pending td{color:var(--graphite);font-style:italic}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:16px}
+.gallery button{min-height:120px;padding:0;border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:var(--frame);cursor:zoom-in;position:relative;display:block}
 .gallery img{display:block;width:100%;height:auto}
-.gallery span{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.65);color:#fff;border-radius:6px;padding:1px 8px;font-size:.75rem}
-.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+.gallery span{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.7);color:#fff;border-radius:6px;padding:1px 8px;font-size:var(--t-0)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:var(--t-1);color:var(--graphite)}
 .legend b{color:var(--ink)}
-#lb{position:fixed;inset:0;background:rgba(5,5,8,.92);display:none;align-items:center;justify-content:center;z-index:10;padding:12px}
+#lb{position:fixed;inset:0;background:rgba(10,10,10,.94);display:none;align-items:center;justify-content:center;z-index:10;padding:12px}
 #lb.open{display:flex}
 #lb img{max-width:100%;max-height:calc(100vh - 80px);object-fit:contain;border-radius:6px}
-#lb .bar2{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:#ddd;font-size:.85rem}
-#lb button{position:absolute;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:999px;width:44px;height:44px;font-size:1.3rem;cursor:pointer}
+#lb .bar2{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:#ddd;font-size:var(--t-1)}
+#lb button{position:absolute;background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:999px;width:44px;height:44px;font-size:1.3rem;cursor:pointer}
 #lb .x{top:12px;right:12px} #lb .p{left:10px;top:50%} #lb .n{right:10px;top:50%}
-footer{margin-top:56px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px}
-
-.latest-tag{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:.8rem;font-weight:600;color:#fff;background:var(--accent);border-radius:999px;padding:2px 12px;margin-bottom:8px;letter-spacing:.02em}
-.feat-title{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;margin:40px 0 0}
-.feat-title h2{margin:0}
-.btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;text-decoration:none;border:0;border-radius:999px;padding:10px 20px;font:inherit;font-weight:600;cursor:pointer}
-.btn.alt{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
-.btn:focus-visible,summary:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-.final{margin-top:16px}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:var(--paper);text-decoration:none;border:0;border-radius:6px;padding:10px 18px;min-height:44px;font:700 var(--t-1) var(--font-sans);cursor:pointer}
+.btn.alt{background:var(--paper-raised);color:var(--ink);border:1px solid var(--rule)}
 .chips{display:inline-flex;gap:6px;flex-wrap:wrap;align-items:center}
-.chip{font-family:"JetBrains Mono",monospace;font-size:.78rem;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:0 8px;color:var(--ink)}
-.chip.mean{background:var(--cyan);border-color:var(--cyan);color:#06222a;font-weight:600}
-.chip.none{color:var(--muted);font-style:italic;background:transparent}
-.versions{display:grid;gap:12px;margin-top:16px}
+.chip{font-size:var(--t-0);font-weight:700;font-variant-numeric:tabular-nums;background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:0 8px;color:var(--ink)}
+.chip.mean{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip.none{color:var(--graphite);font-style:italic;background:transparent}
+.versions{display:grid;gap:10px;margin-top:16px}
+.ver{scroll-margin-top:16px}
 .ver>summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:14px 16px}
 .ver>summary::-webkit-details-marker{display:none}
-.ver>summary::before{content:"\25B8";color:var(--accent);font-size:1.1rem;transition:transform .15s}
+.ver>summary::before{content:"";width:0;height:0;border-left:7px solid var(--ink);border-top:5px solid transparent;border-bottom:5px solid transparent;transition:transform .15s}
 .ver[open]>summary::before{transform:rotate(90deg)}
-.ver .vl{font-weight:800;font-size:1.1rem}
-.ver .vsub{color:var(--muted);font-size:.85rem}
-.ver .vsub a{font-family:"JetBrains Mono",monospace}
+.ver .vl{font-weight:900;font-size:var(--t-3)}
+.ver .vsub{color:var(--graphite);font-size:var(--t-1)}
 .ver .grow{flex:1 1 200px;min-width:0}
-.ver .body{padding:0 16px 16px;border-top:1px solid var(--line)}
-.ver .body video{border-radius:10px;margin-top:16px}
-.ver ul.cl{margin:12px 0 0;padding-left:20px;color:var(--muted);font-size:.92rem}
+.ver .body{padding:0 16px 16px;border-top:1px solid var(--rule)}
+.ver .body video{border-radius:8px;margin-top:16px;max-height:70vh;object-fit:contain;background:#000}
+.ver ul.cl{margin:12px 0 0;padding-left:20px;color:var(--graphite);font-size:var(--t-1)}
 .ver ul.cl li{margin:2px 0} .ver ul.cl li:first-child{color:var(--ink)}
-.ver h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:20px 0 0;font-weight:600}
-.ver.latest{border-color:var(--accent)}
-.tabs{display:flex;gap:4px;padding:8px 8px 0;background:var(--surface);border-bottom:1px solid var(--line)}
-.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:inherit;font-size:.88rem;font-weight:600;padding:8px 14px;cursor:pointer}
-.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
-.tabs .hint{margin-left:auto;align-self:center;color:var(--muted);font-size:.75rem;padding-right:8px}
-.ptabs{margin-top:16px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ver.latest{border-color:var(--ink)}
+.tabs{display:flex;gap:4px;padding:8px 8px 0;background:var(--frame);border-bottom:1px solid #2E2B28}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;color:#A9A49B;font:700 var(--t-1) var(--font-sans);padding:8px 14px;cursor:pointer}
+.tabs button[aria-selected=true]{color:#fff;border-bottom-color:var(--signal)}
+.tabs .hint{margin-left:auto;align-self:center;color:#A9A49B;font-size:var(--t-0);padding-right:8px}
+.ptabs{margin-top:16px;border-radius:8px;overflow:hidden;background:var(--frame)}
 .ptabs video{margin-top:0!important;border-radius:0!important}
 .finalbox{padding:16px;margin-top:16px}
 .finalbox .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 @media (max-width:520px){.tabs .hint{display:none}}
 .cmp{padding:16px;margin-top:16px}
 .cmp-pick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.cmp-pick label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
-select{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:.9rem}
+.cmp-pick label{display:block;font-size:var(--t-1);font-weight:700;margin-bottom:4px}
+select{width:100%;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:6px;padding:8px 10px;min-height:44px;font:500 var(--t-1) var(--font-sans)}
 .cmp-vids{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.cmp-vids video{border-radius:8px}
+.cmp-vids video{border-radius:6px}
 .cmp-bar{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
-.cmp-bar input[type=range]{flex:1 1 160px;min-width:120px;accent-color:var(--accent)}
-.cmp-bar .mono{color:var(--muted);min-width:7.5em}
+.cmp-bar input[type=range]{flex:1 1 160px;min-width:120px;accent-color:var(--signal)}
+.cmp-bar .mono{color:var(--graphite);min-width:7.5em}
 .cmp-bar .btn{padding:6px 16px}
-.cmp-tag{font-size:.8rem;color:var(--muted);margin-top:4px;text-align:center}
-.note{color:var(--muted);font-size:.9rem}
-@media (max-width:520px){.cmp-pick{gap:8px}.ver>summary{padding:12px}}
-a{color:var(--cyan)}
-.err{color:var(--accent)}
+audio{width:100%;max-width:520px;margin-top:8px}
+.err{color:var(--signal-text)}
 </style>
 </head>
 <body>
-<a class="skip-link" href="#showcase">Skip to showcase</a>
-<div class="wrap" id="showcase" tabindex="-1">
-<header>
-  <div>
-    <h1>Love <span>motion</span><br>recreation</h1>
-    <p class="lede">A 20.5-second kinetic-typography and pixel-icon motion piece, rebuilt in code and refined by a loop of AI judges.</p>
-  </div>
-  <button id="theme" type="button" aria-label="Toggle colour theme" hidden>Theme</button>
+<a class="skip-link" href="#showcase">Skip to the showcase</a>
+<header class="site-head">
+  <a class="brand" href="index.html">love motion recreation.</a>
+  <nav class="site-nav" aria-label="Site"><a href="index.html" aria-current="page">Showcase</a><a href="how-we-made-this.html">How I made this</a><a href="session.html">Full session</a><button id="theme" type="button">Dark mode</button></nav>
 </header>
+<main class="wrap" id="showcase" tabindex="-1">
+<section class="hero" aria-labelledby="title">
+  <div>
+    <h1 id="title">love<span class="cursor" aria-hidden="true"></span></h1>
+    <p class="lede">A 20.5-second kinetic-type and pixel-icon video, rebuilt in code by Claude Code and refined by rounds of AI judges.</p>
+    <p class="muted">18 versions so far. Every side-by-side puts the reference on the left and the recreation on the right.</p>
+  </div>
+  <div class="screen">
+    <div class="feat-title"><span class="latest-tag" id="feat-tag">latest</span><span class="warn">Fast cuts and flashing imagery.</span></div>
+    <section class="player" id="featplayer" aria-label="Latest version"></section>
+  </div>
+</section>
 
-<nav class="site-nav" aria-label="Site"><a href="index.html" aria-current="page">Showcase</a><a href="how-we-made-this.html">How I made this</a></nav>
-<nav aria-label="Page sections"><a href="#originalsec">Original</a> · <a href="#finalsec">Final render</a> · <a href="#versions">All versions</a> · <a href="#scores">Scores</a></nav>
-
-<aside class="card guide-link" aria-label="How I made this"><p><b>The conversation behind the recreation.</b><br>The original prompt, the follow-up instructions, and what Claude did with them.</p><a href="how-we-made-this.html">Read how I made this →</a></aside>
-
-<div class="feat-title"><div><span class="latest-tag" id="feat-tag">latest</span></div></div>
-<section class="card player" style="margin-top:8px" id="featplayer"></section>
-
-<dl class="card meta" id="meta" aria-label="Version info">
+<dl class="meta" id="meta" aria-label="Version info">
   <div><dt>Commit</dt><dd class="mono" id="m-hash">…</dd></div>
   <div><dt>Message</dt><dd id="m-msg">…</dd></div>
   <div><dt>Commit date</dt><dd id="m-cdate">…</dd></div>
@@ -133,6 +146,16 @@ a{color:var(--cyan)}
   <div><dt>Video</dt><dd id="m-vid">…</dd></div>
   <div><dt>Judge score</dt><dd id="m-score">…</dd></div>
 </dl>
+
+<aside class="how" aria-label="How I made this">
+  <p><span class="caret" aria-hidden="true">&gt;</span> analyze the mp4 here and use the mp3 as the video. But replicate this video from scratch, make it identical.</p>
+  <a href="how-we-made-this.html">Read how I made this</a>
+</aside>
+
+<h2 id="pick">Every version</h2>
+<p class="note">Pick one to open its render, side-by-side, changes and judge scores below.</p>
+<nav aria-labelledby="pick"><ol class="strip" id="strip"></ol></nav>
+
 <section id="originalsec">
   <h2>Original video</h2>
   <div class="card player"><video controls playsinline preload="metadata" src="../media/original/original.mp4"></video></div>
@@ -146,7 +169,7 @@ a{color:var(--cyan)}
 </section>
 
 <h2>Latest comparison sheets</h2>
-<div class="legend"><span><b>Left</b> = reference</span><span><b>Right</b> = this render</span><span>4 fps, 10 frames per sheet. Tap to enlarge.</span></div>
+<div class="legend"><span><b>Left</b> is the reference</span><span><b>Right</b> is this render</span><span>4 fps, 10 frames per sheet. Select one to enlarge.</span></div>
 <div class="gallery" id="gallery"></div>
 
 <h2>Compare versions</h2>
@@ -188,7 +211,7 @@ a{color:var(--cyan)}
 </ol>
 
 <h2>How it is made</h2>
-<p><a href="how-we-made-this.html">Read the actual prompts and what Claude built in response →</a></p>
+<p><a href="how-we-made-this.html">Read the actual messages and what Claude did after each one</a>, or the <a href="session.html">full session</a>.</p>
 <p><b>Renderer.</b> Node with <code>@napi-rs/canvas</code> (Skia) draws each frame across worker threads. Segments are encoded with ffmpeg and muxed with the audio. Previews render at 1440&times;1080; the final render is 2880&times;2160 with 4-sample motion blur.</p>
 <p><b>Judge loop.</b> After each render, a script builds contact sheets of the reference next to the render at 4 fps. Several Sonnet &ldquo;judge&rdquo; agents compare them, score sections out of 10 and list the biggest differences. Those notes become the next iteration&rsquo;s fixes, and the cycle repeats.</p>
 
@@ -196,9 +219,8 @@ a{color:var(--cyan)}
 <p>Judge scores out of 10, per section of the timeline.</p>
 <p class="note">These are historical scores, not a consistent benchmark: judging became stricter, and some archived comparisons paired different frames. <a href="how-we-made-this.html#lessons">Read the evaluation and alignment caveats.</a></p>
 <section class="card table-wrap"><table id="scores"></table></section>
-
-<footer><a href="https://github.com/EClinick/love-motion-recreation">Source and media archive</a>. No trackers, no analytics. <span id="gen"></span></footer>
-</div>
+</main>
+<footer class="site-foot"><span><a href="https://github.com/EClinick/love-motion-recreation">Source and media archive</a>. No trackers or analytics.</span><span id="gen"></span></footer>
 
 <div id="lb" role="dialog" aria-modal="true" aria-label="Comparison sheet">
   <button class="x" type="button" aria-label="Close">&times;</button>
@@ -241,7 +263,7 @@ a{color:var(--cyan)}
   function gallery(container, v){
     var list = (v.sheets||[]).map(function(p){ return vsrc(v, p); });
     list.forEach(function(src, i){
-      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', v.label + ': open sheet ' + (i+1));
+      var b = document.createElement('button'); b.type = 'button';
       b.innerHTML = '<img loading="lazy" src="' + esc(src) + '" alt="' + esc(v.label) + ' comparison sheet ' + (i+1) + ': reference on the left, render on the right"><span>' + (i+1) + ' / ' + list.length + '</span>';
       b.onclick = function(){ openLB(list, i, v.label); };
       container.appendChild(b);
@@ -283,7 +305,7 @@ a{color:var(--cyan)}
     var top = vers[0];
 
     // ---- featured (latest)
-    $('feat-tag').textContent = top.label + ' — latest';
+    $('feat-tag').textContent = top.label + ', the latest version';
     playerTabs($('featplayer'), top);
     $('m-hash').innerHTML = hashLink(top);
     $('m-msg').textContent = top.subject || '';
@@ -314,11 +336,20 @@ a{color:var(--cyan)}
     });
 
     // ---- version history
-    var box = $('versions');
+    var box = $('versions'), strip = $('strip');
+    vers.slice().reverse().forEach(function(v){
+      var li = el('li'), a = el('a', null, '<span class="vh">Version </span>' + esc(v.label.replace(/^v/, '')) + (v === vers[0] ? '<span class="vh">, latest</span>' : ''));
+      a.href = '#ver-' + v.label;
+      if(v === vers[0]) a.setAttribute('aria-current', 'true');
+      li.appendChild(a); strip.appendChild(li);
+    });
+    function openFromHash(){ var d = location.hash && document.getElementById(location.hash.slice(1)); if(d && d.tagName === 'DETAILS'){ d.open = true; d.scrollIntoView(); } }
+    window.addEventListener('hashchange', openFromHash);
     vers.forEach(function(v, i){
       var d = el('details', 'card ver' + (i===0 ? ' latest' : ''));
+      d.id = 'ver-' + v.label;
       var cl = (v.changelog||[]);
-      d.innerHTML = '<summary><span class="vl">' + esc(v.label) + (i===0 ? ' — latest' : '') + '</span>' +
+      d.innerHTML = '<summary><span class="vl">' + esc(v.label) + (i===0 ? ', latest' : '') + '</span>' +
         '<span class="vsub">' + esc(fmt(v.render_date || v.commit_date)) + ' · ' + hashLink(v) + '</span>' +
         '<span class="grow"></span>' + scoreChips(v) + '</summary>';
       var loaded = false;
@@ -361,6 +392,7 @@ a{color:var(--cyan)}
     });
     $('scores').innerHTML = h + '</tbody>';
 
+    openFromHash();
     setupCompare(vers);
   }).catch(function(e){
     $('m-msg').innerHTML = '<span class="err">Could not load versions.json (' + esc(String(e)) + '). Run npm run site:build.</span>';
