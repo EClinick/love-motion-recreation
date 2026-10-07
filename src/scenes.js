@@ -1973,7 +1973,7 @@ function belt(ctx, heartDeg, t) {
   const items = BELT.map((name, i) => {
     const th = ((heartDeg + (i - 2) * 30) * Math.PI) / 180;
     const c = Math.cos(th);
-    const sc = c >= 0 ? 1.15 * (0.9 + 0.1 * c) : 0.32 + 0.4 * (1 + c);
+    const sc = c >= 0 ? 0.75 + 0.4 * c : 0.32 + 0.4 * (1 + c);
     return { name, i, c, x: 735 + 590 * Math.sin(th) * (c >= 0 ? 1 : 0.75), y: 515 + c * 25 + (c < 0 ? -60 * -c : 0) + BELT_DY[name], sc };
   });
   items
@@ -1983,7 +1983,9 @@ function belt(ctx, heartDeg, t) {
       if (it.c >= 0 && it.c < 0.4) return;
       if (it.c < 0 && it.c > -0.5) return;
       if (it.x < -300 || it.x > W + 300) return;
-      drawSprite(ctx, it.name, it.x, it.y, BELT_W[it.name] * it.sc, (BELT_R[it.name] || 0) + noise1(t * 2, it.i) * 0.03);
+      // items turning away toward the sides foreshorten (edge-on near the ends of the front arc)
+      const sx = it.c >= 0.75 ? 1 : it.c >= 0 ? 0.25 + 0.75 * clamp((it.c - 0.4) / 0.35) ** 0.7 : 1;
+      drawSprite(ctx, it.name, it.x, it.y, BELT_W[it.name] * it.sc, (BELT_R[it.name] || 0) + noise1(t * 2, it.i) * 0.03, 1, { sx });
     });
 }
 
