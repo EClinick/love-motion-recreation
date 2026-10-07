@@ -3427,16 +3427,21 @@ function sceneHand(ctx, t, f) {
   // small white flecks (measured): three hanging in the air, one catching light on the index finger
   if (t > 14.15 && Math.round(t * C.FPS) < 375) {
     const u = inv(14.25, 15.45, t);
-    [[512, 368, 512, 366, -0.25, 13], [625, 400, 650, 398, 0.2, 10], [803, 304, 772, 263, -0.35, 12], [821, 574, 828, 574, 0.15, 14]].forEach(([ax, ay, bx2, by2, rot, len], i) => {
+    // drift re-fitted to frames 360 and 366; each fleck is a ragged broken sliver (2-3 fragments)
+    [[498, 353, 498, 356, -0.25, 13], [674, 372, 636, 405, 0.2, 12], [744, 305, 777, 243, -0.35, 14], [826, 573, 822, 579, 0.15, 14]].forEach(([ax, ay, bx2, by2, rot, len], i) => {
       ctx.save();
       ctx.translate(lerp(ax, bx2, u) + noise1(t * 2, i + 7) * 3, lerp(ay, by2, u) + noise1(t * 2, i + 11) * 3);
       ctx.rotate(rot + noise1(t, i + 3) * 0.2);
-      ctx.shadowColor = 'rgba(255,255,255,0.6)';
-      ctx.shadowBlur = 4 * S;
+      ctx.shadowColor = 'rgba(255,255,255,0.5)';
+      ctx.shadowBlur = 3 * S;
       ctx.fillStyle = 'rgba(248,246,242,0.95)';
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 2.2, len / 2, 0, 0, 7);
-      ctx.fill();
+      const r = rng(i * 31 + Math.round(t * C.FPS));
+      [-0.36, 0, 0.34].forEach((k) => {
+        if (r() < 0.1) return;
+        ctx.beginPath();
+        ctx.ellipse((r() - 0.5) * 2, k * len + (r() - 0.5) * 2, 1.2 + r() * 1.0, 2 + r() * 1.8, (r() - 0.5) * 0.8, 0, 7);
+        ctx.fill();
+      });
       ctx.restore();
     });
   }
