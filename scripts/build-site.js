@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Build a portable /site showcase from the committed media archive.
+// usage: node scripts/build-site.js [outDir=dist]  (or SITE_DIST=<dir>)
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
@@ -39,11 +40,14 @@ final.sbs_size = stat(final.sidebyside);
 const write = (name, value) => fs.writeFileSync(path.join(root, 'site', name), JSON.stringify(value, null, 2) + '\n');
 write('versions.json', versions);
 write('data.json', { iteration: versions[0].id, label: versions[0].label, final });
-const dist = path.join(root, 'dist');
+// Render the sanitised session into the two replay pages (static HTML, no runtime fetch).
+const session = require('./session-render.js').renderInto(path.join(root, 'site'));
+const dist = path.resolve(root, process.argv[2] || process.env.SITE_DIST || 'dist');
 fs.mkdirSync(path.join(dist, 'site'), { recursive: true });
-for (const file of ['index.html', 'how-we-made-this.html', 'how-we-made-this.css', 'how-we-made-this.js', 'theme.css', 'theme.js', 'versions.json', 'data.json', 'scores.json']) {
-  fs.copyFileSync(path.join(root, 'site', file), path.join(dist, 'site', file));
-}
+const files = ['index.html', 'how-we-made-this.html', 'how-we-made-this.css', 'how-we-made-this.js', 'session.html', 'full-session.css', 'full-session.js', 'replay.css', 'theme.css', 'theme.js', 'versions.json', 'data.json', 'scores.json'];
+for (const file of files) fs.copyFileSync(path.join(root, 'site', file), path.join(dist, 'site', file));
+fs.cpSync(path.join(root, 'site', 'stills'), path.join(dist, 'site', 'stills'), { recursive: true });
 fs.cpSync(media, path.join(dist, 'media'), { recursive: true });
 fs.writeFileSync(path.join(dist, 'index.html'), '<!doctype html><html lang="en"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=site/"><title>Love Motion Recreation</title><a href="site/">Open the showcase</a></html>\n');
-console.log('Built dist/site: showcase + walkthrough, ' + versions.length + ' versions, original, final, comparison sheets and overlays.');
+console.log(`Built ${path.relative(root, dist) || '.'}/site: showcase, session replay (${session.meta.counts.human} messages, ${session.meta.counts.tools} tool calls), full session, ${versions.length} versions and media.`);
+module.exports = { files };

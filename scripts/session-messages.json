@@ -1,0 +1,140 @@
+{
+ "_comment": "Approved human messages (already published verbatim, local folder redacted) and timestamps of human messages left out, with the reason shown on the page. Any other human text is left out as an unlabelled operational exchange.",
+ "approved": [
+  {
+   "t": "2026-10-06T20:14:12.121Z",
+   "via": "prompt",
+   "text": "[local media folder redacted] analyze the mp4 here and use the mp3 as the video. But replicate this video from scratch, make it identical. Got all out on motion effects, transitions, icons, to mimic this video exactly. have a judge of sonnet 5.5 critics at the end analzye so you can iteratively loop until it looks the same."
+  },
+  {
+   "t": "2026-10-06T20:14:56.766Z",
+   "via": "queued",
+   "text": "remember to do all work in wsl and create a project and init it to github as well"
+  },
+  {
+   "t": "2026-10-06T21:07:57.452Z",
+   "via": "prompt",
+   "text": "spin up another sonnet general purpose to create a website that hosts via tailscale accessibile the current version with a description etc and the video"
+  },
+  {
+   "t": "2026-10-06T21:15:37.727Z",
+   "via": "prompt",
+   "text": "continually upddate the website with the new versions and also append the old versions in each version change ensure to spin up a sub agent sonnet for that"
+  },
+  {
+   "t": "2026-10-06T21:23:40.103Z",
+   "via": "prompt",
+   "text": "Great when that's done, then create another video showing the two with a side by side comparison. We should do this for every new version too. The website should have each version + the video + the side by side comparison"
+  },
+  {
+   "t": "2026-10-06T21:28:26.289Z",
+   "via": "prompt",
+   "text": "is v1 the og video? Rememebr I want side by side with original and the claude made one"
+  },
+  {
+   "t": "2026-10-06T21:29:07.104Z",
+   "via": "prompt",
+   "text": "Okay nice run thru judge again, continue iterating as this website builds"
+  },
+  {
+   "t": "2026-10-06T21:34:18.638Z",
+   "via": "queued",
+   "text": "Few things I noticed, the hand is off and the head shape is off, and the grainyness is off."
+  },
+  {
+   "t": "2026-10-06T21:45:19.251Z",
+   "via": "queued",
+   "text": "Hmm programmatically compare the face and hand shape it's still not there."
+  },
+  {
+   "t": "2026-10-06T21:55:28.970Z",
+   "via": "queued",
+   "text": "ya the hand is really the main thing that's still wrong, it just doesn't look like a hand. Like the ref."
+  },
+  {
+   "t": "2026-10-06T22:05:22.366Z",
+   "via": "queued",
+   "text": "No it still looks like a balloon, we should try to trace the shape of the hand in every frame and replicate that."
+  },
+  {
+   "t": "2026-10-06T22:06:24.881Z",
+   "via": "prompt",
+   "text": "no just trace the actual frames. This is my video"
+  },
+  {
+   "t": "2026-10-06T22:16:47.913Z",
+   "via": "queued",
+   "text": "This is good! No need to do anymore versions"
+  },
+  {
+   "t": "2026-10-06T22:18:15.177Z",
+   "via": "queued",
+   "text": "convert all mp4s into web sendable mp4s and lets commit each version with the frames, comparisons, videos, and the original video and mp3 to gh"
+  },
+  {
+   "t": "2026-10-06T22:19:18.995Z",
+   "via": "queued",
+   "text": "For the final say Claude instead of recreation for the side by side. Have sonnet do that for us while we do this"
+  },
+  {
+   "t": "2026-10-07T03:56:43.327Z",
+   "via": "prompt",
+   "text": "Okay continue iterating on judges and versions until it gets perfect"
+  },
+  {
+   "t": "2026-10-07T13:26:38.574Z",
+   "via": "prompt",
+   "text": "render v16 then commit that and push"
+  },
+  {
+   "t": "2026-10-07T15:07:24.170Z",
+   "via": "prompt",
+   "text": "run sonnet to update tailscale site and run it"
+  },
+  {
+   "t": "2026-10-07T15:10:32.701Z",
+   "via": "prompt",
+   "text": "okay run v17"
+  },
+  {
+   "t": "2026-10-07T15:34:58.885Z",
+   "via": "prompt",
+   "text": "are u having subagents work on v17 now? I thought u would do all the work?"
+  },
+  {
+   "t": "2026-10-07T15:36:29.260Z",
+   "via": "prompt",
+   "text": "okay if it's opus still for implementation, I okay with that"
+  }
+ ],
+ "omitted": [
+  {
+   "t": "2026-10-06T21:21:29.308Z",
+   "why": "status check"
+  },
+  {
+   "t": "2026-10-06T22:35:51.784Z",
+   "why": "README follow-up"
+  },
+  {
+   "t": "2026-10-06T22:37:32.685Z",
+   "why": "local clean-up"
+  },
+  {
+   "t": "2026-10-06T22:45:14.093Z",
+   "why": "stopping the local server"
+  },
+  {
+   "t": "2026-10-06T22:46:03.328Z",
+   "why": "restarting the local server"
+  },
+  {
+   "t": "2026-10-06T23:20:46.608Z",
+   "why": "stopping the local server"
+  },
+  {
+   "t": "2026-10-07T13:25:59.315Z",
+   "why": "status check"
+  }
+ ]
+}

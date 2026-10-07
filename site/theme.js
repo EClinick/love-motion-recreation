@@ -8,12 +8,12 @@
   } catch (e) {}
   if (!button) return;
   button.hidden = false;
+  button.setAttribute('aria-pressed', root.getAttribute('data-theme') === 'dark' ? 'true' : 'false');
   button.onclick = function () {
-    var dark = root.hasAttribute('data-theme')
-      ? root.getAttribute('data-theme') === 'dark'
-      : matchMedia('(prefers-color-scheme: dark)').matches;
-    var next = dark ? 'light' : 'dark';
+    // Off-white is the default for everyone; dark is only ever an explicit choice.
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     root.setAttribute('data-theme', next);
+    button.setAttribute('aria-pressed', next === 'dark' ? 'true' : 'false');
     try { localStorage.setItem('theme', next); } catch (e) {}
   };
 })();

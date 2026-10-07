@@ -1,0 +1,75 @@
+/* Session replay: Claude Code's dark TUI vocabulary, rendered as ordinary document text. */
+.term{background:var(--term);color:var(--term-fg);font:400 .875rem/1.62 var(--font-mono);border-radius:10px;min-width:0;position:relative}
+.term-bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 14px;background:var(--term);border-bottom:1px solid var(--term-line);border-radius:10px 10px 0 0;font-family:var(--font-sans);font-size:var(--t-1)}
+.term-bar .label{font-weight:700;color:var(--term-fg)}
+.term-bar .not-live{color:var(--term-dim)}
+.term-bar .spacer{flex:1 1 auto}
+.term-bar button,.term-bar a.btn{font:700 var(--t-0)/1 var(--font-sans);color:var(--term-fg);background:#2A2724;border:1px solid #3A3632;border-radius:6px;padding:9px 12px;min-height:36px;min-width:36px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.term-bar button:hover,.term-bar a.btn:hover{border-color:var(--term-dim)}
+.term-bar [hidden]{display:none}
+.term-body{padding:18px 18px 26px;overflow-wrap:anywhere}
+.term :focus-visible{outline-color:#FF6A5F}
+
+.t-head{border:1px solid #3A3632;border-radius:8px;padding:10px 14px;margin:0 0 14px;color:var(--term-dim)}
+.t-head b{color:var(--term-fg);font-weight:600}
+.t-head .mark{color:var(--term-claude)}
+.t-slash{color:var(--term-fg);margin:0 0 2px}
+.t-slash .caret{color:var(--term-dim)}
+.t-slash-out{margin:0 0 10px}
+
+.t-line{display:grid;grid-template-columns:2ch minmax(0,1fr);column-gap:.5ch;margin:0 0 12px}
+.t-dot{color:var(--term-fg)}
+.t-tool .t-dot{color:var(--term-ok)}
+.t-tool.err .t-dot{color:var(--term-err)}
+.t-body{white-space:pre-wrap;min-width:0}
+.t-body b{font-weight:700;color:#fff}
+.t-body code{font:inherit;color:#F3C48B}
+.t-name{font-weight:700;color:#fff}
+.t-out{color:var(--term-dim);display:grid;grid-template-columns:2.2em minmax(0,1fr);white-space:pre-wrap}
+.t-more{color:var(--term-dim);padding-left:2.2em}
+.elbow{display:inline-block;width:.75em;height:.62em;border-left:1px solid currentColor;border-bottom:1px solid currentColor;margin:0 0 0 .55em;vertical-align:.18em}
+
+/* My message: the part of the record the page is about. */
+.t-prompt{display:grid;grid-template-columns:2ch minmax(0,1fr) auto;column-gap:.5ch;margin:26px -18px 16px;padding:12px 18px 12px 15px;background:var(--term-raised);border-left:3px solid var(--signal);font:600 1rem/1.6 var(--font-mono);color:#fff;scroll-margin-top:72px}
+.t-prompt .caret{color:var(--term-dim)}
+.t-prompt time{color:var(--term-dim);font-weight:400;font-size:var(--t-0);padding-top:.2em;white-space:nowrap}
+.t-prompt .q{grid-column:2/4;color:var(--term-dim);font-weight:400;font-size:var(--t-0)}
+.t-prompt .redact{color:var(--term-dim);font-weight:400}
+.anchor{display:block;position:relative;top:-72px;visibility:hidden}
+
+/* Editorial marks use the page's typeface and dashed or paper styling: the page speaking, not the record. */
+.ed{font:500 var(--t-0)/1.5 var(--font-sans);color:var(--term-dim);border:1px dashed #4A4540;border-radius:6px;padding:7px 12px;margin:4px 0 14px 2.5ch}
+.ed b{color:var(--term-fg);font-weight:700}
+.gap{display:block;margin:0 0 12px 2.5ch;color:var(--term-dim);font:500 var(--t-0)/1.5 var(--font-sans)}
+.gap:hover{color:var(--term-fg)}
+.day{font:700 var(--t-1)/1.4 var(--font-sans);color:var(--term-fg);margin:34px 0 0;padding-top:16px;border-top:1px solid var(--term-line)}
+.plate{margin:8px 0 18px 2.5ch;background:var(--paper-raised);color:var(--ink);border-radius:8px;overflow:hidden;font-family:var(--font-sans)}
+.plate img{display:block;width:100%;height:auto;background:#000}
+.plate figcaption{padding:10px 14px;font-size:var(--t-0);line-height:1.5;color:var(--graphite)}
+.plate figcaption b{color:var(--ink)}
+
+/* Full session: shell calls open to show their sanitised command. */
+details.t-line{display:block}
+details.t-line>summary{display:grid;grid-template-columns:2ch minmax(0,1fr);column-gap:.5ch;cursor:pointer;list-style:none}
+details.t-line>summary::-webkit-details-marker{display:none}
+.t-call{min-width:0}
+.t-toggle{color:var(--term-dim);font:500 var(--t-0) var(--font-sans);text-decoration:underline;text-underline-offset:.2em}
+details[open] .t-toggle::after{content:", open"}
+.t-cmd{margin:6px 0 4px 2.5ch;padding:8px 10px;background:#1E1C1A;border-radius:6px;color:#CFCAC1;white-space:pre-wrap;font:400 .8rem/1.55 var(--font-mono)}
+
+@media (max-width:999px){
+  .term-bar{gap:6px 8px;padding:8px 12px}
+  .term-bar .label{flex:1 1 auto}
+  .term-bar .not-live{order:5;flex-basis:100%;font-size:var(--t-0)}
+  .term-bar a.btn.wide{display:none}
+  .t-prompt,.anchor{scroll-margin-top:104px}
+  .anchor{top:-104px}
+}
+@media (max-width:719px){
+  .term{border-radius:0;margin-inline:calc(var(--gutter) * -1);font-size:.78rem}
+  .term-bar{border-radius:0}
+  .term-body{padding:14px var(--gutter) 22px}
+  .t-prompt{margin-inline:calc(var(--gutter) * -1);padding-inline:calc(var(--gutter) - 3px) var(--gutter);font-size:.86rem;grid-template-columns:2ch minmax(0,1fr)}
+  .t-prompt time{grid-column:2;grid-row:2;padding:0}
+  .t-prompt .q{grid-column:2}
+}
