@@ -726,7 +726,7 @@ function sceneSparkle(ctx, t, f) {
   }));
   const [tc, tx] = off(2);
   fx.words(tx, parts, 40, 533, BODY);
-  const tBlur = kf(t, [[2.022, 7], [2.064, 4], [2.106, 3.5], [2.148, 5.5], [2.19, 4.5], [2.27, 2], [2.42, 0.8], [2.6, 0]]);
+  const tBlur = kf(t, [[2.022, 7], [2.064, 4], [2.106, 3.5], [2.148, 5.5], [2.19, 4.5], [2.27, 3.2], [2.34, 2.4], [2.42, 0.9], [2.6, 0]]);
 
   if (t < 2.064) {
     // frame 49: everything defocused on bare paper, dark streaks
