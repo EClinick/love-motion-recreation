@@ -983,7 +983,7 @@ function sceneProfile(ctx, t, f) {
     if (settle < 1) x.filter = `hue-rotate(${-125 * Math.pow(1 - settle, 3.5) - (traced ? 6 : 16) * settle}deg) saturate(${lerp(0.9, 1.25, settle)}) brightness(${lerp(0.3, 0.92, settle * settle)})`;
     else if (t < 4.9 && !traced) x.filter = `hue-rotate(${-16 * (1 - inv(4.35, 4.9, t))}deg) saturate(${1 + 0.15 * (1 - inv(4.35, 4.9, t))}) brightness(${lerp(0.94, 1, inv(4.35, 4.9, t))})`;
     else if (traced) {
-      const bri = kf(t, [[4.35, 0.8], [4.5, 0.8], [4.8, 0.87], [5.5, 0.87], [5.85, 0.6], [6.0, 0.5], [6.05, 0.42], [6.13, 0.33]]);
+      const bri = kf(t, [[4.35, 0.8], [4.5, 0.8], [4.8, 0.87], [5.5, 0.87], [5.85, 0.66], [6.0, 0.5], [6.05, 0.42], [6.13, 0.33]]);
       const sep = kf(t, [[5.5, 0], [5.85, 0.35], [6.0, 0.55], [6.13, 0.7]]);
       const sat = kf(t, [[4.35, 1.15], [5.5, 1.15], [5.85, 1.35], [6.0, 1.15], [6.13, 0.9]]);
       const hue = kf(t, [[4.35, -6], [4.9, 0], [5.6, 0], [5.85, 12], [6.0, 12]]);
