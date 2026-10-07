@@ -2151,20 +2151,21 @@ function sceneCuriosity(ctx, t, f) {
     composite(ctx, c, { blur: 2.5 });
     const r = rng(264);
     ctx.save();
-    ctx.filter = `blur(${2 * S}px)`;
-    ctx.strokeStyle = 'rgba(130,12,26,0.55)';
-    ctx.lineWidth = 30;
+    ctx.filter = `blur(${3 * S}px)`;
+    ctx.strokeStyle = 'rgba(120,10,26,0.5)';
+    ctx.lineWidth = 44;
     ctx.beginPath();
-    ctx.arc(722, 530, 672, 0, 7);
+    ctx.arc(686, 530, 664, 0, 7);
     ctx.stroke();
     ctx.restore();
-    // speckle the ring so it reads as grainy spray
-    ctx.fillStyle = '#c21a2c';
-    for (let i = 0; i < 2600; i++) {
+    // speckle the ring so it reads as a thick grainy spray band
+    for (let i = 0; i < 7000; i++) {
       const a = r() * Math.PI * 2;
-      const d = 672 + (r() + r() - 1) * 22;
-      ctx.globalAlpha = 0.35 + r() * 0.5;
-      ctx.fillRect(722 + Math.cos(a) * d, 530 + Math.sin(a) * d, 3, 3);
+      const d = 664 + (r() + r() - 1) * 28;
+      const sz = 3 + r() * 3;
+      ctx.fillStyle = r() < 0.3 ? '#4a0810' : '#a8182a';
+      ctx.globalAlpha = 0.25 + r() * 0.45;
+      ctx.fillRect(686 + Math.cos(a) * d, 530 + Math.sin(a) * d, sz, sz);
     }
     ctx.globalAlpha = 1;
     return;
@@ -2206,8 +2207,8 @@ function sceneCuriosity(ctx, t, f) {
   const pan = 0;
   ctx.save();
   const vin = ease.outBack(inv(11.01, 11.15, t));
-  const vx = kf(t, [[11.01, 500], [11.08, 496], [11.25, 430, 'outCubic'], [11.6, 410], [11.81, 250, 'inQuad']]);
-  drawSprite(ctx, 'vinyl', vx, 545, 456 * lerp(0.9, 1, vin), noise1(t, 9) * 0.05 - 1.5 * Math.max(0, t - 11.26));
+  const vx = kf(t, [[11.01, 500], [11.08, 496], [11.25, 430, 'outCubic'], [11.6, 410], [11.76, 378], [11.81, 236, 'inQuad']]);
+  drawSprite(ctx, 'vinyl', vx, 545, 430 * lerp(0.9, 1, vin), noise1(t, 9) * 0.05 - 0.5 * Math.max(0, t - 11.26));
   if (t < 11.115) {
     const q = inv(11.01, 11.16, t);
     const drift = q * 40;
