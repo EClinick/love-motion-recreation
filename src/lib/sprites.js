@@ -112,15 +112,18 @@ const builders = {
     return g;
   },
   coin() {
+    // upright gold coin: thick stepped black rim, flat gold, white highlight strip, slot lit top-left
     const g = new Grid(24, 30);
-    g.ellipse(12, 15, 10.2, 13.6, OUT);
-    g.ellipse(12, 15, 8.4, 11.8, '#f4c21c');
-    g.tint((x, y) => x > 15.5, '#d99a0c');
-    g.tint((x, y) => x < 7 && y < 18, '#fbe07a');
-    // vertical slot
-    g.rect(9, 6, 5, 18, OUT);
-    g.rect(10, 7, 3, 16, '#fff7d8');
-    g.rect(12, 7, 1, 16, '#e8d79a');
+    g.ellipse(12, 15, 11.6, 14.6, OUT);
+    g.ellipse(12, 15, 9.4, 12.5, '#e8b81c');
+    // highlight strip down the left side
+    g.tint((x, y) => x > 3.5 && x < 5.5 && y > 7 && y < 23, '#f6f2e6');
+    // slot: white top and left edges, black right and bottom edges, gold inside
+    g.rect(9, 6, 6, 18, '#e8b81c');
+    g.rect(9, 6, 5, 2, '#f6f2e6');
+    g.rect(9, 6, 2, 17, '#f6f2e6');
+    g.rect(13, 8, 2, 16, OUT);
+    g.rect(9, 22, 6, 2, OUT);
     return g;
   },
   controller() {
@@ -150,41 +153,43 @@ const builders = {
   },
 
   cap() {
-    // baseball cap in side view: round crown on the right, long brim reaching left
+    // baseball cap, three-quarter view: domed crown on the right, brim reaching to the lower left
     const g = new Grid(32, 22);
-    const c = '#f6f4ec';
-    g.fill((x, y) => y < 15.5 && ((x - 19) / 11) ** 2 + ((y - 15) / 13.5) ** 2 <= 1, c);
-    g.poly([[16, 12], [9, 13], [1, 18], [3, 20], [14, 19], [23, 16]], c);
-    g.tint((x, y) => y > 15.5 && x < 20, '#e3e0d4');
-    g.tint((x, y) => y > 18 && x < 15, '#d2cebf');
-    g.tint((x, y) => x > 25 && y > 6, '#e6e3d8');
+    const c = '#f4f2ea';
+    g.fill((x, y) => y < 16 && ((x - 19) / 11.5) ** 2 + ((y - 15.5) / 14) ** 2 <= 1, c);
+    // brim, with a darker underside
+    g.poly([[17, 12], [8, 13], [1, 18], [2, 20], [15, 19.5], [24, 16]], c);
+    g.poly([[2, 19], [15, 18.5], [15, 20], [3, 21]], '#c9c5b6');
+    g.tint((x, y) => y > 15.5 && y < 18.5 && x < 20, '#e2dfd2');
+    g.tint((x, y) => x > 25 && y > 5, '#dedbcf');
     g.outline(OUT);
-    // panel seams + button
-    g.line(19, 2, 14, 13, '#c4bfae');
-    g.line(21, 2, 25, 13, '#c4bfae');
-    g.rect(19, 1, 2, 1, '#a59f8a');
+    // panel seams, crown button, sweatband line
+    g.line(19, 2, 13, 13, '#bdb8a6');
+    g.line(21, 2, 26, 13, '#bdb8a6');
+    g.line(13, 14, 26, 14, '#cfcabb');
+    g.rect(19, 1, 2, 1, OUT);
     return g;
   },
 
   cat() {
-    // blocky black cat: big square head with tall white eyes, short legs
-    const g = new Grid(28, 28);
+    // black cat walking left: head with two ears and small grey eyes, long body, legs, tail up behind
+    const g = new Grid(30, 27);
     const k = '#121114';
-    g.rect(4, 5, 17, 12, k);
-    g.poly([[4, 6], [5, 0], [10, 5]], k);
-    g.poly([[15, 5], [20, 0], [21, 6]], k);
-    g.ellipse(15, 19, 11, 6, k);
-    g.rect(5, 21, 4, 6, k);
-    g.rect(11, 22, 3, 5, k);
-    g.rect(17, 22, 3, 5, k);
-    g.rect(22, 20, 4, 7, k);
-    // short tail up at the back
-    g.rect(24, 10, 2, 8, k);
-    g.rect(25, 8, 2, 3, k);
-    g.tint((x, y) => y < 4 && (x < 8 || x > 17), '#2a282e');
-    // eyes
-    g.rect(8, 9, 2, 3, '#f2f0e6');
-    g.rect(15, 9, 2, 3, '#f2f0e6');
+    g.rect(2, 6, 11, 9, k); // head
+    g.poly([[2, 7], [3, 1], [7, 6]], k); // left ear
+    g.poly([[8, 6], [12, 1], [13, 7]], k); // right ear
+    g.rect(6, 11, 19, 9, k); // body
+    g.ellipse(22, 15, 5, 5, k); // haunch
+    g.rect(6, 19, 3, 7, k); // front legs
+    g.rect(10, 19, 3, 6, k);
+    g.rect(18, 19, 3, 6, k);
+    g.rect(22, 18, 3, 8, k);
+    g.rect(25, 7, 2, 8, k); // tail up and over
+    g.rect(26, 4, 2, 4, k);
+    g.rect(27, 3, 2, 2, k);
+    g.tint((x, y) => y < 6 && x < 14, '#24222a');
+    g.rect(4, 9, 1, 1, '#6c6a72'); // eyes
+    g.rect(9, 9, 1, 1, '#6c6a72');
     return g;
   },
 
@@ -225,26 +230,21 @@ const builders = {
     g.rect(0, 6, 2, 3, '#6a6a70');
     g.rect(52, 6, 2, 3, '#6a6a70');
     g.outline(OUT);
-    // lens: knurled outer ring, dark barrel, dashed inner ring, glass with a warm reflection
+    // lens: solid concentric rings (light, dark, light), dark glass with an aperture glint and warm reflection
     const lx = 31;
     const ly = 21.5;
     g.circle(lx, ly, 13.4, '#2a2a30');
-    g.circle(lx, ly, 12.6, '#4c4c53');
-    g.fill((x, y) => {
-      const r = Math.hypot(x - lx, y - ly);
-      const a = Math.atan2(y - ly, x - lx);
-      return r > 11.2 && r < 12.4 && Math.floor((a + Math.PI) * 6) % 2 === 0;
-    }, '#b6b6bc');
-    g.circle(lx, ly, 10.4, '#1e1e23');
-    g.fill((x, y) => {
-      const r = Math.hypot(x - lx, y - ly);
-      const a = Math.atan2(y - ly, x - lx);
-      return r > 4.6 && r < 5.6 && Math.floor((a + Math.PI) * 3) % 2 === 0;
-    }, '#9a9aa2');
-    g.circle(lx, ly, 4.4, '#26262c');
-    g.rect(lx - 2, ly - 4, 4, 1, '#6a6478');
-    g.rect(lx - 2, ly + 1, 4, 2, '#6e4e30');
-    g.rect(lx - 1, ly + 3, 3, 1, '#c8c8d0');
+    g.circle(lx, ly, 12.6, '#9a9aa2');
+    g.circle(lx, ly, 11.6, '#4a4a52');
+    g.circle(lx, ly, 9.6, '#b4b4bc');
+    g.circle(lx, ly, 8.8, '#2c2c33');
+    g.circle(lx, ly, 6.4, '#8e8e98');
+    g.circle(lx, ly, 5.6, '#1c1c22');
+    g.rect(lx - 2, ly - 3, 4, 1, '#6c6c78');
+    g.rect(lx - 3, ly - 2, 1, 3, '#55555f');
+    g.rect(lx + 2, ly - 2, 1, 3, '#55555f');
+    g.rect(lx - 2, ly + 2, 4, 2, '#b08a48');
+    g.rect(lx - 1, ly + 2, 2, 1, '#d8b060');
     return g;
   },
   book() {
@@ -288,9 +288,11 @@ const builders = {
     });
     g.circle(c, c, 6.4, '#e0303c');
     g.circle(c, c, 4.4, '#cc2430');
-    g.px(c, c, '#f6e8ea');
-    g.px(c - 1, c, '#f6e8ea');
-    g.px(c, c - 1, '#f6e8ea');
+    g.px(c, c, '#fbf2f2');
+    g.px(c - 1, c, '#f0a8b0');
+    g.px(c + 1, c, '#f0a8b0');
+    g.px(c, c - 1, '#f0a8b0');
+    g.px(c, c + 1, '#f0a8b0');
     return g;
   },
   skateboard() {
@@ -329,65 +331,64 @@ const builders = {
     return g;
   },
   plant() {
-    // leafy pothos in a slate pot
-    const g = new Grid(28, 31);
-    const leaf = (cx, cy, a, L, w, c) => {
-      const dx = Math.cos(a);
-      const dy = Math.sin(a);
-      g.poly([[cx + dx * L, cy + dy * L], [cx - dy * w, cy + dx * w], [cx - dx * L * 0.5, cy - dy * L * 0.5], [cx + dy * w, cy - dx * w]], c);
-    };
-    const d2 = Math.PI / 180;
-    g.ellipse(14, 11, 8, 5, '#24583c');
-    leaf(14, 9, -90 * d2, 7, 4.5, '#3f8a46');
-    leaf(5, 13, 195 * d2, 5, 3, '#2f6e4a');
-    leaf(23, 13, -15 * d2, 5, 3, '#2f6e4a');
-    leaf(8, 9, 215 * d2, 6, 3.5, '#3f8a46');
-    leaf(20, 9, -35 * d2, 6, 3.5, '#3f8a46');
-    leaf(11, 6, 245 * d2, 6, 3.5, '#4f9e48');
-    leaf(17, 6, -65 * d2, 6, 3.5, '#4f9e48');
-    leaf(14, 5, -90 * d2, 5, 3, '#5aac4c');
-    leaf(10, 12, 200 * d2, 4, 2.5, '#2a6040');
-    leaf(18, 12, -20 * d2, 4, 2.5, '#2a6040');
-    g.tint((x, y) => (x * 1.3 + y * 0.7) % 5 < 1.2 && y < 14, '#9fcb5a');
-    g.tint((x, y) => (x * 0.9 + y * 1.7) % 11 < 1.1 && y < 12, '#d4e070');
-    g.rect(13, 13, 2, 5, '#1e4a34');
-    // pot
-    g.poly([[6, 18], [22, 18], [20, 30], [8, 30]], '#8ea2c8');
-    g.rect(5, 17, 18, 3, '#c8d2ea');
-    g.tint((x, y) => x > 16 && y > 20, '#6f84ac');
-    g.tint((x, y) => x < 10 && y > 20, '#b4c4e2');
-    g.outline('#1b2240');
+    // rounded leaf clumps (teal behind, green, lime in front) over a two-tone slate pot
+    const g = new Grid(30, 31);
+    [[15, 9, 6.5, 6.5], [7, 13, 6.5, 4.5], [23, 13, 6.5, 4.5]].forEach(([x, y, a, b]) => g.ellipse(x, y, a, b, '#1f7a64'));
+    [[15, 8, 4.8, 5], [7, 12, 4.6, 3.2], [23, 12, 4.6, 3.2], [11, 15, 3.5, 2.5], [19, 15, 3.5, 2.5]].forEach(([x, y, a, b]) => g.ellipse(x, y, a, b, '#3c9a44'));
+    [[14, 6, 3, 3], [6, 11, 3, 2], [22, 11, 3, 2]].forEach(([x, y, a, b]) => g.ellipse(x, y, a, b, '#6cc04a'));
+    [[13, 4], [16, 7], [4, 10], [20, 10], [9, 13], [24, 12]].forEach(([x, y]) => g.rect(x, y, 2, 2, '#c8e070'));
+    // dark gaps between the clumps, down to the stem
+    g.line(15, 17, 10, 12, '#141c3a');
+    g.line(15, 17, 20, 12, '#141c3a');
+    g.rect(14, 13, 2, 5, '#141c3a');
+    g.outline('#16503e');
+    // pot: thick dark rim, white lip highlight, light left, shaded right
+    g.poly([[7, 21], [23, 21], [21, 30], [9, 30]], '#c4d2ec');
+    g.tint((x, y) => x > 16 && y > 20.5, '#8ea2cc');
+    g.rect(6, 18, 18, 3, '#1c2040');
+    g.rect(8, 21, 9, 1, '#eef2fa');
+    g.outline('#14182e');
     return g;
   },
 
   cash() {
-    const g = new Grid(40, 26);
-    // isometric bill stack
-    const top = [[1, 10], [24, 1], [39, 9], [16, 19]];
-    g.poly(top, '#6ab43c');
-    g.poly([[1, 10], [16, 19], [16, 24], [1, 15]], '#3c7a28');
-    g.poly([[16, 19], [39, 9], [39, 14], [16, 24]], '#4d9330');
-    g.outline('#1e3a14');
-    // stacked edges
-    for (let i = 0; i < 3; i++) {
-      g.line(2, 12 + i * 1.3, 15, 20 + i * 1.3, '#8fcf5a');
-      g.line(17, 21 + i * 1.3, 38, 11 + i * 1.3, '#9ad866');
-    }
-    // band
-    g.poly([[11, 6], [16, 4], [31, 12], [26, 15]], '#d6c7a2');
-    g.poly([[26, 15], [31, 12], [31, 17], [26, 20]], '#b8a982');
-    // $ glyphs on the top bill
-    const dollar = (x, y) => {
-      g.rect(x, y, 3, 1, '#3d7d26');
-      g.px(x, y + 1, '#3d7d26');
-      g.rect(x, y + 2, 3, 1, '#3d7d26');
-      g.px(x + 2, y + 3, '#3d7d26');
-      g.rect(x, y + 4, 3, 1, '#3d7d26');
-      g.px(x + 1, y - 1, '#3d7d26');
-      g.px(x + 1, y + 5, '#3d7d26');
+    // bill stack angled down to the right: green top with "$" on both halves, tan band, dark edges
+    const g = new Grid(44, 28);
+    // long axis runs from upper-left to lower-right
+    const P = [[1, 9], [12, 2], [43, 19], [32, 25]];
+    const top = P;
+    // stack thickness below the two lower edges
+    g.poly([[1, 9], [32, 25], [32, 28], [1, 12]], '#3f7a18');
+    g.poly([[32, 25], [43, 19], [43, 22], [32, 28]], '#4a8a1c');
+    g.poly(top, '#6fb22a');
+    // inner lighter panels and darker border
+    const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    const inset = (t0, t1) => {
+      const a = lerp(P[0], P[3], 0.18);
+      const b = lerp(P[1], P[2], 0);
+      const q = (t, side) => lerp(lerp(P[0], P[1], side), lerp(P[3], P[2], side), t);
+      return [q(t0, 0.25), q(t0, 0.75), q(t1, 0.75), q(t1, 0.25)];
     };
-    dollar(7, 7);
-    dollar(30, 6);
+    g.poly(inset(0.06, 0.4), '#86c834');
+    g.poly(inset(0.62, 0.95), '#86c834');
+    // tan band across the middle
+    const band = [lerp(P[0], P[3], 0.44), lerp(P[1], P[2], 0.44), lerp(P[1], P[2], 0.58), lerp(P[0], P[3], 0.58)];
+    g.poly(band, '#cdb898');
+    const bs = [lerp(P[0], P[3], 0.44), lerp(P[0], P[3], 0.58)];
+    g.poly([bs[0], bs[1], [bs[1][0], bs[1][1] + 3], [bs[0][0], bs[0][1] + 3]], '#a8957a');
+    g.outline('#2c5414');
+    const dollar = (x, y) => {
+      const c = '#3e7a1c';
+      g.rect(x, y, 3, 1, c);
+      g.px(x, y + 1, c);
+      g.rect(x, y + 2, 3, 1, c);
+      g.px(x + 2, y + 3, c);
+      g.rect(x, y + 4, 3, 1, c);
+      g.px(x + 1, y - 1, c);
+      g.px(x + 1, y + 5, c);
+    };
+    dollar(10, 8);
+    dollar(31, 17);
     return g;
   },
 };
