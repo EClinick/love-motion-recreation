@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Rotoscope the hand silhouette from the user's source video, one mask per frame of
-// the hand shot. Masks are derived media: written to ref/derived/hand/ (gitignored).
-//   node scripts/trace-hand.js [t0=13.76] [t1=15.89]
+// Rotoscope a figure silhouette (hand or head) from the user's source video, one mask
+// per frame. Masks are derived media: written to ref/derived/<name>/ (gitignored).
+//   node scripts/trace-hand.js [hand|head] [t0] [t1]
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -11,9 +11,11 @@ const ROOT = path.join(__dirname, '..');
 const FPS = 24000 / 1001;
 const W = 1440;
 const H = 1080;
-const t0 = Number(process.argv[2] ?? 13.76);
-const t1 = Number(process.argv[3] ?? 15.89);
-const outDir = path.join(ROOT, 'ref', 'derived', 'hand');
+const NAME = process.argv[2] ?? 'hand';
+const DEF = { hand: [13.76, 15.89], head: [3.82, 6.3] }[NAME];
+const t0 = Number(process.argv[3] ?? DEF[0]);
+const t1 = Number(process.argv[4] ?? DEF[1]);
+const outDir = path.join(ROOT, 'ref', 'derived', NAME);
 fs.mkdirSync(outDir, { recursive: true });
 
 function largestComponent(m) {
@@ -44,6 +46,7 @@ function largestComponent(m) {
   return m;
 }
 
+let lastHot = null; // the shirt fades to grey late in the head shot: carry its last clear shape
 (async () => {
   const f0 = Math.round(t0 * FPS);
   const f1 = Math.round(t1 * FPS);
@@ -56,7 +59,12 @@ function largestComponent(m) {
     x.filter = 'blur(2px)'; // suppress film grain before thresholding
     x.drawImage(img, 0, 0);
     const d = x.getImageData(0, 0, W, H).data;
-    const pale = t > 15.6; // pale desaturated fist on a grey wall
+    const pale = NAME === 'hand' && t > 15.6; // pale desaturated fist on a grey wall
+    const darkOnLight = NAME === 'head' && t > 6.04; // backlit dark silhouette on a pale wall
+    if (NAME === 'head' && t > 5.86 && t <= 6.04) {
+      process.stdout.write(` [skip f${f} tan/grey transition]`);
+      continue;
+    }
     const m = new Uint8Array(W * H);
     for (let i = 0; i < W * H; i++) {
       const r = d[i * 4];
@@ -66,13 +74,15 @@ function largestComponent(m) {
       const mn = Math.min(r, g, b);
       const warm = mx > 70 && mx - mn > 45;
       const cream = mx > 170 && r >= b && mx - mn > 18; // pale lit skin (text is greyer)
-      m[i] = pale ? ((r + g + b) / 3 > 130 ? 1 : 0) : warm || cream ? 1 : 0;
+      const white = NAME === 'head' && (r + g + b) / 3 > 150; // blown-out shirt / shoulder
+      m[i] = darkOnLight ? ((r + g + b) / 3 < 120 && i % W > 560 ? 1 : 0) : pale ? ((r + g + b) / 3 > 130 ? 1 : 0) : warm || cream || white ? 1 : 0;
     }
     largestComponent(m);
     // fill interior holes: anything the outside background can't reach is inside the hand
     const out = new Uint8Array(W * H);
     const st = [];
-    for (let xx = 0; xx < W; xx++) { st.push(xx, (H - 1) * W + xx); }
+    // the head's body runs off the bottom edge, so only the hand seeds from the bottom row
+    for (let xx = 0; xx < W; xx++) { st.push(xx); if (NAME !== 'head') st.push((H - 1) * W + xx); }
     for (let yy = 0; yy < H; yy++) { st.push(yy * W, yy * W + W - 1); }
     while (st.length) {
       const k = st.pop();
@@ -85,10 +95,41 @@ function largestComponent(m) {
       if (ky > 0) st.push(k - W);
       if (ky < H - 1) st.push(k + W);
     }
-    let area = 0;
+    // fill only SMALL interior holes (specular highlights); keep real gaps between digits
+    const holeLab = new Int32Array(W * H);
+    let hl = 1;
+    const hs = [];
     for (let i = 0; i < W * H; i++) {
-      if (!out[i]) m[i] = 1;
+      if (out[i] || m[i] || holeLab[i]) continue;
+      const pix = [];
+      holeLab[i] = hl;
+      hs.push(i);
+      while (hs.length) {
+        const k = hs.pop();
+        pix.push(k);
+        const kx = k % W;
+        for (const j of [k - 1, k + 1, k - W, k + W]) {
+          if (j < 0 || j >= W * H) continue;
+          if ((j === k - 1 && kx === 0) || (j === k + 1 && kx === W - 1)) continue;
+          if (!out[j] && !m[j] && !holeLab[j]) { holeLab[j] = hl; hs.push(j); }
+        }
+      }
+      if (pix.length < 2500) pix.forEach((k) => (m[k] = 1));
+      hl++;
+    }
+    let area = 0;
+    let bx0 = W, bx1 = 0, by0 = H, by1 = 0;
+    for (let i = 0; i < W * H; i++) {
       area += m[i];
+      if (m[i]) {
+        const xx = i % W;
+        const yy = (i / W) | 0;
+        bx0 = Math.min(bx0, xx); bx1 = Math.max(bx1, xx); by0 = Math.min(by0, yy); by1 = Math.max(by1, yy);
+      }
+    }
+    if (NAME === 'head' && (bx1 - bx0 > 760 || by1 - by0 < 500 || by0 > 400)) {
+      process.stdout.write(` [skip f${f} implausible head bbox]`);
+      continue;
     }
     if (area < 20000) {
       // too little of the hand is visible (heavy blur): leave no mask, renderer falls back
@@ -109,6 +150,32 @@ function largestComponent(m) {
     sx.filter = 'blur(2.5px)';
     sx.drawImage(mc, 0, 0);
     fs.writeFileSync(path.join(outDir, `f_${String(f).padStart(4, '0')}.png`), sm.toBuffer('image/png'));
+    if (NAME === 'head') {
+      // white-hot region (the shirt / shoulder blows out to near white in the thermal look)
+      const hi = mx2.createImageData(W, H);
+      const cur = new Uint8Array(W * H);
+      let n = 0;
+      let nLast = 0;
+      for (let i = 0; i < W * H; i++) {
+        const r = d[i * 4];
+        const g = d[i * 4 + 1];
+        const b = d[i * 4 + 2];
+        cur[i] = !darkOnLight && m[i] && (r + g + b) / 3 > 200 && Math.max(r, g, b) - Math.min(r, g, b) < 80 ? 1 : 0;
+        n += cur[i];
+        if (lastHot) nLast += lastHot[i];
+      }
+      const use = lastHot && n < 0.6 * nLast ? lastHot : cur;
+      if (use === cur && n > 5000) lastHot = cur;
+      for (let i = 0; i < W * H; i++) {
+        hi.data[i * 4] = hi.data[i * 4 + 1] = hi.data[i * 4 + 2] = 255;
+        hi.data[i * 4 + 3] = use[i] ? 255 : 0;
+      }
+      mx2.putImageData(hi, 0, 0);
+      sx.clearRect(0, 0, W, H);
+      sx.filter = 'blur(4px)';
+      sx.drawImage(mc, 0, 0);
+      fs.writeFileSync(path.join(outDir, `hot_${String(f).padStart(4, '0')}.png`), sm.toBuffer('image/png'));
+    }
     process.stdout.write(`\r${f - f0 + 1}/${f1 - f0 + 1}`);
   }
   console.log(`\nmasks -> ${outDir}`);

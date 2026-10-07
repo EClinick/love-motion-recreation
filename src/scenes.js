@@ -489,14 +489,22 @@ function sceneProfile(ctx, t, f) {
   const bg = bgRamp(t, [
     [3.82, '#151314'],
     [5.45, '#151314'],
-    [5.56, '#2a1718'],
-    [5.7, '#55494b'],
-    [5.85, '#7d7273'],
-    [5.97, '#c3bec1'],
-    [6.1, '#d9d7d6'],
-    [6.26, '#bdbbba'],
+    [5.6, '#2c1d20'],
+    [5.75, '#3a2c30'],
+    [5.85, '#54464b'],
+    [6.0, '#7c7175'],
+    [6.13, '#ada7a9'],
+    [6.17, '#bdbabb'],
+    [6.21, '#e4e5e5'],
   ]);
   fx.dark(ctx, bg);
+  const wall = inv(5.45, 5.75, t);
+  if (wall > 0) {
+    ctx.globalAlpha = wall;
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+  }
   if (t > 5.4 && t < 5.66) {
     const g = ctx.createRadialGradient(0, 1080, 0, 0, 1080, 700);
     g.addColorStop(0, `rgba(160,20,20,${0.5 * Math.sin(Math.PI * inv(5.4, 5.66, t))})`);
@@ -504,7 +512,7 @@ function sceneProfile(ctx, t, f) {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
   }
-  const lit = inv(5.95, 6.12, t);
+  const lit = 0.25 * inv(6.05, 6.2, t);
   if (lit > 0) {
     const g = ctx.createLinearGradient(0, 0, 700, 0);
     g.addColorStop(0, `rgba(255,255,255,${0.9 * lit})`);
@@ -515,8 +523,10 @@ function sceneProfile(ctx, t, f) {
   }
 
   const settle = ease.inOutCubic(inv(3.82, 4.35, t));
-  const z = lerp(1, 1.04, inv(4.1, 6.2, t));
-  const [sx, sy] = shake(t, 2.2, 0.8, 21);
+  const traced = headMask(t);
+  // a traced head already carries the source's own camera motion
+  const z = traced ? 1 : lerp(1, 1.04, inv(4.1, 6.2, t));
+  const [sx, sy] = traced ? [0, 0] : shake(t, 2.2, 0.8, 21);
   ctx.save();
   camera(ctx, { x: sx, y: sy, z, cx: 900, cy: 600 });
 
@@ -531,15 +541,63 @@ function sceneProfile(ctx, t, f) {
   x.save();
   x.translate(hx, hy);
   x.scale(hz, hz);
-  const heat = thermal('head', 'heat');
-  if (toShadow < 1) {
-    x.globalAlpha = 1 - toShadow;
-    if (settle < 1) x.filter = `hue-rotate(${-125 * Math.pow(1 - settle, 3.5) - 16 * settle}deg) saturate(${lerp(0.9, 1.25, settle)}) brightness(${lerp(0.3, 0.92, settle * settle)})`;
+  const heat = traced ? thermalImage(`head${traced.f}`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, hotMask: traced.hot, hotGain: 0.55, front: 0.12, hot: [[0.62, 0.18, 190, 0.12]] }) : thermal('head', 'heat');
+  // traced images are screen-space: undo the head transform while drawing them
+  const drawHead = (img, ox = 0) => {
+    if (!traced) return x.drawImage(img, 0, 0);
+    x.save();
+    x.setTransform(S, 0, 0, S, 0, 0);
+    x.drawImage(img, ox, 0, W, H);
+    x.restore();
+  };
+  if (toShadow < 1 || traced) {
+    x.globalAlpha = traced ? 1 : 1 - toShadow;
+    if (settle < 1) x.filter = `hue-rotate(${-125 * Math.pow(1 - settle, 3.5) - (traced ? 6 : 16) * settle}deg) saturate(${lerp(0.9, 1.25, settle)}) brightness(${lerp(0.3, 0.92, settle * settle)})`;
     else if (t < 4.9) x.filter = `hue-rotate(${-16 * (1 - inv(4.35, 4.9, t))}deg) saturate(${1 + 0.15 * (1 - inv(4.35, 4.9, t))}) brightness(${lerp(0.94, 1, inv(4.35, 4.9, t))})`;
+    else if (traced) {
+      const bri = kf(t, [[4.35, 0.87], [5.5, 0.87], [5.85, 0.55], [6.0, 0.45], [6.05, 0.4], [6.13, 0.33]]);
+      const sep = kf(t, [[5.5, 0], [5.85, 0.35], [6.0, 0.55], [6.13, 0.7]]);
+      const sat = kf(t, [[4.35, 1.15], [5.5, 1.15], [5.85, 1.2], [6.0, 1.0], [6.13, 0.8]]);
+      const hue = kf(t, [[4.35, -6], [4.9, 0]]);
+      x.filter = `hue-rotate(${hue}deg) sepia(${sep}) saturate(${sat}) brightness(${bri})`;
+    } else if (toTan > 0 && traced) x.filter = `sepia(${lerp(0.3, 0.55, toTan)}) saturate(${lerp(1.2, 1.45, toTan)}) brightness(${lerp(0.92, 0.9, toTan)})`;
     else if (toTan > 0) x.filter = `sepia(${lerp(0.45, 0.85, toTan)}) saturate(${lerp(1.25, 0.9, toTan)}) brightness(${lerp(0.82, 0.55, toTan)})`;
     else if (t > 5.55) x.filter = `sepia(${0.45 * inv(5.55, 5.84, t)}) saturate(${lerp(1, 1.25, inv(5.55, 5.84, t))}) brightness(${lerp(1, 0.82, inv(5.55, 5.84, t))})`;
-    x.drawImage(heat, 0, 0);
+    const ghost = traced ? Math.sin(Math.PI * inv(5.9, 6.12, t)) : 0;
+    if (ghost > 0.02) {
+      // RGB-split ghosts trailing the head on the left during the switch to the backlit wall
+      const f0 = x.filter;
+      x.filter = 'none';
+      x.save();
+      x.setTransform(S, 0, 0, S, 0, 0);
+      x.globalAlpha = 0.8 * ghost;
+      x.drawImage(silhouette(traced.mask, '#c47a74'), -18 * ghost, 4, W, H);
+      x.globalAlpha = ghost;
+      x.drawImage(silhouette(traced.mask, '#1b1414'), 0, 0, W, H);
+      x.restore();
+      x.filter = f0;
+    }
+    drawHead(heat, 30 * ghost);
     x.filter = 'none';
+    const wash = traced ? 0.45 * (1 - inv(4.3, 4.75, t)) * clamp((t - 3.9) / 0.15) : 0;
+    if (wash > 0) {
+      // the head reads red, not orange, as it settles
+      x.save();
+      x.setTransform(S, 0, 0, S, 0, 0);
+      x.globalCompositeOperation = 'source-atop';
+      x.fillStyle = `rgba(213,40,0,${wash})`;
+      x.fillRect(0, 0, W, H);
+      x.restore();
+      if (traced.hot) {
+        // keep the shirt white-hot under the wash
+        x.save();
+        x.setTransform(S, 0, 0, S, 0, 0);
+        x.globalAlpha = (wash / 0.45) * 0.85;
+        x.filter = `blur(${6 * S}px)`;
+        x.drawImage(silhouette(traced.hot, '#f6efe2'), 0, 0, W, H);
+        x.restore();
+      }
+    }
     if (settle < 0.45) {
       // 3.75: lit crimson core fading to purple, blue patch toward the lower right
       const e = 1 - settle / 0.45;
@@ -585,7 +643,7 @@ function sceneProfile(ctx, t, f) {
       x.fillRect(-100, -100, 1000, 1100);
       x.restore();
     }
-    if (toTan > 0.5) {
+    if (toTan > 0.5 && !traced) {
       // irregular dark burn ring around an olive patch in the hair
       x.save();
       x.globalAlpha = (1 - toShadow) * clamp((toTan - 0.5) * 2);
@@ -614,9 +672,48 @@ function sceneProfile(ctx, t, f) {
       x.restore();
     }
   }
-  if (toShadow > 0) {
+  if (traced && traced.hot && t > 5.6) {
+    // the shirt goes neutral grey and darkens as the wall lights up
+    x.globalAlpha = 1;
+    x.filter = 'none';
+    const shc = kf(t, [[5.6, 0], [5.85, 1]]);
+    const col = t < 5.85 ? '#cfcac0' : t < 6.0 ? mixHex('#7f7770', '#534e4d', inv(5.85, 6.0, t)) : t < 6.13 ? mixHex('#534e4d', '#201e1c', inv(6.0, 6.13, t)) : t < 6.21 ? '#1c1b1b' : mixHex('#1c1b1b', '#2f2d2d', inv(6.21, 6.25, t));
+    x.globalAlpha = t < 5.85 ? shc : 1;
+    if (t >= 6.15) {
+      // drawn after the silhouette below
+    } else drawHead(silhouette(traced.hot, t < 5.85 ? mixHex('#d8d4ca', '#7f7770', shc) : col));
+    x.globalAlpha = 1;
+  }
+  const thr = traced ? kf(t, [[6.01, -0.3], [6.048, 0.26], [6.089, 0.7], [6.131, 1.0], [6.15, 1.2]]) : 0;
+  if (traced && thr > -0.15 && t < 6.15) {
+    x.globalAlpha = 1;
+    x.filter = `blur(${2.5 * S}px)`;
+    drawHead(burnImage(`head${traced.f}`, traced.mask, thr));
+    x.filter = 'none';
+  }
+  if (traced && t >= 6.15) {
+    x.globalAlpha = 1;
+    const sc = t < 6.17 ? mixHex('#443a28', '#38322a', inv(6.15, 6.17, t)) : t < 6.21 ? mixHex('#38322a', '#3a3a3a', inv(6.17, 6.21, t)) : mixHex('#3a3a3a', '#8b898a', inv(6.21, 6.25, t));
+    drawHead(silhouette(traced.mask, sc));
+    if (traced.hot) drawHead(silhouette(traced.hot, t < 6.21 ? '#1c1b1b' : mixHex('#1c1b1b', '#2f2d2d', inv(6.21, 6.25, t))));
+  } else if (toShadow > 0 && !traced) {
     x.globalAlpha = toShadow;
-    x.drawImage(thermal('head', 'shadow'), 0, 0);
+    drawHead(thermal('head', 'shadow'));
+    if (false) {
+      // small dark burn spot in the hair
+      x.save();
+      x.setTransform(S, 0, 0, S, 0, 0);
+      x.filter = `blur(${2 * S}px)`;
+      x.fillStyle = '#100c0c';
+      x.beginPath();
+      for (let i = 0; i <= 24; i++) {
+        const a = (i / 24) * Math.PI * 2;
+        const rr = 1 + noise1(a * 2.5, 31) * 0.35;
+        x.lineTo(1062 + Math.cos(a) * 26 * rr, 380 + Math.sin(a) * 36 * rr);
+      }
+      x.fill();
+      x.restore();
+    }
   }
   x.restore();
   composite(ctx, c, { blur: (1 - settle) * 16 });
@@ -720,7 +817,10 @@ function sceneProfile(ctx, t, f) {
     const g = inv(5.7, 5.92, t);
     const base = mixHex('#d8d0cc', '#8f8786', g);
     parts = [{ t: 'you', c: base }, { t: 'just', c: base }, { t: 'show', c: mixHex('#a09694', '#6a6260', g) }];
-  } else parts = [{ t: 'you', c: '#3c3836' }, { t: 'just', c: '#3c3836' }, { t: 'show', c: '#3c3836' }, { t: 'it.', c: '#3c3836' }];
+  } else {
+    const tc = mixHex('#4e4a48', '#3d2620', inv(6.0, 6.15, t));
+    parts = [{ t: 'you', c: tc }, { t: 'just', c: tc }, { t: 'show', c: tc }, { t: 'it.', c: tc }];
+  }
   fx.words(ctx, parts, 200, 538, BODY, { blur: (1 - intro) * 9 });
   if (t < 5.2 && blinkOn(t - 3.82, 0.42)) fx.cursor(ctx, 640, 540, 44, 'rgba(160,156,150,0.8)', 3);
 }
@@ -1494,18 +1594,162 @@ function sceneScatter(ctx, t, f) {
 const fsMod = require('fs');
 const pathMod = require('path');
 const HAND_DIR = pathMod.join(__dirname, '..', 'ref', 'derived', 'hand');
+const HEAD_DIR = pathMod.join(__dirname, '..', 'ref', 'derived', 'head');
 const handMasks = {};
+const headMasks = {};
+const headHot = {};
 // Image decoding is async in @napi-rs/canvas, so masks are preloaded before rendering.
 async function preload() {
-  if (!fsMod.existsSync(HAND_DIR)) return;
   const { loadImage } = require('@napi-rs/canvas');
-  for (const name of fsMod.readdirSync(HAND_DIR)) {
-    const m = /^f_(\d+)\.png$/.exec(name);
-    if (m) handMasks[Number(m[1])] = await loadImage(fsMod.readFileSync(pathMod.join(HAND_DIR, name)));
+  for (const [dir, into] of [[HAND_DIR, handMasks], [HEAD_DIR, headMasks]]) {
+    if (!fsMod.existsSync(dir)) continue;
+    for (const name of fsMod.readdirSync(dir)) {
+      const m = /^(f|hot)_(\d+)\.png$/.exec(name);
+      if (m) (m[1] === 'hot' ? headHot : into)[Number(m[2])] = await loadImage(fsMod.readFileSync(pathMod.join(dir, name)));
+    }
   }
 }
 function handMask(t) {
   return handMasks[Math.round(t * C.FPS)] || null;
+}
+// nearest traced head frame (the tracer skips a few blurred / mid-transition frames)
+function headMask(t) {
+  const f = Math.round(t * C.FPS);
+  for (let d = 0; d <= 6; d++) {
+    const m = headMasks[f - d] || headMasks[f + d];
+    if (m) {
+      const k = headMasks[f - d] ? f - d : f + d;
+      return { f: k, mask: m, hot: headHot[k] || null };
+    }
+  }
+  return null;
+}
+
+// Thermal-camera colouring of a traced silhouette: a heat field (distance inside the outline,
+// plus hot spots) mapped through an iron colormap. Computed at 1440x1080, cached per frame.
+const IRON = [[0, [70, 6, 10]], [0.22, [176, 24, 14]], [0.42, [228, 70, 18]], [0.6, [240, 118, 32]], [0.76, [246, 160, 54]], [0.88, [252, 214, 140]], [1, [255, 252, 246]]];
+const ironLut = (() => {
+  const lut = new Uint8Array(256 * 3);
+  for (let i = 0; i < 256; i++) {
+    const v = i / 255;
+    let k = 1;
+    while (k < IRON.length - 1 && IRON[k][0] < v) k++;
+    const [a, ca] = IRON[k - 1];
+    const [b, cb] = IRON[k];
+    const u = clamp((v - a) / (b - a));
+    for (let j = 0; j < 3; j++) lut[i * 3 + j] = Math.round(ca[j] + (cb[j] - ca[j]) * u);
+  }
+  return lut;
+})();
+const thermalCache = new Map();
+function thermalImage(key, mask, { depth = 28, base = 0.24, gain = 0.5, hot = [], warm = null, hotMask = null, hotGain = 0.6, front = 0 } = {}) {
+  if (thermalCache.has(key)) return thermalCache.get(key);
+  const m = createCanvas(W, H);
+  const mx = m.getContext('2d');
+  mx.drawImage(mask, 0, 0, W, H);
+  const b = createCanvas(W, H);
+  const bx = b.getContext('2d');
+  bx.filter = `blur(${depth}px)`;
+  bx.drawImage(mask, 0, 0, W, H);
+  const md = mx.getImageData(0, 0, W, H);
+  const bd = bx.getImageData(0, 0, W, H).data;
+  const d = md.data;
+  // bounding box of the silhouette, so hot spots follow the figure
+  let x0 = W, x1 = 0, y0 = H, y1 = 0;
+  for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (d[(y * W + x) * 4 + 3] > 128) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  const bw = Math.max(1, x1 - x0);
+  const bh = Math.max(1, y1 - y0);
+  const spots = hot.map(([u, v, r, a]) => [x0 + u * bw, y0 + v * bh, r, a]);
+  let hd = null;
+  if (hotMask) {
+    const hc = createCanvas(W, H);
+    const hx = hc.getContext('2d');
+    hx.filter = 'blur(10px)';
+    hx.drawImage(hotMask, 0, 0, W, H);
+    hd = hx.getImageData(0, 0, W, H).data;
+  }
+  for (let y = 0; y < H; y++) {
+    const wy = warm ? clamp((y - warm[0]) / (warm[1] - warm[0])) : 0;
+    const wy2 = wy * wy * (3 - 2 * wy);
+    for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * 4;
+      if (!d[i + 3]) continue;
+      const e = clamp((bd[i + 3] / 255 - 0.5) * 2);
+      let h = base + gain * Math.pow(e, 0.7) + (warm ? warm[2] * wy2 : 0);
+      if (hd) h += hotGain * (hd[i + 3] / 255);
+      if (front) h -= front * clamp(1 - (x - x0) / (0.35 * bw));
+      for (const [hx, hy, hr, ha] of spots) {
+        const q = ((x - hx) ** 2 + (y - hy) ** 2) / (hr * hr);
+        if (q < 4) h += ha * Math.exp(-q);
+      }
+      const v = Math.max(0, Math.min(255, Math.round(h * 255))) * 3;
+      d[i] = ironLut[v];
+      d[i + 1] = ironLut[v + 1];
+      d[i + 2] = ironLut[v + 2];
+    }
+  }
+  mx.putImageData(md, 0, 0);
+  if (thermalCache.size > 6) thermalCache.delete(thermalCache.keys().next().value);
+  thermalCache.set(key, m);
+  return m;
+}
+// Burn-through: dark spreads inward from the outline (a black rim at the front) until only a
+// small spot is left. `thr` is how far in the burn has reached (0 = edge, 1 = core).
+let burnNoise = null;
+function burnImage(key, mask, thr) {
+  const k = `${key}:${thr.toFixed(3)}`;
+  if (thermalCache.has(k)) return thermalCache.get(k);
+  if (!burnNoise) {
+    const r = rng(77);
+    const small = createCanvas(48, 36);
+    const sx = small.getContext('2d');
+    const id = sx.createImageData(48, 36);
+    for (let i = 0; i < 48 * 36; i++) {
+      id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = Math.round(r() * 255);
+      id.data[i * 4 + 3] = 255;
+    }
+    sx.putImageData(id, 0, 0);
+    const big = createCanvas(W, H);
+    const bx = big.getContext('2d');
+    bx.filter = 'blur(10px)';
+    bx.drawImage(small, 0, 0, W, H);
+    burnNoise = bx.getImageData(0, 0, W, H).data;
+  }
+  const m = createCanvas(W, H);
+  const mx = m.getContext('2d');
+  mx.drawImage(mask, 0, 0, W, H);
+  const b = createCanvas(W, H);
+  const bx = b.getContext('2d');
+  bx.filter = 'blur(70px)';
+  bx.drawImage(mask, 0, 0, W, H);
+  const md = mx.getImageData(0, 0, W, H);
+  const bd = bx.getImageData(0, 0, W, H).data;
+  const d = md.data;
+  for (let i = 0; i < W * H * 4; i += 4) {
+    if (!d[i + 3]) continue;
+    const y = (i / 4 / W) | 0;
+    const v = clamp((bd[i + 3] / 255 - 0.5) * 2) + (burnNoise[i] / 255 - 0.5) * 0.3 - 0.9 * clamp((y - 380) / 450);
+    if (v > thr + 0.07) {
+      d[i + 3] = 0; // not yet burned
+    } else if (v > thr - 0.05) {
+      d[i] = 18; d[i + 1] = 13; d[i + 2] = 9; // burning rim
+    } else {
+      d[i] = 74; d[i + 1] = 62; d[i + 2] = 42;
+    }
+  }
+  mx.putImageData(md, 0, 0);
+  thermalCache.set(k, m);
+  return m;
+}
+// flat-filled silhouette (backlit shadow)
+function silhouette(mask, color) {
+  const c = createCanvas(W, H);
+  const x = c.getContext('2d');
+  x.drawImage(mask, 0, 0, W, H);
+  x.globalCompositeOperation = 'source-in';
+  x.fillStyle = color;
+  x.fillRect(0, 0, W, H);
+  return c;
 }
 
 // Thermal shading inside a traced silhouette (screen space).
@@ -1540,6 +1784,27 @@ function tracedHand(ctx, mask, filter, tint = 0) {
   ex.drawImage(mask, 0, 0, W, H);
   ex.filter = 'none';
   x.drawImage(ec, 0, 0, W, H);
+  // yellow-white highlights on the back of the hand and the thumb
+  [[650, 780, 110], [560, 690, 70]].forEach(([hx, hy, hr]) => {
+    const hg = x.createRadialGradient(hx, hy, 0, hx, hy, hr);
+    hg.addColorStop(0, 'rgba(255,216,144,0.6)');
+    hg.addColorStop(1, 'rgba(255,216,144,0)');
+    x.fillStyle = hg;
+    x.fillRect(0, 0, W, H);
+  });
+  // deep red-brown band along the right edge (index side to wrist)
+  const [rc, rx] = off(4);
+  rx.drawImage(ec, 0, 0, W, H);
+  rx.globalCompositeOperation = 'source-in';
+  rx.fillStyle = 'rgba(122,42,20,0.9)';
+  rx.fillRect(0, 0, W, H);
+  rx.globalCompositeOperation = 'destination-in';
+  const side = rx.createLinearGradient(720, 0, 860, 0);
+  side.addColorStop(0, 'rgba(0,0,0,0)');
+  side.addColorStop(1, 'rgba(0,0,0,1)');
+  rx.fillStyle = side;
+  rx.fillRect(0, 0, W, H);
+  x.drawImage(rc, 0, 0, W, H);
   if (tint > 0) {
     // intro: crimson body with violet toward the lower right
     x.fillStyle = `rgba(160,24,40,${0.95 * tint})`;
@@ -1590,7 +1855,7 @@ function sceneHand(ctx, t, f) {
   x.scale(lerp(0.65, 1, settle), 1);
   x.translate(-710 + (1 - settle) * 15 + fall * -290, -1110 + (1 - settle) * 140 + fall * 30);
   if (settle < 1) x.filter = `hue-rotate(${-30 * (1 - settle)}deg) saturate(${1 + (1 - settle) * 0.6}) brightness(${lerp(0.55, 0.88, settle)})`;
-  else if (fall > 0) x.filter = `saturate(${1 - fall * 0.85}) brightness(${1 - fall * 0.08})`;
+  else if (fall > 0) x.filter = `saturate(${1 - fall * 0.85}) brightness(${1 - fall * 0.25})`;
   if (fall > 0) {
     // wider fist with an orange rim on its right edge
     x.translate(520, 900);
@@ -1605,8 +1870,8 @@ function sceneHand(ctx, t, f) {
     const f2 = x.filter;
     x.filter = 'none';
     x.globalAlpha = fall;
-    x.filter = `blur(${6 * S}px)`;
-    x.drawImage(rim, 270, 250);
+    x.filter = `blur(${3 * S}px)`;
+    x.drawImage(rim, 260, 250);
     x.filter = 'none';
     x.globalAlpha = 1;
     x.filter = f2;
@@ -1889,11 +2154,11 @@ function sceneFinale(ctx, t, f) {
     dot(ctx, x, y, r * (t > 19.2 && t < 19.4 ? 0.5 : 1) * lerp(1, 1.1, grow), '#2a1714');
   });
   LOOPS.forEach(([ch, s, d, rx, ry, seed, turns, dx, dy]) => {
-    if (t < s || t > s + d + 0.16) return;
+    if (t < s || t > s + d + 0.28) return;
     const [ax, ay] = pos[ch];
     const messy = s < 18 || ch === 'V' || (s > 19.6 && ch === 'E');
     const pts = (messy ? fx.loopPoints(seed, rx * (s < 18 ? 0.8 : ch === 'V' ? 0.95 : 1.15), ry * (s < 18 ? 0.8 : ch === 'V' ? 0.95 : 1.15), 2.6, 200).map(([a, b], i) => [a + noise1(i * 0.2, seed) * 10, b + noise1(i * 0.2, seed + 4) * 10]) : smoothLoop(rx * 1.7, ry * 1.7, turns, seed)).map(([a, b]) => [a + ax + dx, b + ay + dy]);
-    fx.strokePartial(ctx, pts, inv(s + d, s + d + 0.16, t), inv(s, s + d, t), messy ? 1.3 : 1.6, '#e0402e');
+    fx.strokePartial(ctx, pts, inv(s + d + 0.12, s + d + 0.28, t), inv(s, s + d, t), messy ? 1.3 : 1.6, '#e0402e');
   });
   if (t > 19.95) {
     FINAL_LOOPS.forEach(([ch, rx, ry, seed, turns, dx, dy]) => {
@@ -1909,9 +2174,9 @@ function sceneFinale(ctx, t, f) {
       const [ex, ey] = pos.E;
       ctx.fillStyle = '#e0402e';
       ctx.beginPath();
-      ctx.moveTo(ex + 22, ey - 4);
-      ctx.lineTo(ex + 36, ey + 2);
-      ctx.lineTo(ex + 24, ey + 10);
+      ctx.moveTo(ex + 22, ey - 8);
+      ctx.lineTo(ex + 44, ey + 2);
+      ctx.lineTo(ex + 24, ey + 14);
       ctx.closePath();
       ctx.fill();
     }
