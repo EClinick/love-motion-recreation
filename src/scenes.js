@@ -2060,10 +2060,10 @@ function sprayBlob(ctx, cx, cy, r, seed, sy = 1) {
   ctx.fill();
   ctx.filter = 'none';
   const g = rng(seed);
-  const n = Math.round(r * 9);
+  const n = Math.round(r * 5);
   for (let i = 0; i < n; i++) {
     const a = g() * Math.PI * 2;
-    const d = r * (0.8 + Math.pow(g(), 2) * 0.45);
+    const d = r * (0.84 + Math.pow(g(), 2) * 0.24);
     const sz = 1.5 + g() * 3.5;
     ctx.globalAlpha = 0.5 + g() * 0.5;
     ctx.fillRect(cx + Math.cos(a) * d - sz / 2, cy + Math.sin(a) * d * sy - sz / 2, sz, sz);
@@ -2149,7 +2149,7 @@ function sceneScatter(ctx, t, f) {
   ctx.fillStyle = '#ededed';
   ctx.fillRect(0, 0, W, H);
   const spin = inv(11.85, 12.03, t);
-  const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.388, 0.36, 'linear'], [12.43, 0.75, 'inQuad'], [12.47, 1.9, 'inQuad']]);
+  const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.388, 0.36, 'linear'], [12.45, 0.75, 'inQuad'], [12.49, 1.9, 'inQuad']]);
   const burstP = ease.inOutCubic(inv(12.49, 12.555, t));
   const z = kf(t, [[12.6, 1], [13.47, 0.95, 'linear'], [13.68, 0.88, 'inQuad'], [13.722, 0.7], [13.76, 0.62]]);
   const turn = kf(t, [[12.6, 0], [13.47, 0.21, 'linear'], [13.68, 0.65, 'inQuad'], [13.722, 1.0, 'inQuad'], [13.76, 1.3]]);
