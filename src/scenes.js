@@ -969,7 +969,7 @@ function sceneProfile(ctx, t, f) {
   x.save();
   x.translate(hx, hy);
   x.scale(hz, hz);
-  const heat = traced ? thermalImage(`head${traced.f}`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, hotMask: traced.hot, front: kf(t, [[5.5, 0.3], [5.85, 0.08]]), rimBack: 0.35, mottle: 0.04, floor: 0.37, hotBlur: 16, hotGain: 0.85, hot: [[0.62, 0.18, 220, 0.11]] }) : thermal('head', 'heat');
+  const heat = traced ? thermalImage(`head${traced.f}`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, hotMask: traced.hot, front: kf(t, [[5.5, 0.3], [5.85, 0.08]]), rimBack: 0.35, mottle: 0.04, floor: kf(t, [[5.6, 0.37], [5.92, 0.56]]), hotBlur: 10, hotGain: 0.27, hot: [[0.31, 0.6, 170, -0.14]], glow: [55, 0.12] }) : thermal('head', 'heat');
   // traced images are screen-space: undo the head transform while drawing them
   const drawHead = (img, ox = 0) => {
     if (!traced) return x.drawImage(img, 0, 0);
@@ -983,10 +983,10 @@ function sceneProfile(ctx, t, f) {
     if (settle < 1) x.filter = `hue-rotate(${-125 * Math.pow(1 - settle, 3.5) - (traced ? 6 : 16) * settle}deg) saturate(${lerp(0.9, 1.25, settle)}) brightness(${lerp(0.3, 0.92, settle * settle)})`;
     else if (t < 4.9 && !traced) x.filter = `hue-rotate(${-16 * (1 - inv(4.35, 4.9, t))}deg) saturate(${1 + 0.15 * (1 - inv(4.35, 4.9, t))}) brightness(${lerp(0.94, 1, inv(4.35, 4.9, t))})`;
     else if (traced) {
-      const bri = kf(t, [[4.35, 0.8], [4.5, 0.8], [4.8, 0.87], [5.5, 0.87], [5.85, 0.55], [6.0, 0.45], [6.05, 0.4], [6.13, 0.33]]);
+      const bri = kf(t, [[4.35, 0.8], [4.5, 0.8], [4.8, 0.87], [5.5, 0.87], [5.85, 0.6], [6.0, 0.5], [6.05, 0.42], [6.13, 0.33]]);
       const sep = kf(t, [[5.5, 0], [5.85, 0.35], [6.0, 0.55], [6.13, 0.7]]);
-      const sat = kf(t, [[4.35, 1.15], [5.5, 1.15], [5.85, 1.35], [6.0, 1.3], [6.13, 0.9]]);
-      const hue = kf(t, [[4.35, -6], [4.9, 0]]);
+      const sat = kf(t, [[4.35, 1.15], [5.5, 1.15], [5.85, 1.35], [6.0, 1.15], [6.13, 0.9]]);
+      const hue = kf(t, [[4.35, -6], [4.9, 0], [5.6, 0], [5.85, 12], [6.0, 12]]);
       x.filter = `hue-rotate(${hue}deg) sepia(${sep}) saturate(${sat}) brightness(${bri})`;
     } else if (toTan > 0 && traced) x.filter = `sepia(${lerp(0.3, 0.55, toTan)}) saturate(${lerp(1.2, 1.45, toTan)}) brightness(${lerp(0.92, 0.9, toTan)})`;
     else if (toTan > 0) x.filter = `sepia(${lerp(0.45, 0.85, toTan)}) saturate(${lerp(1.25, 0.9, toTan)}) brightness(${lerp(0.82, 0.55, toTan)})`;
@@ -1006,7 +1006,15 @@ function sceneProfile(ctx, t, f) {
       x.restore();
       x.filter = f0;
     }
-    drawHead(heat, 30 * ghost);
+    if (traced && t >= 5.99 && t < 6.15) {
+      // frames 143-146: the heat is posterized (salmon cool band, black contour, flat olive fill)
+      const hex = (c) => [1, 3, 5].map((k) => parseInt(c.slice(k, k + 2), 16));
+      const post = thermalImage(`head${traced.f}p`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, hotMask: traced.hot, front: 0.46, rimBack: 0.35, floor: 0.37, hotBlur: 10, hotGain: 0.27,
+        poster: { t1: 0.45, w: 0.06, jag: 0.24, hi: null, lo: hex(mixHex('#8a4a30', '#764434', inv(5.95, 6.0, t))), line: hex('#1c1611') } });
+      drawHead(heat);
+      x.filter = 'none';
+      drawHead(post);
+    } else drawHead(heat, 30 * ghost);
     x.filter = 'none';
     const wash = traced ? 0.5 * (1 - inv(4.5, 4.8, t)) * clamp((t - 3.9) / 0.15) : 0;
     if (wash > 0) {
@@ -1021,6 +1029,13 @@ function sceneProfile(ctx, t, f) {
         // keep the shirt white-hot under the wash
         x.save();
         x.setTransform(S, 0, 0, S, 0, 0);
+        // yellow halo above the shirt survives the wash too
+        x.globalCompositeOperation = 'source-atop';
+        x.globalAlpha = Math.min(1, wash / 0.15);
+        x.filter = `blur(${40 * S}px)`;
+        x.drawImage(silhouette(traced.hot, '#e2aa2c'), 0, 0, W, H);
+        x.drawImage(silhouette(traced.hot, '#e2aa2c'), 0, 0, W, H);
+        x.globalCompositeOperation = 'source-over';
         x.globalAlpha = Math.min(1, wash / 0.15) * 0.9;
         x.filter = `blur(${6 * S}px)`;
         x.drawImage(silhouette(traced.hot, '#e9ebef'), 0, 0, W, H);
@@ -2875,7 +2890,7 @@ function headMask(t) {
 
 // Thermal-camera colouring of a traced silhouette: a heat field (distance inside the outline,
 // plus hot spots) mapped through an iron colormap. Computed at 1440x1080, cached per frame.
-const IRON = [[0, [70, 6, 10]], [0.22, [176, 24, 14]], [0.42, [214, 52, 22]], [0.6, [240, 118, 32]], [0.76, [246, 160, 54]], [0.88, [252, 214, 140]], [1, [250, 252, 255]]];
+const IRON = [[0, [70, 6, 10]], [0.22, [176, 24, 14]], [0.42, [214, 52, 22]], [0.6, [240, 118, 32]], [0.76, [246, 160, 40]], [0.88, [252, 220, 100]], [1, [250, 252, 255]]];
 const ironLut = (() => {
   const lut = new Uint8Array(256 * 3);
   for (let i = 0; i < 256; i++) {
@@ -2890,7 +2905,7 @@ const ironLut = (() => {
   return lut;
 })();
 const thermalCache = new Map();
-function thermalImage(key, mask, { depth = 28, base = 0.24, gain = 0.5, hot = [], warm = null, hotMask = null, hotGain = 0.6, front = 0, rimBack = 1, mottle = 0, floor = 0, hotBlur = 10 } = {}) {
+function thermalImage(key, mask, { depth = 28, base = 0.24, gain = 0.5, hot = [], warm = null, hotMask = null, hotGain = 0.6, front = 0, rimBack = 1, mottle = 0, floor = 0, hotBlur = 10, glow = null, poster = null } = {}) {
   if (thermalCache.has(key)) return thermalCache.get(key);
   const m = createCanvas(W, H);
   const mx = m.getContext('2d');
@@ -2917,6 +2932,15 @@ function thermalImage(key, mask, { depth = 28, base = 0.24, gain = 0.5, hot = []
     hx.drawImage(hotMask, 0, 0, W, H);
     hd = hx.getImageData(0, 0, W, H).data;
   }
+  // glow = [blur, gain]: a wide soft halo of the hot region (the shirt warms the neck yellow)
+  let gd = null;
+  if (hotMask && glow) {
+    const gc = createCanvas(W, H);
+    const gx = gc.getContext('2d');
+    gx.filter = `blur(${glow[0]}px)`;
+    gx.drawImage(hotMask, 0, 0, W, H);
+    gd = gx.getImageData(0, 0, W, H).data;
+  }
   for (let y = 0; y < H; y++) {
     const wy = warm ? clamp((y - warm[0]) / (warm[1] - warm[0])) : 0;
     const wy2 = wy * wy * (3 - 2 * wy);
@@ -2930,12 +2954,26 @@ function thermalImage(key, mask, { depth = 28, base = 0.24, gain = 0.5, hot = []
       const ee = Math.pow(e, 0.7);
       let h = base + gain * (ee + (1 - ee) * (1 - rimBack) * back) + (warm ? warm[2] * wy2 : 0);
       if (hd) h += hotGain * (hd[i + 3] / 255);
+      if (gd) h += glow[1] * (gd[i + 3] / 255);
       if (mottle) h += mottle * (nz[i] / 255 - 0.5);
       if (floor) h = Math.max(h, floor);
       if (front) h -= front * clamp(1 - (x - x0) / (0.35 * bw));
       for (const [hx, hy, hr, ha] of spots) {
         const q = ((x - hx) ** 2 + (y - hy) ** 2) / (hr * hr);
         if (q < 4) h += ha * Math.exp(-q);
+      }
+      if (poster) {
+        // posterized heat: cool band, a jagged black contour, then a flat hot fill
+        const hj = h + poster.jag * (noiseField()[i] / 255 - 0.5);
+        const c = hj < poster.t1 ? poster.lo : hj < poster.t1 + poster.w ? poster.line : poster.hi2 && h > poster.t2 ? poster.hi2 : poster.hi;
+        if (!c) {
+          d[i + 3] = 0; // hot fill left to the regular heat layer underneath
+          continue;
+        }
+        d[i] = c[0];
+        d[i + 1] = c[1];
+        d[i + 2] = c[2];
+        continue;
       }
       const v = Math.max(0, Math.min(255, Math.round(h * 255))) * 3;
       d[i] = ironLut[v];

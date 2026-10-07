@@ -184,9 +184,13 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       }
       const use = lastHot && n < 0.6 * nLast ? lastHot : cur;
       if (use === cur && n > 5000) lastHot = cur;
+      // on the dark wall the heat is graded: in the iron palette green rises steadily with heat,
+      // so the yellow fringe around the white-hot shirt comes through as partial heat
+      const graded = !darkOnLight && t < 5.6;
       for (let i = 0; i < W * H; i++) {
         hi.data[i * 4] = hi.data[i * 4 + 1] = hi.data[i * 4 + 2] = 255;
-        hi.data[i * 4 + 3] = use[i] ? 255 : 0;
+        const gr = graded && m[i] ? Math.max(0, Math.min(1, (d[i * 4 + 1] - 130) / 110)) : 0;
+        hi.data[i * 4 + 3] = Math.round(255 * Math.max(gr, use[i] && !graded ? 1 : 0));
       }
       mx2.putImageData(hi, 0, 0);
       sx.clearRect(0, 0, W, H);
