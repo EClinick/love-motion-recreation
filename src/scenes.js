@@ -361,7 +361,7 @@ function sceneType(ctx, t, f) {
   ctx.fillStyle = bg2;
   ctx.fillRect(0, 600, W, H - 600);
   const x0 = kf(t, [[0.68, 100], [0.8, 72, 'outCubic'], [1.96, 42, 'linear']]);
-  const y0 = 540;
+  const y0 = 534;
   const [sx, sy] = shake(t, 2.5, 1, 4);
 
   // ghost cursive, out of focus, drifting right across the top
@@ -724,7 +724,7 @@ function sceneSparkle(ctx, t, f) {
     o: i === 2 && t > 3.5 ? { glow: 'rgba(255,255,255,0.8)', glowBlur: 14 } : {},
   }));
   const [tc, tx] = off(2);
-  fx.words(tx, parts, 40, 538, BODY);
+  fx.words(tx, parts, 40, 533, BODY);
   const tBlur = kf(t, [[2.022, 7], [2.064, 3], [2.106, 2], [2.27, 1.5], [2.45, 0]]);
 
   if (t < 2.064) {
@@ -1197,8 +1197,8 @@ function sceneProfile(ctx, t, f) {
   }
   // focus per frame, measured from the source's text sharpness (soft, sharp, soft again, then settling)
   const tb = kf(t, [[3.82, 9], [3.837, 7], [3.879, 5], [3.921, 2.2], [3.962, 4.5], [4.004, 4.5], [4.046, 4], [4.088, 3], [4.129, 2.5], [4.171, 2], [4.213, 1.5], [4.254, 1.0], [4.296, 0.8], [4.338, 0.6], [4.5, 0.4]]);
-  fx.words(ctx, parts, 200, 538, BODY, { blur: tb });
-  if (t < 4.36) fx.cursor(ctx, 640, 540, 44, 'rgba(160,156,150,0.8)', 3);
+  fx.words(ctx, parts, 207, 533, BODY, { blur: tb });
+  if (t < 4.36) fx.cursor(ctx, 647, 535, 44, 'rgba(160,156,150,0.8)', 3);
 }
 
 // =====================================================================
