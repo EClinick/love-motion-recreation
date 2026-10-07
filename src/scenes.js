@@ -1818,6 +1818,42 @@ function burst(ctx, cx, cy, q, seed, colors = ['#ece8e2', '#e8231d']) {
 }
 
 function sceneAction(ctx, t, f) {
+  if (t < 8.32) {
+    // frame 199: a huge grainy dark-red star behind the upright camera, small bright star, cursor block
+    fx.dark(ctx, '#141313');
+    const [c, x] = off(0);
+    x.fillStyle = 'rgba(112,10,22,0.85)';
+    x.save();
+    x.translate(1091, 540);
+    x.scale(0.62, 1);
+    fx.starPath(x, 0, 0, 580, 0, 0.3);
+    x.fill();
+    x.restore();
+    const r = rng(199);
+    x.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 2600; i++) {
+      x.fillStyle = `rgba(0,0,0,${0.3 + r() * 0.5})`;
+      x.fillRect(560 + r() * 1080, r() * H, 6 + r() * 9, 6 + r() * 9);
+    }
+    x.globalCompositeOperation = 'source-over';
+    const sg = x.createLinearGradient(200, 0, 540, 0);
+    sg.addColorStop(0, 'rgba(150,20,30,0)');
+    sg.addColorStop(1, 'rgba(150,20,30,0.8)');
+    x.fillStyle = sg;
+    x.fillRect(200, 532, 340, 14);
+    drawSprite(x, 'camera', 716, 540, 371, 0);
+    x.fillStyle = '#f2f0ee';
+    x.fillRect(910, 500, 81, 92);
+    x.fillStyle = '#e8221c';
+    x.save();
+    x.translate(850, 440);
+    x.scale(0.75, 1);
+    fx.starPath(x, 0, 0, 160, 0, 0.08);
+    x.restore();
+    x.fill();
+    composite(ctx, c, { blur: 6 });
+    return;
+  }
   fx.dark(ctx, '#141313');
   const pos = kf(t, [[8.3, [575, 520]], [8.342, [567, 513]], [8.383, [553, 540]], [8.425, [540, 540]], [8.467, [527, 527]], [8.655, [513, 527]], [8.675, [527, 473], 'inOutCubic'], [8.895, [520, 473]], [8.915, [486, 513], 'inOutCubic'], [9.05, [478, 552]], [9.0924, [405, 575], 'inQuad'], [9.13, [400, 580]]]);
   const rot = kf(t, [[8.3, -0.12], [8.383, -0.15], [8.655, -0.2], [8.675, -1.29, 'inOutCubic'], [8.895, -1.29], [8.915, -0.18, 'inOutCubic'], [9.05, -0.19], [9.0924, -0.28, 'inQuad'], [9.13, -0.3]]);
@@ -3672,8 +3708,8 @@ const TIMELINE = [
   [0.68, 1.96, sceneType],
   [1.96, 3.82, sceneSparkle],
   [3.82, 6.29, sceneProfile],
-  [6.29, 8.3, sceneRing],
-  [8.3, 9.13, sceneAction],
+  [6.29, 8.29, sceneRing],
+  [8.29, 9.13, sceneAction],
   [9.13, 9.84, sceneStripA],
   [9.84, 10.51, sceneIntention],
   [10.51, 11.01, sceneStripB],
