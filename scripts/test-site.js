@@ -137,6 +137,48 @@ test('showcase keeps the version archive without the numbered navigator or force
   }
 });
 
+test('featured player stays full-width and its container follows each video aspect ratio', () => {
+  const html = site('index.html');
+  const css = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  assert.match(css, /\.hero\{[^}]*grid-template-columns:minmax\(0,1fr\)/);
+  const heroRules = [...css.matchAll(/\.hero\{([^}]*)\}/g)].map(m => m[1]);
+  assert.equal(heroRules.filter(rule => rule.includes('grid-template-columns')).length, 1,
+    'desktop must not put the featured media back in an adjacent column');
+  const mediaRules = [...css.matchAll(/(?:#featplayer|\.screen video)\{([^}]*)\}/g)].map(m => m[1]);
+  for (const rule of mediaRules) assert.doesNotMatch(rule, /(?:min-height|max-height|height):/,
+    'featured height must come from the video, not a viewport reserve or cap');
+  assert.match(css, /#featplayer\{margin-top:0\}/);
+  assert.match(css, /video\{[^}]*width:100%;height:auto;aspect-ratio:4\/3/);
+  assert.match(css, /\.screen video\{object-fit:contain\}/);
+
+  // Exercise the actual tab handler: mode changes must set 4:3 / 8:3 on the video,
+  // never reserve a separate host height, and retain the native media controls.
+  function element(tag) {
+    return {
+      tag, children: [], style: {}, dataset: {}, attrs: {}, currentTime: 0, paused: true,
+      appendChild(child) { this.children.push(child); },
+      setAttribute(key, value) { this.attrs[key] = value; },
+      querySelectorAll(tag) { return this.children.filter(child => child.tag === tag); }
+    };
+  }
+  const context = { el: element, esc: s => s, vsrc: (v, src) => src };
+  const player = html.match(/function playerTabs\(host, v\)\{[\s\S]*?(?=\n  function getJSON)/)[0];
+  vm.runInNewContext(player, context);
+  const host = element('section');
+  const video = context.playerTabs(host, { video: 'render.mp4', sidebyside: 'sidebyside.mp4' });
+  const tabs = host.children[0].querySelectorAll('button');
+  assert.equal(video.controls, true);
+  assert.equal(video.playsInline, true);
+  assert.equal(video.style.aspectRatio, '4/3');
+  tabs[1].onclick();
+  assert.equal(video.style.aspectRatio, '8/3');
+  assert.equal(video.src, 'sidebyside.mp4');
+  tabs[0].onclick();
+  assert.equal(video.style.aspectRatio, '4/3');
+  assert.equal(video.src, 'render.mp4');
+  assert.deepEqual(host.style, {});
+});
+
 test('published session data and pages carry no private data or hidden reasoning', () => {
   const { BANNED, check } = require('./session-extract.js');
   check(JSON.stringify(session));

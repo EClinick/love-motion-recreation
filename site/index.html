@@ -17,10 +17,10 @@
 <style>
 .wrap{max-width:1180px;margin:0 auto;padding:0 var(--gutter)}
 .hero{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;padding:44px 0 8px}
-@media (min-width:1000px){.hero{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:center;padding:56px 0 12px}}
-.screen video{max-height:64vh;object-fit:contain}
-#featplayer{min-height:min(64vh,calc((100vw - 2 * var(--gutter)) * .75))}
-@media (min-width:1000px){#featplayer{min-height:min(64vh,30vw)}}
+@media (min-width:1000px){.hero{padding:56px 0 12px}}
+/* The featured media gets the full column; each mode supplies its own aspect ratio. */
+.screen video{object-fit:contain}
+#featplayer{margin-top:0}
 h1{font-weight:900;font-size:var(--t-7);line-height:.92;letter-spacing:-.05em;margin:0 0 18px}
 .lede{font-size:var(--t-3);line-height:1.5;margin:0 0 10px;max-width:36ch}
 .muted,.note{color:var(--graphite);font-size:var(--t-1)}
@@ -29,7 +29,7 @@ h3{font-weight:900;font-size:var(--t-2);margin:20px 0 0}
 p{margin:0 0 12px}
 .mono{font-family:var(--font-mono);font-size:.85em}
 .screen{background:var(--frame);border-radius:10px;overflow:hidden;color:#E7E4DD}
-.screen .feat-title{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:var(--t-1)}
+.screen .feat-title{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:10px 14px;font-size:var(--t-1)}
 .latest-tag{font-weight:900;color:#fff}
 .screen .warn{color:#A9A49B;font-size:var(--t-0)}
 video{display:block;width:100%;height:auto;aspect-ratio:4/3;background:#000}
