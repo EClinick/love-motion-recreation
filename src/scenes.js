@@ -1436,7 +1436,7 @@ function inkBall(ctx, x, y, r, trail = [], soft = 2.5) {
 
 // Perspective ring fitted to the source (frame 167): centre, radii, depth k; icons scale with depth.
 // sizes re-fitted to the v17 sprites from source widths at 8.008 s and 6.673 s (front items)
-const RING_BASE = { clapper: 168, skateboard: 181, vinyl: 157, book: 165, camera: 184, cat: 176, coin: 161, controller: 176, cap: 198, heart: 199, cash: 204, plant: 155 };
+const RING_BASE = { clapper: 168, skateboard: 181, vinyl: 157, book: 165, camera: 184, cat: 176, coin: 161, controller: 176, cap: 152, heart: 180, cash: 204, plant: 155 };
 const RING_ROT = { skateboard: -0.45, cash: 0 };
 const ringSpin = (t) =>
   kf(t, [
@@ -1498,7 +1498,21 @@ function drawRing2(x, t, tint = null) {
       const rot = noise1(t * 2 + it.i, it.i) * 0.04 + (RING_ROT[it.name] || 0);
       drawSprite(x, it.name, it.x, it.y, it.w, rot);
       const hit = tint ? 0 : hitAmt(it.name);
-      if (hit > 0) drawSprite(x, it.name, it.x, it.y, it.w, rot, hit * 0.75, { silhouette: '#f0a030' });
+      if (hit > 0 && it.name === 'heart') {
+        // the heart stays red; the hit glows orange from its middle
+        const [hc, hx] = off(6);
+        drawSprite(hx, 'heart', it.x, it.y, it.w, rot);
+        hx.globalCompositeOperation = 'source-atop';
+        const hg = hx.createRadialGradient(it.x, it.y, 0, it.x, it.y, it.w * 0.45);
+        hg.addColorStop(0, `rgba(250,120,40,${0.8 * hit})`);
+        hg.addColorStop(1, 'rgba(250,120,40,0)');
+        hx.fillStyle = hg;
+        hx.fillRect(it.x - it.w, it.y - it.w, it.w * 2, it.w * 2);
+        x.save();
+        x.setTransform(1, 0, 0, 1, 0, 0);
+        x.drawImage(hc, 0, 0);
+        x.restore();
+      } else if (hit > 0) drawSprite(x, it.name, it.x, it.y, it.w, rot, hit * 0.75, { silhouette: '#f0a030' });
     });
 }
 
@@ -1886,7 +1900,19 @@ function sceneRing(ctx, t, f) {
   }
   if (fr === 178) inkBlob(x, 367, 107, 76, 40, 0.1, 4);
   if (fr === 179) inkBlob(x, 425, 94, 62, 44, 0.2, 4);
-  if (fr === 180) inkTrail(x, [[800, 120], [620, 110], [470, 170], [400, 300], [410, 450], [440, 570]], 30, 0.55, 8);
+  if (fr === 180) {
+    // dark brush sweeping right then down, its grey trail curling back to a small hollow ring
+    inkTrail(x, [[439, 83], [560, 92], [660, 118], [725, 190], [735, 280], [700, 370]], 48, 0.85, 6);
+    inkTrail(x, [[700, 370], [620, 470], [520, 540], [432, 572]], 34, 0.35, 10);
+    x.save();
+    x.filter = `blur(${3 * S}px)`;
+    x.strokeStyle = 'rgba(60,56,56,0.45)';
+    x.lineWidth = 9;
+    x.beginPath();
+    x.arc(416, 574, 22, 0, 7);
+    x.stroke();
+    x.restore();
+  }
   if (fr === 181) {
     const [px, py] = hitPos('cash');
     inkBlob(x, px - 20, py - 20, 34, 26, 0.3, 3);
