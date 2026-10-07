@@ -1041,21 +1041,6 @@ function sceneProfile(ctx, t, f) {
     ctx.fillRect(hx - 100, hy, 900, 900);
     ctx.restore();
   }
-  // red contour rings over the blurred head during the intro
-  if (t > 3.93 && t < 4.2) {
-    ctx.save();
-    ctx.filter = `blur(${4 * S}px)`;
-    ctx.filter = `blur(${14 * S}px)`;
-    ctx.strokeStyle = `rgba(160,24,24,${0.45 * Math.sin(Math.PI * inv(3.93, 4.2, t))})`;
-    ctx.lineWidth = 40;
-    ctx.lineWidth = 10;
-    [[0.6, 1], [0.8, 0.8], [1, 0.6]].forEach(([k]) => {
-      ctx.beginPath();
-      ctx.ellipse(hx + 360, hy + 320, 230 * k, 260 * k, 0.2, 0, 7);
-      ctx.stroke();
-    });
-    ctx.restore();
-  }
   if (t < 3.97) {
     ctx.save();
     ctx.filter = `blur(${8 * S}px)`;
@@ -1080,54 +1065,93 @@ function sceneProfile(ctx, t, f) {
     ctx.fillStyle = g;
     ctx.fillRect(1200, 840, 240, 240);
   }
-  // amber comet streak during the intro
-  if (t < 4.12) {
-    const q = inv(3.82, 4.1, t);
-    const [c3, x3] = off(2);
-    x3.strokeStyle = 'rgba(255,160,60,0.8)';
-    x3.lineWidth = 16;
-    x3.beginPath();
-    x3.moveTo(lerp(380, 300, q), lerp(540, 120, q));
-    x3.lineTo(lerp(700, 560, q), lerp(540, 240, q));
-    x3.stroke();
-    composite(ctx, c3, { blur: 12, alpha: 1 - inv(4.0, 4.12, t) });
-  }
-  // thermal hotspot dot early, short orbit, then short thick white strokes behind the head
-  if (t > 3.95 && t < 4.3) dot(ctx, 1100 + drift * 0.2, 400, 9, '#ffd84a');
-  if (t > 3.9 && t < 4.14) {
+  // one-frame accents measured from the source, by frame number
+  const fr = Math.round(t * C.FPS);
+  const glowStroke = (pts, lw, col, blur = 3) => {
     ctx.save();
-    ctx.filter = `blur(${18 * S}px)`;
-    dot(ctx, 410, 186, 75, `rgba(192,128,32,${Math.sin(Math.PI * inv(3.9, 4.14, t))})`);
+    ctx.filter = `blur(${blur * S}px)`;
+    fx.strokePartial(ctx, smoothPts(pts, 8), 0, 1, lw, col);
     ctx.restore();
-  }
-  if (t > 4.34 && t < 4.46) {
-    const q = ease.outCubic(inv(4.34, 4.4, t));
-    const q2 = ease.inCubic(inv(4.4, 4.46, t));
+  };
+  const softDot = (x, y, r, col, blur = 4) => {
     ctx.save();
-    ctx.strokeStyle = 'rgba(250,248,244,0.95)';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.ellipse(960 + drift, 430, 370, 92, -0.3, Math.PI * 2 * q2, Math.PI * 2 * q);
-    ctx.stroke();
+    ctx.filter = `blur(${blur * S}px)`;
+    dot(ctx, x, y, r, col);
     ctx.restore();
+  };
+  const orbit = (cx, cy, rx, ry, rot, a0, a1, lw, col) => {
+    const pts = [];
+    for (let i = 0; i <= 40; i++) {
+      const a = lerp(a0, a1, i / 40);
+      const ex = Math.cos(a) * rx;
+      const ey = Math.sin(a) * ry;
+      pts.push([cx + ex * Math.cos(rot) - ey * Math.sin(rot), cy + ex * Math.sin(rot) + ey * Math.cos(rot)]);
+    }
+    fx.strokePartial(ctx, pts, 0, 1, lw, col);
+  };
+  const AMBER = 'rgba(240,150,50,0.9)';
+  if (fr === 92) glowStroke([[450, 540], [600, 536], [742, 532]], 14, AMBER, 4);
+  if (fr === 93) glowStroke([[607, 530], [900, 527], [1215, 520]], 12, AMBER, 3);
+  if (fr === 94) {
+    glowStroke([[990, 566], [1110, 560], [1237, 552]], 8, AMBER, 2);
+    softDot(1350, 675, 22, 'rgba(236,160,40,0.9)', 6);
+    softDot(877, 427, 10, 'rgba(200,90,30,0.9)', 2);
   }
-  if (t > 4.55 && t < 4.9) {
-    const a0 = inv(4.82, 4.9, t);
-    fx.strokePartial(ctx, fx.loopPoints(71, 26, 60, 0.55).map(([a, b]) => [a + 1165, b + 420]), a0, inv(4.6, 4.66, t), 7, CREAM);
-    fx.strokePartial(ctx, fx.loopPoints(72, 100, 44, 1.0).map(([a, b]) => [a + 1150, b + 686]), a0, inv(4.62, 4.72, t), 7, CREAM);
+  if (fr === 95) {
+    ctx.save();
+    ctx.filter = `blur(${3 * S}px)`;
+    orbit(967, 573, 360, 140, -0.12, 0, Math.PI * 2, 14, AMBER);
+    ctx.restore();
+    softDot(630, 337, 30, 'rgba(236,160,40,0.85)', 8);
   }
-  if (t > 4.45 && t < 4.6) dot(ctx, 888, 738, 5, '#fff');
-  if (t > 4.85 && t < 5.25) dot(ctx, 1074, 384, 5, '#fff');
+  if (fr === 96) {
+    glowStroke([[810, 360], [860, 200], [980, 130], [1125, 112]], 22, 'rgba(200,24,24,0.9)', 4);
+    glowStroke([[742, 540], [900, 560], [1080, 585]], 10, AMBER, 2);
+    softDot(1080, 585, 14, '#ffd84a', 2);
+    glowStroke([[1215, 180], [1320, 260], [1350, 405]], 12, AMBER, 5);
+  }
+  if (fr === 97) {
+    glowStroke([[450, 180], [650, 270], [855, 360]], 14, AMBER, 4);
+    softDot(607, 810, 30, 'rgba(200,24,24,0.8)', 8);
+    softDot(1080, 585, 12, '#ffd84a', 2);
+  }
+  if (fr >= 98 && fr <= 103) {
+    const k = (fr - 98) / 5;
+    softDot(lerp(405, 270, k), 180, lerp(30, 22, k), `rgba(236,150,40,${lerp(0.9, 0.35, k)})`, 8);
+    softDot(585, lerp(877, 922, k), 16, `rgba(170,20,20,${lerp(0.8, 0.3, k)})`, 6);
+    if (fr <= 102) softDot(1102, 585, lerp(12, 5, k), '#ffd84a', 1.5);
+  }
+  if (fr === 105) orbit(900, 472, 400, 130, -0.45, 2.3, 3.3, 4, '#f6f2ec');
+  if (fr === 106) {
+    orbit(900, 472, 400, 130, -0.45, 0, Math.PI * 2, 4, '#f6f2ec');
+    dot(ctx, 832, 711, 6, '#fff');
+  }
+  if (fr === 107) {
+    orbit(900, 472, 400, 130, -0.45, -1.35, -0.9, 4, '#f6f2ec');
+    fx.strokePartial(ctx, [[870, 690], [886, 684]], 0, 1, 5, '#fff');
+  }
+  if (fr >= 108 && fr <= 111) dot(ctx, 877, 697, 4, '#fff');
+  if (fr === 114) orbit(700, 175, 80, 30, 0.5, 3.2, 5.6, 4, '#f6f2ec');
+  if (fr === 115) {
+    orbit(945, 461, 360, 60, 0.78, 0, Math.PI * 2, 4, '#f6f2ec');
+    orbit(1080, 450, 90, 60, 0.3, 0.2, 2.2, 3, '#f6f2ec');
+  }
+  if (fr === 116) {
+    orbit(1170, 427, 40, 50, 0.2, -1.2, 1.0, 4, '#f6f2ec');
+    orbit(1150, 675, 100, 40, 0.3, -0.5, 2.6, 5, '#f6f2ec');
+  }
+  if (fr === 117) fx.strokePartial(ctx, [[1120, 352], [1130, 364]], 0, 1, 4, '#f6f2ec');
+  if (fr >= 118 && fr <= 123) dot(ctx, 1102, 360, 3, 'rgba(255,255,255,0.8)');
   ctx.restore();
 
   // text
   const intro = inv(3.82, 4.0, t);
   let parts;
-  if (t < 5.22) parts = [{ t: 'you', c: CREAM }, { t: 'dont.', c: CREAM }];
+  if (t < 5.28) parts = [{ t: 'you', c: CREAM }, { t: 'dont.', c: CREAM }];
   else if (t < 5.36) parts = [{ t: 'you', c: CREAM }];
-  else if (t < 5.7) parts = [{ t: 'you', c: CREAM }, { t: 'just', c: mixHex(CREAM, '#cfc8c4', inv(5.56, 5.7, t)) }];
+  else if (t < 5.66) parts = [{ t: 'you', c: CREAM }, { t: 'just', c: mixHex(CREAM, '#cfc8c4', inv(5.56, 5.66, t)) }];
   else if (t < 5.97) {
-    const g = inv(5.7, 5.92, t);
+    const g = inv(5.66, 5.92, t);
     const base = mixHex('#d8d0cc', '#8f8786', g);
     parts = [{ t: 'you', c: base }, { t: 'just', c: base }, { t: 'show', c: mixHex('#a09694', '#6a6260', g) }];
   } else {
@@ -1135,7 +1159,7 @@ function sceneProfile(ctx, t, f) {
     parts = [{ t: 'you', c: tc }, { t: 'just', c: tc }, { t: 'show', c: tc }, { t: 'it.', c: tc }];
   }
   fx.words(ctx, parts, 200, 538, BODY, { blur: (1 - intro) * 9 });
-  if (t < 5.2 && blinkOn(t - 3.82, 0.42)) fx.cursor(ctx, 640, 540, 44, 'rgba(160,156,150,0.8)', 3);
+  if (t < 4.36) fx.cursor(ctx, 640, 540, 44, 'rgba(160,156,150,0.8)', 3);
 }
 
 // =====================================================================
