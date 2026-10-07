@@ -491,6 +491,35 @@ function starColors(t) {
 }
 
 // Four-arm sparkle with independent arm angles and lengths (the source star is skewed).
+// device-resolution speckle for the blue star body, made once per scale
+let speckleCanvas = null;
+function starSpeckle() {
+  if (speckleCanvas && speckleCanvas.width === 720 * S) return speckleCanvas;
+  const w = 720 * S;
+  const h = H * S;
+  speckleCanvas = createCanvas(w, h);
+  const x = speckleCanvas.getContext('2d');
+  const r = rng(314);
+  const blot = createCanvas(Math.ceil(w / 24), Math.ceil(h / 24));
+  const bx = blot.getContext('2d');
+  for (let i = 0; i < blot.width * blot.height; i++) {
+    bx.fillStyle = `rgba(8,16,90,${r() * 0.35})`;
+    bx.fillRect(i % blot.width, (i / blot.width) | 0, 1, 1);
+  }
+  x.filter = `blur(${10 * S}px)`;
+  x.drawImage(blot, 0, 0, w, h);
+  x.filter = 'none';
+  // fine dense grain written straight into the pixels
+  const id = x.getImageData(0, 0, w, h);
+  const d = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const q = r();
+    if (q < 0.16) { d[i] = 150; d[i + 1] = 180; d[i + 2] = 255; d[i + 3] = Math.max(d[i + 3], 40 + r() * 70); }
+    else if (q < 0.26) { d[i] = 10; d[i + 1] = 18; d[i + 2] = 100; d[i + 3] = Math.max(d[i + 3], 40 + r() * 60); }
+  }
+  x.putImageData(id, 0, 0);
+  return speckleCanvas;
+}
 function armStar(ctx, cx, cy, angs, lens, k) {
   const tips = angs.map((a, i) => [cx + Math.cos(a) * lens[i], cy + Math.sin(a) * lens[i]]);
   const avg = lens.reduce((q, v) => q + v, 0) / lens.length;
@@ -502,7 +531,9 @@ function armStar(ctx, cx, cy, angs, lens, k) {
     let a1 = angs[j];
     if (a1 < a0) a1 += Math.PI * 2;
     const am = (a0 + a1) / 2;
-    const c = [cx + Math.cos(am) * avg * k, cy + Math.sin(am) * avg * k];
+    // k may be one pinch for all gaps or one per gap (gap i runs from arm i to arm i+1)
+    const ki = Array.isArray(k) ? k[i] : k;
+    const c = [cx + Math.cos(am) * avg * ki, cy + Math.sin(am) * avg * ki];
     ctx.bezierCurveTo(lerp(tips[i][0], c[0], 0.85), lerp(tips[i][1], c[1], 0.85), lerp(tips[j][0], c[0], 0.85), lerp(tips[j][1], c[1], 0.85), ...tips[j]);
   }
   ctx.closePath();
@@ -524,7 +555,11 @@ function starPose(t) {
   const A = STAR_KEYS[i];
   const B = STAR_KEYS[i + 1];
   const u = ease.inOutQuad(inv(A[0], B[0], t));
-  return { cx: lerp(A[1], B[1], u), cy: lerp(A[2], B[2], u), angs: A[3].map((v, j) => lerp(v, B[3][j], u)), lens: A[4].map((v, j) => lerp(v, B[4][j], u)), k: lerp(A[5], B[5], u) };
+  // the outer edges of the up and right arms pinch in harder once the star has opened (measured
+  // row by row on frames 60-80): extra pinch on the right->down and left->up gaps
+  const k = lerp(A[5], B[5], u);
+  const deep = kf(t, [[2.3, 0], [2.5, 1], [3.71, 1], [3.79, 0]]);
+  return { cx: lerp(A[1], B[1], u), cy: lerp(A[2], B[2], u), angs: A[3].map((v, j) => lerp(v, B[3][j], u)), lens: A[4].map((v, j) => lerp(v, B[4][j], u)), k: [k, k - 0.08 * deep, k, k - 0.11 * deep] };
 }
 
 // icon drift measured from the source (frame 50 -> 3.0 s)
@@ -549,7 +584,7 @@ function sparkleShade(ctx, t) {
   [[0, 1], [400, 0.95], [600, 0.66], [800, 0.36], [1000, 0.15], [1200, 0.05], [1500, 0]].forEach(([d, a]) => g.addColorStop(d / 1500, `rgba(40,26,24,${a * m})`));
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
-  const v = kf(t, [[2.064, 0.1], [2.25, 0.24], [2.5, 0.36], [3.0, 0.48], [3.5, 0.56], [3.62, 0.62]]);
+  const v = 0.55 * kf(t, [[2.064, 0.1], [2.25, 0.24], [2.5, 0.36], [3.0, 0.48], [3.5, 0.56], [3.62, 0.62]]);
   const tg = ctx.createLinearGradient(0, 0, 0, H);
   tg.addColorStop(0, `rgba(30,22,22,${v})`);
   tg.addColorStop(0.35, 'rgba(30,22,22,0)');
@@ -557,7 +592,27 @@ function sparkleShade(ctx, t) {
   tg.addColorStop(1, `rgba(30,22,22,${v})`);
   ctx.fillStyle = tg;
   ctx.fillRect(0, 0, W, H);
-  const rc = kf(t, [[3.0, 0], [3.5, 1], [3.545, 1.1], [3.587, 1.3], [3.63, 1.7]]);
+  // warm, deep shade in the left corners (measured #2d2121 at 3.0 s)
+  const lc = kf(t, [[2.25, 0], [2.5, 0.6], [3.0, 0.8], [3.5, 0.85]]);
+  [[0, 0], [0, H]].forEach(([qx, qy]) => {
+    const cg = ctx.createRadialGradient(qx, qy, 0, qx, qy, 760);
+    cg.addColorStop(0, `rgba(34,18,18,${lc})`);
+    cg.addColorStop(0.45, `rgba(34,18,18,${0.75 * lc})`);
+    cg.addColorStop(1, 'rgba(34,18,18,0)');
+    ctx.fillStyle = cg;
+    ctx.fillRect(0, 0, W, H);
+  });
+  // the middle brightens as the light closes (measured centre #c5 -> #dd from 3.3 to 3.59 s)
+  const cl = kf(t, [[3.3, 0], [3.5, 0.35], [3.59, 0.55]]);
+  if (cl > 0) {
+    const lg = ctx.createRadialGradient(800, 430, 0, 800, 430, 520);
+    lg.addColorStop(0, `rgba(255,255,255,${cl})`);
+    lg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = lg;
+    ctx.fillRect(0, 0, W, H);
+  }
+  // the spotlight only closes in at the very end (right corners stay light at 3.34 s)
+  const rc = kf(t, [[3.25, 0], [3.42, 0.3], [3.5, 0.75], [3.545, 1.1], [3.587, 1.3], [3.63, 1.7]]);
   if (rc > 0) {
     ctx.save();
     ctx.translate(800, 500);
@@ -758,6 +813,17 @@ function sceneSparkle(ctx, t, f) {
   x2.fill();
   x2.globalAlpha = 1;
   x2.shadowBlur = 0;
+  // speckled, mottled body (light-blue grains and darker blotches, as in the source)
+  const spk = inv(2.25, 2.45, t);
+  if (spk > 0) {
+    x2.save();
+    x2.clip();
+    x2.globalAlpha = spk;
+    x2.setTransform(1, 0, 0, 1, 0, 0);
+    x2.drawImage(starSpeckle(), 0, 0);
+    x2.restore();
+    armStar(x2, P.cx, P.cy, P.angs, P.lens, P.k);
+  }
   // halftone dots in the deep blue body late on
   const ht = inv(3.3, 3.5, t);
   if (ht > 0) {
