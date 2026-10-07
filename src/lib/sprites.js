@@ -113,17 +113,17 @@ const builders = {
   },
   coin() {
     // upright gold coin: thick stepped black rim, flat gold, white highlight strip, slot lit top-left
-    const g = new Grid(24, 30);
-    g.ellipse(12, 15, 11.6, 14.6, OUT);
-    g.ellipse(12, 15, 9.4, 12.5, '#e8b81c');
+    const g = new Grid(26, 30);
+    g.ellipse(13, 15, 12.6, 14.6, OUT);
+    g.ellipse(13, 15, 10.4, 12.5, '#e8b81c');
     // highlight strip down the left side
     g.tint((x, y) => x > 3.5 && x < 5.5 && y > 7 && y < 23, '#f6f2e6');
     // slot: white top and left edges, black right and bottom edges, gold inside
-    g.rect(9, 6, 6, 18, '#e8b81c');
-    g.rect(9, 6, 5, 2, '#f6f2e6');
-    g.rect(9, 6, 2, 17, '#f6f2e6');
-    g.rect(13, 8, 2, 16, OUT);
-    g.rect(9, 22, 6, 2, OUT);
+    g.rect(10, 6, 6, 18, '#e8b81c');
+    g.rect(10, 6, 5, 2, '#f6f2e6');
+    g.rect(10, 6, 2, 17, '#f6f2e6');
+    g.rect(14, 8, 2, 16, OUT);
+    g.rect(10, 22, 6, 2, OUT);
     return g;
   },
   controller() {
@@ -172,24 +172,24 @@ const builders = {
   },
 
   cat() {
-    // black cat walking left: head with two ears and small grey eyes, long body, legs, tail up behind
+    // black cat: big square head with two ears and pale eye pixels, short body, legs, tail up behind
     const g = new Grid(30, 27);
     const k = '#121114';
-    g.rect(2, 6, 11, 9, k); // head
-    g.poly([[2, 7], [3, 1], [7, 6]], k); // left ear
-    g.poly([[8, 6], [12, 1], [13, 7]], k); // right ear
-    g.rect(6, 11, 19, 9, k); // body
-    g.ellipse(22, 15, 5, 5, k); // haunch
-    g.rect(6, 19, 3, 7, k); // front legs
-    g.rect(10, 19, 3, 6, k);
-    g.rect(18, 19, 3, 6, k);
+    g.rect(1, 5, 15, 13, k); // head
+    g.poly([[1, 6], [2, 0], [7, 5]], k); // ears
+    g.poly([[10, 5], [15, 0], [16, 6]], k);
+    g.rect(10, 11, 15, 9, k); // body
+    g.ellipse(22, 15, 5, 5, k);
+    g.rect(3, 17, 3, 9, k); // legs
+    g.rect(8, 18, 3, 7, k);
+    g.rect(17, 19, 3, 6, k);
     g.rect(22, 18, 3, 8, k);
     g.rect(25, 7, 2, 8, k); // tail up and over
     g.rect(26, 4, 2, 4, k);
     g.rect(27, 3, 2, 2, k);
-    g.tint((x, y) => y < 6 && x < 14, '#24222a');
-    g.rect(4, 9, 1, 1, '#6c6a72'); // eyes
-    g.rect(9, 9, 1, 1, '#6c6a72');
+    g.tint((x, y) => y < 5 && x < 17, '#24222a');
+    g.rect(4, 9, 2, 2, '#b6b4bc'); // eyes
+    g.rect(11, 9, 2, 2, '#b6b4bc');
     return g;
   },
 

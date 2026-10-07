@@ -1963,7 +1963,7 @@ const ROW_A = [
 // The light strips are the icon ring seen edge-on and spinning: front items big and packed,
 // side items compressed, back items small and higher, peeking out behind.
 const BELT = ['plant', 'cash', 'heart', 'cap', 'controller', 'coin', 'cat', 'camera', 'book', 'vinyl', 'skateboard', 'clapper'];
-const BELT_W = { plant: 270, cash: 430, heart: 420, cap: 400, controller: 390, coin: 360, cat: 420, camera: 330, book: 330, vinyl: 310, skateboard: 430, clapper: 350 };
+const BELT_W = { plant: 270, cash: 430, heart: 365, cap: 330, controller: 390, coin: 430, cat: 420, camera: 280, book: 330, vinyl: 310, skateboard: 430, clapper: 350 };
 const BELT_DY = { plant: -15, cash: 0, heart: 10, cap: 5, controller: 0, coin: 5, cat: 10, camera: -5, book: 0, vinyl: -10, skateboard: 5, clapper: 5 };
 const BELT_R = { skateboard: -0.25, cash: 0.12, cap: -0.05 };
 function belt(ctx, heartDeg, t) {
@@ -2469,8 +2469,53 @@ function sceneScatter(ctx, t, f) {
       drawSprite(x, it.name, px, py, w, r, 1, sil ? { silhouette: '#121010' } : {});
     });
   if (t < 12.45) {
-    const keys = [[11.85, [1300, 560]], [11.887, [664, 564]], [11.928, [330, 650]], [11.97, [240, 760]], [12.012, [460, 290]], [12.054, [700, 500]], [12.095, [697, 480]], [12.25, [730, 520]], [12.45, [750, 545]]];
-    if (t < 12.075) {
+    const keys = [[11.85, [1300, 560]], [11.887, [664, 564]], [11.928, [330, 650]], [11.97, [240, 760]], [12.012, [231, 130]], [12.054, [700, 500]], [12.095, [697, 480]], [12.25, [730, 520]], [12.45, [750, 545]]];
+    const fr = Math.round(t * C.FPS);
+    if (fr >= 286 && fr <= 289) {
+      // frames 286-289: curved brush strokes whipping around the ring (traced from the source)
+      // Catmull-Rom through the traced points, so the tapered stroke curves smoothly
+      const curve = (pts, k = 10) => {
+        const out = [];
+        for (let i = 0; i < pts.length - 1; i++) {
+          const p0 = pts[Math.max(0, i - 1)];
+          const p1 = pts[i];
+          const p2 = pts[i + 1];
+          const p3 = pts[Math.min(pts.length - 1, i + 2)];
+          for (let j = 0; j < k; j++) {
+            const u = j / k;
+            const u2 = u * u;
+            const u3 = u2 * u;
+            out.push([0, 1].map((d) => 0.5 * (2 * p1[d] + (-p0[d] + p2[d]) * u + (2 * p0[d] - 5 * p1[d] + 4 * p2[d] - p3[d]) * u2 + (-p0[d] + 3 * p1[d] - 3 * p2[d] + p3[d]) * u3)));
+          }
+        }
+        out.push(pts[pts.length - 1]);
+        return out;
+      };
+      const brush = (pts, w, col, blur = 0) => {
+        x.save();
+        if (blur) x.filter = `blur(${blur * S}px)`;
+        fx.strokePartial(x, curve(pts), 0, 1, w * 2, col, true);
+        x.restore();
+      };
+      if (fr === 286) {
+        brush([[40, 470], [120, 400], [260, 352], [420, 336], [520, 346], [560, 400], [545, 500]], 40, 'rgba(26,24,24,0.85)', 9);
+        brush([[300, 640], [220, 720], [110, 860]], 30, 'rgba(60,58,58,0.5)', 6);
+      } else if (fr === 287) {
+        brush([[230, 780], [700, 560], [1160, 330]], 18, 'rgba(50,48,48,0.3)', 5);
+        brush([[1290, 90], [1250, 260], [1120, 450], [930, 620], [700, 720]], 34, 'rgba(40,38,38,0.55)', 5);
+        brush([[1235, 60], [1290, 100], [1292, 170]], 40, '#161414', 3);
+      } else if (fr === 288) {
+        brush([[225, 158], [248, 338], [304, 506]], 24, 'rgba(50,48,48,0.45)', 6);
+        brush([[195, 118], [270, 135], [360, 169], [450, 225]], 34, '#161414', 3);
+        brush([[506, 965], [570, 958], [625, 935], [680, 860], [712, 790]], 13, '#141212', 1);
+      } else {
+        brush([[470, 215], [560, 300], [686, 450]], 30, 'rgba(30,28,28,0.85)', 6);
+        x.save();
+        x.filter = `blur(${3 * S}px)`;
+        sprayBlob(x, 690, 455, 34, 3, 0.95);
+        x.restore();
+      }
+    } else if (t < 12.075) {
       const trail = [];
       for (let i = 0; i <= 12; i++) trail.push(kf(Math.max(11.85, t - i * 0.006), keys));
       inkBall(x, trail[0][0], trail[0][1], 50, trail, 15);
