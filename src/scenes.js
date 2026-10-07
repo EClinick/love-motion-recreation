@@ -590,10 +590,10 @@ const floatPos = (n, t) => [kf(t, FLOAT_KEYS[n].map(([a, x]) => [a, x, 'outCubic
 function sparkleShade(ctx, t) {
   const m = kf(t, [[2.064, 0.35], [2.25, 0.72], [2.5, 1], [3.0, 1], [3.5, 1]]);
   const g = ctx.createRadialGradient(-100, 540, 0, -100, 540, 1500);
-  [[0, 1], [400, 0.95], [600, 0.66], [800, 0.36], [1000, 0.15], [1200, 0.05], [1500, 0]].forEach(([d, a]) => g.addColorStop(d / 1500, `rgba(40,26,24,${a * m})`));
+  [[0, 1], [400, 0.88], [600, 0.6], [800, 0.34], [1000, 0.15], [1200, 0.05], [1500, 0]].forEach(([d, a]) => g.addColorStop(d / 1500, `rgba(40,26,24,${a * m})`));
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
-  const v = 0.55 * kf(t, [[2.064, 0.1], [2.25, 0.24], [2.5, 0.36], [3.0, 0.48], [3.5, 0.56], [3.62, 0.62]]);
+  const v = 0.68 * kf(t, [[2.064, 0.1], [2.25, 0.24], [2.5, 0.36], [3.0, 0.48], [3.5, 0.56], [3.62, 0.62]]);
   const tg = ctx.createLinearGradient(0, 0, 0, H);
   tg.addColorStop(0, `rgba(30,22,22,${v})`);
   tg.addColorStop(0.35, 'rgba(30,22,22,0)');
@@ -602,10 +602,10 @@ function sparkleShade(ctx, t) {
   ctx.fillStyle = tg;
   ctx.fillRect(0, 0, W, H);
   // warm, deep shade in the left corners (measured #2d2121 at 3.0 s)
-  const lc = kf(t, [[2.25, 0], [2.5, 0.6], [3.0, 0.8], [3.5, 0.85]]);
+  const lc = kf(t, [[2.25, 0], [2.5, 0.85], [3.0, 0.92], [3.5, 0.92]]);
   [[0, 0], [0, H]].forEach(([qx, qy]) => {
     const cg = ctx.createRadialGradient(qx, qy, 0, qx, qy, 760);
-    cg.addColorStop(0, `rgba(34,18,18,${lc})`);
+    cg.addColorStop(0, `rgba(18,12,12,${lc})`);
     cg.addColorStop(0.45, `rgba(34,18,18,${0.75 * lc})`);
     cg.addColorStop(1, 'rgba(34,18,18,0)');
     ctx.fillStyle = cg;
@@ -796,7 +796,7 @@ function sceneSparkle(ctx, t, f) {
   }));
   const [tc, tx] = off(2);
   fx.words(tx, parts, 40, 533, BODY);
-  const tBlur = kf(t, [[2.022, 7], [2.064, 4], [2.106, 3.5], [2.148, 5.5], [2.19, 4.5], [2.27, 3.2], [2.34, 2.4], [2.42, 0.9], [2.6, 0]]);
+  const tBlur = kf(t, [[2.022, 7], [2.064, 4], [2.106, 3.5], [2.148, 5.5], [2.19, 4.5], [2.27, 3.2], [2.34, 2.4], [2.42, 0.9], [2.5442, 0], [2.5859, 2], [2.6276, 3.6], [2.711, 3.6], [2.7944, 3], [2.8779, 2.4], [2.9196, 1.2], [2.9613, 0]]); // second focus pull on frames 62-70
 
   if (t < 2.064) {
     // frame 49: everything defocused on bare paper, dark streaks
@@ -872,7 +872,7 @@ function sceneSparkle(ctx, t, f) {
     // the icons break up into coarse pixel blocks before vanishing (frames 76-78)
     const out = 0;
     const mos = inv(3.09, 3.255, t);
-    const ib = kf(t, [[2.064, 1.5], [2.2, 4], [2.3, 3], [2.45, 0]]);
+    const ib = kf(t, [[2.064, 1.5], [2.2, 4], [2.3, 3], [2.45, 0], [2.5442, 0], [2.5859, 2], [2.6276, 3.6], [2.711, 3.6], [2.7944, 3], [2.8779, 2.4], [2.9196, 1.2], [2.9613, 0]]);
     const [ic, ix] = off(0);
     FLOATERS.forEach(([n, w, r, ph]) => {
       const [x, y] = floatPos(n, t);
