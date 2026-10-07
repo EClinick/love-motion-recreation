@@ -343,7 +343,7 @@ function inkMatte(fr, color) {
     id.data[i * 4] = r;
     id.data[i * 4 + 1] = g;
     id.data[i * 4 + 2] = b;
-    id.data[i * 4 + 3] = a[i];
+    id.data[i * 4 + 3] = Math.round(a[i] * 0.9);
   }
   x.putImageData(id, 0, 0);
   return (inkCache[key] = c);
@@ -351,7 +351,8 @@ function inkMatte(fr, color) {
 
 function sceneType(ctx, t, f) {
   const frI = Math.round(t * C.FPS);
-  const matte = inkMatte(frI, '#2c2422');
+  // brown pen ink (measured: mean dark ink #53342a in the source)
+  const matte = inkMatte(frI, '#3e2218');
   const strokes = !matte && !process.env.NOSIG;
   // neutral grey paper; the shade on the left (and a little at the bottom) deepens over the shot
   ctx.fillStyle = '#e7e7e8';
