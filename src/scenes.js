@@ -1892,8 +1892,11 @@ function typed(ctx, word, t0, t, x, y, curX, hold = 0, soft = 0) {
   fx.text(ctx, word, x, y, CARD, CREAM, { blur: (p < 0.3 && !hold ? 2.5 : 0.8) + soft, glow: 'rgba(243,239,232,0.35)', glowBlur: 6 });
   // trailing block shrinks into the caret, which stays bright
   // block collapses to a fat caret, holds, then thins
-  const cw = lerp(lerp(120, 30, ease.outCubic(p)), 12, ease.inOutQuad(inv(t0 + 0.32 + hold, t0 + 0.55 + hold, t)));
-  const cx = lerp(x + wFull + (hold ? 30 : 70), curX - 6, ease.outCubic(p));
+  // measured on frames 201-207: the block narrows 120 -> 80 -> 56 -> 36 -> 20 px
+  const pb = inv(t0 + 0.05 + hold, t0 + 0.26 + hold, t);
+  const cw = lerp(lerp(120, 22, ease.outQuad(pb)), 18, ease.inOutQuad(inv(t0 + 0.32 + hold, t0 + 0.55 + hold, t)));
+  // the block starts over the end of the word (frame 201 shows "actio" + block), then slides to the caret
+  const cx = lerp(x + (hold ? wFull + 30 : wFull * 0.8), curX - 6, ease.outCubic(pb));
   ctx.fillStyle = CREAM;
   ctx.fillRect(cx, y - 45, cw, 90);
 }
@@ -2024,10 +2027,10 @@ function sceneAction(ctx, t, f) {
   if (t > 9.03 && t < 9.072) fx.strokePartial(ctx, [[924, 218], [1005, 214]], 0, 1, 5, CREAM);
   else if (t >= 9.072) fx.strokePartial(ctx, [[690, 228], [945, 222]], 0, 1, 6, CREAM);
   sparks(ctx, t, 2, 7);
-  const soft = kf(t, [[8.39, 0], [8.425, 6], [8.467, 5], [8.51, 0]]);
+  const soft = kf(t, [[8.39, 0], [8.425, 6], [8.467, 5], [8.51, 2.5], [8.55, 0]]);
   ctx.save();
   if (soft > 0.3) ctx.filter = `blur(${soft * S}px)`;
-  typed(ctx, 'action.', 8.32, t, 966, 530, 1300, 0, soft);
+  typed(ctx, 'action.', 8.32, t, 952, 530, 1268, 0, soft);
   ctx.restore();
 }
 
@@ -2074,14 +2077,14 @@ const ROW_A = [
 // The light strips are the icon ring seen edge-on and spinning: front items big and packed,
 // side items compressed, back items small and higher, peeking out behind.
 const BELT = ['plant', 'cash', 'heart', 'cap', 'controller', 'coin', 'cat', 'camera', 'book', 'vinyl', 'skateboard', 'clapper'];
-const BELT_W = { plant: 270, cash: 430, heart: 420, cap: 400, controller: 390, coin: 360, cat: 420, camera: 330, book: 330, vinyl: 310, skateboard: 430, clapper: 350 };
+const BELT_W = { plant: 270, cash: 430, heart: 365, cap: 330, controller: 390, coin: 430, cat: 420, camera: 280, book: 330, vinyl: 310, skateboard: 430, clapper: 350 };
 const BELT_DY = { plant: -15, cash: 0, heart: 10, cap: 5, controller: 0, coin: 5, cat: 10, camera: -5, book: 0, vinyl: -10, skateboard: 5, clapper: 5 };
-const BELT_R = { skateboard: -0.25, cash: 0.12, cap: -0.05 };
+const BELT_R = { skateboard: -0.25, cash: 0, cap: -0.05 };
 function belt(ctx, heartDeg, t) {
   const items = BELT.map((name, i) => {
     const th = ((heartDeg + (i - 2) * 30) * Math.PI) / 180;
     const c = Math.cos(th);
-    const sc = c >= 0 ? 1.15 * (0.9 + 0.1 * c) : 0.32 + 0.4 * (1 + c);
+    const sc = c >= 0 ? 0.75 + 0.4 * c : 0.32 + 0.4 * (1 + c);
     return { name, i, c, x: 735 + 590 * Math.sin(th) * (c >= 0 ? 1 : 0.75), y: 515 + c * 25 + (c < 0 ? -60 * -c : 0) + BELT_DY[name], sc };
   });
   items
@@ -2091,7 +2094,9 @@ function belt(ctx, heartDeg, t) {
       if (it.c >= 0 && it.c < 0.4) return;
       if (it.c < 0 && it.c > -0.5) return;
       if (it.x < -300 || it.x > W + 300) return;
-      drawSprite(ctx, it.name, it.x, it.y, BELT_W[it.name] * it.sc, (BELT_R[it.name] || 0) + noise1(t * 2, it.i) * 0.03);
+      // items turning away toward the sides foreshorten (edge-on near the ends of the front arc)
+      const sx = it.c >= 0.75 ? 1 : it.c >= 0 ? 0.25 + 0.75 * clamp((it.c - 0.4) / 0.35) ** 0.7 : 1;
+      drawSprite(ctx, it.name, it.x, it.y, BELT_W[it.name] * it.sc, (BELT_R[it.name] || 0) + noise1(t * 2, it.i) * 0.03, 1, { sx });
     });
 }
 
@@ -2262,20 +2267,21 @@ function sceneCuriosity(ctx, t, f) {
     composite(ctx, c, { blur: 2.5 });
     const r = rng(264);
     ctx.save();
-    ctx.filter = `blur(${2 * S}px)`;
-    ctx.strokeStyle = 'rgba(130,12,26,0.55)';
-    ctx.lineWidth = 30;
+    ctx.filter = `blur(${3 * S}px)`;
+    ctx.strokeStyle = 'rgba(120,10,26,0.5)';
+    ctx.lineWidth = 44;
     ctx.beginPath();
-    ctx.arc(722, 530, 672, 0, 7);
+    ctx.arc(686, 530, 664, 0, 7);
     ctx.stroke();
     ctx.restore();
-    // speckle the ring so it reads as grainy spray
-    ctx.fillStyle = '#c21a2c';
-    for (let i = 0; i < 2600; i++) {
+    // speckle the ring so it reads as a thick grainy spray band
+    for (let i = 0; i < 7000; i++) {
       const a = r() * Math.PI * 2;
-      const d = 672 + (r() + r() - 1) * 22;
-      ctx.globalAlpha = 0.35 + r() * 0.5;
-      ctx.fillRect(722 + Math.cos(a) * d, 530 + Math.sin(a) * d, 3, 3);
+      const d = 664 + (r() + r() - 1) * 28;
+      const sz = 3 + r() * 3;
+      ctx.fillStyle = r() < 0.3 ? '#4a0810' : '#a8182a';
+      ctx.globalAlpha = 0.25 + r() * 0.45;
+      ctx.fillRect(686 + Math.cos(a) * d, 530 + Math.sin(a) * d, sz, sz);
     }
     ctx.globalAlpha = 1;
     return;
@@ -2317,8 +2323,8 @@ function sceneCuriosity(ctx, t, f) {
   const pan = 0;
   ctx.save();
   const vin = ease.outBack(inv(11.01, 11.15, t));
-  const vx = kf(t, [[11.01, 500], [11.08, 496], [11.25, 430, 'outCubic'], [11.6, 410], [11.81, 250, 'inQuad']]);
-  drawSprite(ctx, 'vinyl', vx, 545, 456 * lerp(0.9, 1, vin), noise1(t, 9) * 0.05 - 1.5 * Math.max(0, t - 11.26));
+  const vx = kf(t, [[11.01, 500], [11.08, 496], [11.25, 430, 'outCubic'], [11.6, 410], [11.76, 378], [11.81, 236, 'inQuad']]);
+  drawSprite(ctx, 'vinyl', vx, 545, 430 * lerp(0.9, 1, vin), noise1(t, 9) * 0.05 - 0.5 * Math.max(0, t - 11.26));
   if (t < 11.115) {
     const q = inv(11.01, 11.16, t);
     const drift = q * 40;
@@ -2371,13 +2377,15 @@ function sceneCuriosity(ctx, t, f) {
   if (t > 11.57) note(ctx, 'eighth', 630 - 140 * nd, 790, pop(11.57) * 1.9, 0.15 + 0.1 * nd + noise1(t, 3) * 0.08);
   ctx.restore();
   sparks(ctx, t, 6, 5);
-  typed(ctx, 'curiosity.', 10.9, t, 804 + pan, 526, 1323 + pan, 0.17);
+  typed(ctx, 'curiosity.', 10.9, t, 816 + pan, 526, 1323 + pan, 0.17);
 }
 
 // =====================================================================
 // 7. Ring again (top view) then the ink scatter.
 // =====================================================================
 const TOP_W = { clapper: 225, skateboard: 255, vinyl: 210, book: 210, camera: 210, cat: 200, coin: 235, controller: 235, cap: 235, heart: 285, cash: 290, plant: 210 };
+// measured: between 12.1 and 12.45 s these icons recede to about 0.75x while the rest keep their size
+const TOP_RECEDE = { clapper: 1, skateboard: 1, vinyl: 1, coin: 1, cat: 1, heart: 1, cash: 1, plant: 1 };
 const SCATTER = {
   vinyl: [600, 171, 135, 0],
   clapper: [174, 470, 210, 0],
@@ -2494,6 +2502,25 @@ const arcPts = (cx, cy, rx, ry, a0, a1, rot = 0) =>
     return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
   });
 
+// Catmull-Rom through traced points, so tapered brush strokes curve smoothly
+function smoothPts(pts, k = 10) {
+  const out = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    for (let j = 0; j < k; j++) {
+      const u = j / k;
+      const u2 = u * u;
+      const u3 = u2 * u;
+      out.push([0, 1].map((d) => 0.5 * (2 * p1[d] + (-p0[d] + p2[d]) * u + (2 * p0[d] - 5 * p1[d] + 4 * p2[d] - p3[d]) * u2 + (-p0[d] + 3 * p1[d] - 3 * p2[d] + p3[d]) * u3)));
+    }
+  }
+  out.push(pts[pts.length - 1]);
+  return out;
+}
+
 function sceneScatter(ctx, t, f) {
   if (t >= 13.75) {
     // frame 330: the icons collapse into a tight cluster on black around a small white glow
@@ -2518,7 +2545,7 @@ function sceneScatter(ctx, t, f) {
   ctx.fillStyle = '#ededed';
   ctx.fillRect(0, 0, W, H);
   const spin = inv(11.85, 12.03, t);
-  const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.388, 0.36, 'linear'], [12.45, 0.75, 'inQuad'], [12.49, 1.9, 'inQuad']]);
+  const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.388, 0.36, 'linear'], [12.45, 0.75, 'inQuad'], [12.49, 1.9, 'inQuad'], [12.52, 2.65, 'linear']]);
   const burstP = ease.inOutCubic(inv(12.49, 12.555, t));
   const z = kf(t, [[12.6, 1], [13.47, 0.95, 'linear'], [13.68, 0.88, 'inQuad'], [13.722, 0.7], [13.76, 0.62]]);
   const turn = kf(t, [[12.6, 0], [13.47, 0.21, 'linear'], [13.68, 0.65, 'inQuad'], [13.722, 1.0, 'inQuad'], [13.76, 1.3]]);
@@ -2532,7 +2559,7 @@ function sceneScatter(ctx, t, f) {
   const sa = Math.sin(turn);
   const orbit = (px, py) => [700 + z * ((px - 700) * ca - (py - 560) * sa), 560 + z * ((px - 700) * sa + (py - 560) * ca)];
   const ring = ringLayout(phi - 0.21, { tilt: 0.4, R: 385, cx: 715, cy: 511, F: 4000, xs: 0.9 });
-  const RING_ROT = { skateboard: -0.5, cash: 0.4, cap: -0.15, book: 0.12 };
+  const RING_ROT = { skateboard: -0.5, cash: 0, cap: -0.15, book: 0.12 };
   ring
     .slice()
     .sort((a, b) => (burstP > 0.5 ? (a.name === 'plant' ? -1 : b.name === 'plant' ? 1 : b.z - a.z) : b.z - a.z))
@@ -2549,7 +2576,8 @@ function sceneScatter(ctx, t, f) {
       }
       if (it.name === 'plant') {
         // tucked behind the clapper, then slides out to its left
-        const m = kf(t, [[13.5, [0, 0]], [13.68, [-120, -10]]]);
+        // (mostly hidden behind the clapper first: only a sliver of leaves shows in the source)
+        const m = kf(t, [[12.85, [0, 0]], [13.0, [0, 32]], [13.5, [0, 32]], [13.68, [-120, -10]]]);
         px += m[0];
         py += m[1];
       }
@@ -2560,7 +2588,7 @@ function sceneScatter(ctx, t, f) {
         px += m[0];
         py += m[1];
       }
-      const w = lerp(TOP_W[it.name], tgt[2], burstP);
+      const w = lerp(TOP_W[it.name] * (TOP_RECEDE[it.name] ? kf(t, [[12.1, 1], [12.45, 0.75]]) : 1), tgt[2], burstP);
       const sil = SIL[it.name] && t > SIL[it.name];
       const r = burstP * tgt[3] * noise1(t * 1.5 + it.i, it.i) * 0.45 + (1 - burstP) * (RING_ROT[it.name] || 0);
       if (it.name === 'cash' && t > 13.2) {
@@ -2577,11 +2605,39 @@ function sceneScatter(ctx, t, f) {
         heartAt = [px, py, w, r];
         return; // drawn last, over the text
       }
+      if (sil && it.name === 'heart') drawSprite(x, 'heart', px, py, w * 1.06, r, 1, { silhouette: '#b81c26' }); // thin red rim
       drawSprite(x, it.name, px, py, w, r, 1, sil ? { silhouette: '#121010' } : {});
     });
   if (t < 12.45) {
-    const keys = [[11.85, [1300, 560]], [11.887, [664, 564]], [11.928, [330, 650]], [11.97, [240, 760]], [12.012, [460, 290]], [12.054, [700, 500]], [12.095, [697, 480]], [12.25, [730, 520]], [12.45, [750, 545]]];
-    if (t < 12.075) {
+    const keys = [[11.85, [1300, 560]], [11.887, [664, 564]], [11.928, [330, 650]], [11.97, [240, 760]], [12.012, [231, 130]], [12.054, [700, 500]], [12.095, [697, 480]], [12.25, [730, 520]], [12.45, [750, 545]]];
+    const fr = Math.round(t * C.FPS);
+    if (fr >= 286 && fr <= 289) {
+      // frames 286-289: curved brush strokes whipping around the ring (traced from the source)
+      const brush = (pts, w, col, blur = 0) => {
+        x.save();
+        if (blur) x.filter = `blur(${blur * S}px)`;
+        fx.strokePartial(x, smoothPts(pts), 0, 1, w * 2, col, true);
+        x.restore();
+      };
+      if (fr === 286) {
+        brush([[40, 470], [120, 400], [260, 352], [420, 336], [520, 346], [560, 400], [545, 500]], 40, 'rgba(26,24,24,0.85)', 9);
+        brush([[300, 640], [220, 720], [110, 860]], 30, 'rgba(60,58,58,0.5)', 6);
+      } else if (fr === 287) {
+        brush([[230, 780], [700, 560], [1160, 330]], 18, 'rgba(50,48,48,0.3)', 5);
+        brush([[1290, 90], [1250, 260], [1120, 450], [930, 620], [700, 720]], 34, 'rgba(40,38,38,0.55)', 5);
+        brush([[1235, 60], [1290, 100], [1292, 170]], 40, '#161414', 3);
+      } else if (fr === 288) {
+        brush([[225, 158], [248, 338], [304, 506]], 24, 'rgba(50,48,48,0.45)', 6);
+        brush([[195, 118], [270, 135], [360, 169], [450, 225]], 34, '#161414', 3);
+        brush([[506, 965], [570, 958], [625, 935], [680, 860], [712, 790]], 13, '#141212', 1);
+      } else {
+        brush([[470, 215], [560, 300], [686, 450]], 30, 'rgba(30,28,28,0.85)', 6);
+        x.save();
+        x.filter = `blur(${3 * S}px)`;
+        sprayBlob(x, 690, 455, 34, 3, 0.95);
+        x.restore();
+      }
+    } else if (t < 12.075) {
       const trail = [];
       for (let i = 0; i <= 12; i++) trail.push(kf(Math.max(11.85, t - i * 0.006), keys));
       inkBall(x, trail[0][0], trail[0][1], 50, trail, 15);
@@ -2593,6 +2649,17 @@ function sceneScatter(ctx, t, f) {
       sprayBlob(x, bx, by, t < 12.11 ? 54 : 40, 3, 0.95);
       x.restore();
     }
+  }
+  if (Math.round(t * C.FPS) === 306) {
+    // frame 306: three soft smoke strokes curling up from the smeared skateboard (traced)
+    x.save();
+    x.filter = `blur(${3 * S}px)`;
+    [
+      [[237, 284], [280, 305], [318, 342], [350, 395], [381, 450]],
+      [[381, 135], [430, 170], [453, 216], [430, 280], [417, 342], [426, 450]],
+      [[444, 360], [500, 325], [552, 306], [630, 288], [705, 279]],
+    ].forEach((pts) => fx.strokePartial(x, smoothPts(pts), 0, 1, 14, '#161414', true));
+    x.restore();
   }
   if (t > 12.93) {
     // the blot drops from the top right onto the coin and swallows it
@@ -2681,17 +2748,13 @@ function sceneScatter(ctx, t, f) {
     if (t > a && t < d) ribbon(x, pts, inv(c2, d, t), inv(a, b, t), 20);
   });
   if (t > 12.95) {
-    x.fillStyle = '#141212';
-    [[1320, 510, 0.5], [1245, 605, -0.4], [675, 715, 0.9]].forEach(([a, b, r]) => {
+    // small reddish-brown flecks scattered around (measured at 13.5 s), not black shards
+    [[90, 124, 0.4], [169, 551, -0.6], [293, 585, 1.1], [743, 315, 0.2], [743, 698, -1.0], [1294, 518, 0.7], [596, 1013, -0.3], [1320, 510, 0.5], [1245, 605, -0.4]].forEach(([a, b, r], i) => {
       x.save();
       x.translate(a, b);
       x.rotate(r);
-      x.beginPath();
-      x.moveTo(-14, -4);
-      x.lineTo(16, -2);
-      x.lineTo(-4, 9);
-      x.closePath();
-      x.fill();
+      x.fillStyle = i % 3 === 0 ? '#3a1612' : '#6a2a1e';
+      x.fillRect(-4, -1.5, 8 + (i % 3) * 2, 3);
       x.restore();
     });
   }
@@ -2716,6 +2779,7 @@ function sceneScatter(ctx, t, f) {
     // heartAt is already orbited; apply the layer zoom
     const sx0 = hx + kf(t, [[12.25, 0], [12.4, 30]]);
     const sy0 = hy;
+    drawSprite(x, 'heart', lerp(sx0, tgt[0], k), lerp(sy0, tgt[1], k), hw * 1.06, hr, 1, { silhouette: '#b81c26' });
     drawSprite(x, 'heart', lerp(sx0, tgt[0], k), lerp(sy0, tgt[1], k), hw, hr, 1, { silhouette: '#121010' });
     x.restore();
   }
@@ -3052,7 +3116,7 @@ function handShade(mask) {
 }
 
 // Thermal shading inside a traced silhouette (screen space).
-function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0, tone = null) {
+function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0, tone = null, hotTint = '#e4e3d6') {
   const [c, x] = off(0);
   x.drawImage(tone ? toneShade(mask, tone) : handShade(mask), 0, 0, W, H);
   if (pale > 0) {
@@ -3078,7 +3142,7 @@ function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0, tone = nu
     const hx = hc.getContext('2d');
     hx.drawImage(hot, 0, 0, W, H);
     hx.globalCompositeOperation = 'source-in';
-    hx.fillStyle = '#e4e3d6';
+    hx.fillStyle = hotTint;
     hx.fillRect(0, 0, W, H);
     x.save();
     x.globalCompositeOperation = 'source-atop';
@@ -3157,7 +3221,7 @@ function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0, tone = nu
 }
 function sceneHand(ctx, t, f) {
   // background warms to red-brown then mauve-grey as the hand closes (measured per frame)
-  const bg = bgRamp(t, [[13.76, '#141313'], [15.47, '#151414'], [15.557, '#221417'], [15.599, '#251619'], [15.641, '#2a191b'], [15.682, '#2e1c1e'], [15.724, '#362426'], [15.766, '#3f2c2f'], [15.808, '#463437'], [15.849, '#4d3d41'], [15.89, '#524347']]);
+  const bg = bgRamp(t, [[13.76, '#141313'], [15.52, '#161414'], [15.557, '#221417'], [15.599, '#251619'], [15.641, '#2a191b'], [15.682, '#2e1c1e'], [15.724, '#362426'], [15.766, '#3f2c2f'], [15.808, '#463437'], [15.849, '#4d3d41'], [15.89, '#524347']]);
   fx.dark(ctx, bg);
   const flatWall = inv(15.5, 15.7, t);
   if (flatWall > 0) {
@@ -3179,8 +3243,9 @@ function sceneHand(ctx, t, f) {
   if (traced) {
     let filt = '';
     if (settle < 1) filt = `brightness(${lerp(0.92, 1, settle)}) blur(${(1 - settle) * 10 * S}px)`;
+    else if (t > 15.3 && t <= 15.64) filt = `brightness(${kf(t, [[15.3, 1], [15.5, 0.92], [15.64, 1]])})`;
     else if (t > 15.64) filt = `saturate(${kf(t, [[15.64, 1], [15.77, 0.85]])}) brightness(${kf(t, [[15.64, 1], [15.766, 0.8], [15.81, 0.62]])})`;
-    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0, handHotMask(t), kf(t, [[15.77, 0], [15.8, 1]]), t < 15.785 ? handToneMap(t) : null);
+    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0, handHotMask(t), kf(t, [[15.77, 0], [15.8, 1]]), t < 15.785 ? handToneMap(t) : null, t < 14.4 ? '#e4e3d6' : '#e3d9b6');
   }
   const hand = traced ? null : thermalHand(pose);
   const [c, x] = traced ? [null, null] : off(0);
@@ -3230,16 +3295,16 @@ function sceneHand(ctx, t, f) {
     const q = inv(13.76, 14.1, t);
     const span = lerp(1.1, 0.2, q);
     const [ac, ax] = off(5);
-    ax.strokeStyle = `rgba(240,238,234,${0.75 * (1 - inv(14.05, 14.15, t))})`;
+    ax.strokeStyle = `rgba(214,212,210,${0.75 * (1 - inv(14.05, 14.15, t))})`;
     ax.lineCap = 'round';
-    ax.lineWidth = 8;
+    ax.lineWidth = lerp(8, 18, q);
     [[0, 1], [1.4, 0.92], [2.6, 1.05], [3.7, 0.88], [5.0, 0.97]].forEach(([a0, rk], k) => {
       const a = a0 + t * 7 + k * 0.3;
       ax.beginPath();
       ax.ellipse(lerp(600, 640, q), lerp(660, 520, q), lerp(250, 200, q) * rk, lerp(400, 230, q) * rk, -0.35, a, a + span);
       ax.stroke();
     });
-    composite(ctx, ac, { blur: lerp(6, 3, q) });
+    composite(ctx, ac, { blur: lerp(6, 7, q) });
   }
   // smoky white swooshes curling off the pinch (15.66-15.72)
   if (t > 15.65 && t < 15.74) {
@@ -3413,8 +3478,8 @@ function sceneLove(ctx, t, f) {
     g.addColorStop(1, 'rgba(120,5,20,0.75)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
-    fx.grain(ctx, f + 2, 0.35);
-    drawSprite(ctx, 'camera', 692, 549, 480, 0.025, 1, { sy: 0.95, shadow: 'rgba(60,0,0,0.5)', shadowBlur: 20 });
+    fx.grain(ctx, f + 2, 0.08);
+    drawSprite(ctx, 'camera', 692, 549, 480, 0.078, 1, { sy: 0.95, shadow: 'rgba(60,0,0,0.5)', shadowBlur: 20 });
     letter(ctx, 'L', LX[0], LY, LSIZE, '#2fb2e6');
     letter(ctx, 'O', LX[1], LY, LSIZE, '#9c9c9e');
     return;
@@ -3422,22 +3487,38 @@ function sceneLove(ctx, t, f) {
   if (t < 16.77) {
     ctx.fillStyle = '#d41b16';
     ctx.fillRect(0, 0, W, H);
-    fx.grain(ctx, f + 2, 0.35);
+    fx.grain(ctx, f + 2, 0.08);
     const q = ease.outCubic(inv(16.56, 16.64, t));
     const blue = '#2fb2e6';
+    const fr = Math.round(t * C.FPS);
+    if (fr >= 402) {
+      // frame 402: black spreads out from the book, leaving dark maroon only at the edges
+      const g = ctx.createRadialGradient(724, 540, 240, 724, 540, 960);
+      g.addColorStop(0, '#151213');
+      g.addColorStop(0.5, '#331618');
+      g.addColorStop(1, '#721019');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      fx.grain(ctx, f + 3, 0.08);
+      letter(ctx, 'L', LX[0], LY, LSIZE, '#c9d6d6');
+      letter(ctx, 'O', LX[1], LY, LSIZE, blue);
+      letter(ctx, 'V', LX[2], LY, LSIZE, blue);
+      drawSprite(ctx, 'book', 724, 540, 490, 0.28, 1, { sy: 1.15 });
+      return;
+    }
+    if (fr === 401) {
+      // frame 401: a dark shadow blooms around the book
+      const g = ctx.createRadialGradient(712, 528, 50, 712, 528, 240);
+      g.addColorStop(0, 'rgba(18,10,12,0.95)');
+      g.addColorStop(0.55, 'rgba(30,8,10,0.6)');
+      g.addColorStop(1, 'rgba(60,6,10,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
     letter(ctx, 'L', LX[0], LY, LSIZE, blue);
     letter(ctx, 'O', LX[1], LY, LSIZE, blue);
     if (t > 16.6) letter(ctx, 'V', LX[2], LY, LSIZE, blue);
     drawSprite(ctx, 'book', 735, 546, lerp(120, 330, q), lerp(-0.4, 0.28, q), 1, { sy: 1.15, shadow: 'rgba(60,0,0,0.6)', shadowBlur: 40 });
-    const dk = inv(16.735, 16.77, t);
-    if (dk > 0) {
-      // the red closes in to black around the book
-      const g = ctx.createRadialGradient(735, 546, lerp(700, 180, dk), 735, 546, lerp(1100, 520, dk));
-      g.addColorStop(0, 'rgba(20,18,18,0)');
-      g.addColorStop(1, `rgba(20,18,18,${0.95 * dk})`);
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, H);
-    }
     return;
   }
   if (t < 17.18) {
@@ -3484,10 +3565,10 @@ function sceneLove(ctx, t, f) {
 // Finale: letters tumble in, scatter, then spin back upright and converge. Measured per frame
 // from the reference (exact frame times; 17.31-18.1 s re-measured for v15).
 const FIN = {
-  L: [[17.31, [1391, 432, 180]], [17.35, [650, 770, 40]], [17.47, [903, 400, -30]], [17.56, [745, 566, 0]], [17.64, [648, 680, -90]], [17.77, [542, 788, -30]], [17.93, [464, 860, 45]], [18.02, [454, 881, -90]], [18.1, [443, 886, -150]], [18.25, [440, 895, -180]], [18.5, [438, 906, -140]], [18.75, [440, 900, -100]], [19.0, [444, 891, -50]], [19.25, [446, 880, -5]], [19.5, [447, 873, 0]], [19.75, [468, 843, 0]], [19.853, [466, 844, 0]], [20.02, [485, 810, 0]], [20.145, [496, 762, 0]], [20.187, [524, 736, 0]], [20.229, [540, 690, 0]], [20.27, [580, 640, 0]], [20.3, [640, 580, 0]]],
+  L: [[17.31, [1391, 432, 180]], [17.35, [650, 770, 40]], [17.47, [903, 400, -30]], [17.56, [745, 566, 0]], [17.64, [648, 680, -90]], [17.77, [542, 788, -30]], [17.93, [464, 860, 45]], [18.02, [454, 881, -90]], [18.1, [443, 886, -150]], [18.25, [440, 895, -180]], [18.5, [438, 906, -140]], [18.75, [440, 900, -100]], [19.0, [444, 891, -50]], [19.25, [446, 880, -5]], [19.5, [447, 873, 0]], [19.75, [468, 843, 0]], [19.853, [466, 844, 0]], [20.02, [485, 810, 0]], [20.145, [496, 762, 0]], [20.187, [524, 736, 0]], [20.229, [540, 690, 0]], [20.27, [580, 640, 11]], [20.3, [640, 580, 11]]],
   O: [[17.31, [530, 950, 0]], [17.35, [750, 970, 0]], [17.39, [929, 821, 0]], [17.47, [1190, 611, 0]], [17.56, [1372, 460, 0]], [17.64, [1372, 384, 0]], [17.77, [1190, 346, 0]], [17.93, [1035, 309, 0]], [18.02, [983, 298, 0]], [18.1, [940, 287, 0]], [18.5, [825, 264, 0]], [19.0, [807, 255, 0]], [19.5, [801, 273, 0]], [19.75, [798, 282, 0]], [20.02, [794, 305, 0]], [20.145, [792, 332, 0]], [20.187, [770, 350, 0]], [20.229, [760, 370, 0]], [20.27, [740, 410, 0]], [20.3, [760, 520, 0]]],
-  V: [[17.31, [52, 389, 180]], [17.35, [140, 730, -120]], [17.47, [417, 745, -200]], [17.56, [588, 475, 10]], [17.64, [719, 281, 180]], [17.77, [855, 43, 110]], [17.93, [713, 80, 60]], [18.02, [626, 119, 90]], [18.1, [562, 151, 150]], [18.25, [450, 205, 190]], [18.5, [354, 249, 270]], [18.75, [338, 252, 285]], [19.0, [330, 255, 300]], [19.25, [340, 262, 345]], [19.5, [348, 267, 360]], [19.75, [369, 276, 360]], [20.02, [395, 297, 360]], [20.145, [439, 332, 360]], [20.187, [460, 340, 360]], [20.229, [490, 360, 360]], [20.27, [550, 400, 360]], [20.3, [690, 500, 360]]],
-  E: [[17.31, [700, 1000, 200]], [17.47, [313, 76, 300]], [17.56, [447, 162, 90]], [17.64, [620, 339, -90]], [17.77, [799, 518, -60]], [17.93, [955, 659, -50]], [18.02, [1009, 713, 90]], [18.1, [1050, 756, 120]], [18.25, [1134, 834, 170]], [18.5, [1173, 870, 170]], [18.75, [1185, 880, 150]], [19.0, [1188, 885, 50]], [19.25, [1176, 878, 40]], [19.5, [1164, 873, 0]], [19.75, [1149, 843, 0]], [19.853, [1147, 854, 0]], [20.02, [1115, 825, 0]], [20.145, [1068, 783, 0]], [20.187, [1040, 770, 0]], [20.229, [1000, 730, 0]], [20.27, [930, 670, 0]], [20.3, [800, 560, 0]]],
+  V: [[17.31, [52, 389, 180]], [17.35, [140, 730, -120]], [17.434, [324, 905, -180]], [17.47, [417, 745, -200]], [17.56, [588, 475, 10]], [17.64, [719, 281, 180]], [17.77, [855, 43, 110]], [17.93, [713, 80, 60]], [18.02, [626, 119, 90]], [18.1, [562, 151, 150]], [18.25, [450, 205, 190]], [18.5, [354, 249, 270]], [18.75, [338, 252, 285]], [19.0, [330, 255, 300]], [19.25, [340, 262, 345]], [19.5, [348, 267, 360]], [19.75, [369, 276, 360]], [20.02, [395, 297, 360]], [20.145, [439, 332, 360]], [20.187, [460, 340, 360]], [20.229, [490, 360, 360]], [20.27, [555, 400, 371]], [20.3, [690, 500, 371]]],
+  E: [[17.31, [700, 1000, 200]], [17.47, [313, 76, -60]], [17.5175, [338, 72, 20]], [17.56, [447, 162, 90]], [17.64, [620, 339, -90]], [17.77, [799, 518, -60]], [17.93, [955, 659, -50]], [18.02, [1009, 713, 90]], [18.1, [1050, 756, 120]], [18.25, [1134, 834, 170]], [18.5, [1173, 870, 170]], [18.75, [1185, 880, 150]], [19.0, [1188, 885, 50]], [19.25, [1176, 878, 40]], [19.5, [1164, 873, 0]], [19.75, [1149, 843, 0]], [19.853, [1147, 854, 0]], [20.02, [1115, 825, 0]], [20.145, [1068, 783, 0]], [20.187, [1040, 770, 0]], [20.229, [1000, 730, 0]], [20.27, [930, 670, 11]], [20.3, [800, 560, 11]]],
 };
 // V, L and E spin together, clockwise and slowing, from 17.68 s until upright at 19.75 s.
 // Fitted per frame by matching rendered glyphs to the source ink (frames 424-468).
@@ -3522,64 +3603,18 @@ function inkDot(ctx, x, y, r, seed, tail = 0) {
 }
 const DOTS = [
   // keyframes, radius
-  [[[17.47, [864, 579]], [17.56, [836, 616]], [17.64, [821, 609]], [17.8, [790, 470]], [17.93, [750, 326]], [18.02, [741, 324]], [18.5, [735, 306]], [19.5, [702, 273]], [19.75, [672, 279]], [20.0, [657, 381]], [20.15, [657, 381]], [20.187, [666, 396]], [20.229, [660, 416]], [20.27, [650, 436]]], 11, 6],
-  [[[17.47, [1307, 706]], [17.56, [1311, 680]], [17.64, [1307, 670]], [17.77, [1302, 654]], [17.93, [1294, 659]], [18.02, [1290, 650]], [18.1, [1281, 644]], [18.5, [1224, 390]], [19.5, [1218, 282]], [19.75, [1227, 261]], [20.0, [1146, 360]], [20.15, [1146, 360]], [20.187, [1116, 372]], [20.229, [1080, 392]], [20.27, [990, 340]]], 8, 10],
-  [[[17.47, [173, 287]], [17.56, [166, 335]], [17.64, [158, 356]], [17.77, [156, 389]], [17.9, [200, 600]], [18.02, [233, 750]], [18.1, [242, 717]], [18.5, [240, 696]], [19.5, [213, 702]], [19.75, [213, 672]], [20.0, [360, 579]], [20.15, [360, 579]], [20.187, [390, 566]], [20.229, [420, 554]], [20.27, [426, 526]]], 7, 7],
-];
-const LOOPS = [
-  // letter, start, dur, rx, ry, seed, turns, dx, dy
-  ['V', 17.44, 0.14, 40, 30, 1, 2.2, 0, 0],
-  ['L', 17.46, 0.14, 34, 40, 2, 2.0, 0, 0],
-  ['E', 17.46, 0.12, 30, 34, 3, 1.8, 0, 0],
-  ['O', 17.47, 0.12, 12, 110, 21, 1.0, 0, -40],
-  ['L', 17.72, 0.12, 30, 22, 22, 1.4, 0, 0],
-  ['V', 19.2, 0.25, 30, 80, 4, 1.2, -15, -40],
-  ['O', 19.22, 0.25, 14, 50, 5, 1.1, 0, -30],
-  ['L', 19.24, 0.15, 14, 38, 6, 1.1, -20, 44],
-  ['E', 19.26, 0.25, 34, 26, 7, 1.3, -10, -10],
-  ['V', 19.45, 0.25, 40, 30, 8, 1.3, 10, 0],
-  ['L', 19.4, 0.25, 34, 18, -35, 1.05, -30, 30],
-  ['E', 19.5, 0.25, 34, 26, 11, 1.3, 0, 0],
-  ['V', 19.7, 0.25, 44, 52, 12, 2.2, 0, -20],
-  ['O', 19.7, 0.25, 12, 52, 13, 1.1, 2, -50],
-  ['L', 19.6, 0.15, 30, 18, -35, 1.05, -30, 25],
-  ['E', 19.74, 0.25, 34, 30, 15, 1.3, 0, 0],
+  [[[17.47, [864, 579]], [17.56, [836, 616]], [17.64, [821, 609]], [17.8, [790, 470]], [17.93, [750, 326]], [18.02, [741, 324]], [18.5, [735, 306]], [19.5, [702, 273]], [19.75, [672, 279]], [19.853, [672, 282]], [19.937, [663, 305]], [20.02, [653, 352]], [20.103, [657, 383]], [20.187, [666, 398]], [20.229, [662, 418]], [20.27, [650, 436]]], 11, 6],
+  [[[17.47, [1307, 706]], [17.56, [1311, 680]], [17.64, [1307, 670]], [17.77, [1302, 654]], [17.93, [1294, 659]], [18.02, [1290, 650]], [18.1, [1281, 644]], [18.5, [1224, 390]], [19.5, [1218, 282]], [19.75, [1227, 261]], [19.853, [1227, 266]], [19.937, [1214, 284]], [20.02, [1179, 326]], [20.103, [1144, 360]], [20.145, [1127, 375]], [20.187, [1116, 376]], [20.229, [1080, 393]], [20.27, [990, 340]]], 8, 10],
+  [[[17.47, [173, 287]], [17.56, [166, 335]], [17.64, [158, 356]], [17.77, [156, 389]], [17.9, [200, 600]], [18.02, [233, 750]], [18.1, [242, 717]], [18.5, [240, 696]], [19.5, [213, 702]], [19.75, [213, 672]], [19.853, [214, 679]], [19.937, [240, 648]], [20.02, [305, 614]], [20.103, [362, 581]], [20.145, [381, 573]], [20.187, [392, 566]], [20.229, [417, 554]], [20.27, [426, 526]]], 7, 7],
 ];
 // Red pen loops, measured: [letter, start, end, angle deg, length, width]. Single elongated loops
 // and flicks leaving each letter (not scribbled circles).
 const FIN_PEN = [
-  ['E', 17.43, 17.6, -120, 70, 34], ['L', 17.43, 17.52, -40, 115, 26], ['V', 17.43, 17.52, 110, 115, 8], ['O', 17.44, 17.52, 130, 95, 6],
+  ['E', 17.43, 17.6, -120, 70, 34], ['L', 17.43, 17.52, -40, 115, 26], ['V', 17.43, 17.52, 110, 115, 8, 419], ['O', 17.44, 17.52, 130, 95, 6, 419],
   ['V', 17.52, 17.6, 180, 32, 26], ['L', 17.52, 17.6, -20, 42, 20], ['O', 17.53, 17.6, 180, 22, 22],
   ['V', 17.6, 17.7, -80, 62, 30], ['E', 17.6, 17.68, -170, 60, 6], ['O', 17.6, 17.7, 140, 62, 20], ['L', 17.6, 17.68, 0, 42, 16],
   ['V', 17.72, 17.82, 190, 62, 20], ['E', 17.72, 17.82, -150, 52, 40], ['O', 17.72, 17.82, -90, 72, 15], ['L', 17.72, 17.82, -95, 72, 15],
-  ['V', 19.2, 19.32, 0, 52, 26], ['O', 19.2, 19.34, -95, 125, 4], ['O', 19.22, 19.34, 60, 62, 30], ['E', 19.22, 19.32, 110, 62, 6], ['L', 19.22, 19.32, -120, 32, 20],
-  ['V', 19.44, 19.58, -60, 42, 26], ['O', 19.44, 19.58, -110, 36, 20], ['L', 19.44, 19.58, -50, 32, 20], ['E', 19.42, 19.6, -40, 82, 40],
-  ['V', 19.68, 19.84, 150, 62, 20], ['O', 19.7, 19.84, 95, 72, 25], ['L', 19.68, 19.86, 120, 100, 30], ['E', 19.66, 19.86, -150, 170, 110], ['E', 19.72, 19.84, 40, 40, 20],
-  ['V', 19.88, 20.0, 10, 42, 32], ['O', 19.88, 20.0, -88, 95, 30], ['L', 19.88, 20.0, 118, 160, 40], ['E', 19.88, 20.0, 0, 40, 26],
-  ['O', 20.03, 20.16, 100, 62, 8], ['E', 20.03, 20.16, 180, 82, 30], ['V', 20.05, 20.16, 0, 40, 20],
 ];
-const FINAL_LOOPS = [
-  ['O', 6, 80, -2, 1.0, 2, -10],
-  ['E', 64, 30, 33, 1.2, -50, -36],
-  ['V', 26, 18, 34, 1.2, 0, 0],
-];
-
-function smoothLoop(rx, ry, turns, seed, n = 160) {
-  const r = rng(Math.abs(seed) + 50);
-  const tilt = seed < 0 ? seed * D : (r() - 0.5) * 0.6;
-  const a0 = r() * Math.PI * 2;
-  const pts = [];
-  for (let i = 0; i <= n; i++) {
-    const u = i / n;
-    const a = a0 + u * turns * Math.PI * 2;
-    const g = 1 + u * 0.12; // slight spiral so overlapping passes separate
-    const px = Math.cos(a) * rx * g;
-    const py = Math.sin(a) * ry * g;
-    pts.push([px * Math.cos(tilt) - py * Math.sin(tilt), px * Math.sin(tilt) + py * Math.cos(tilt)]);
-  }
-  return pts;
-}
-
 // Catmull-Rom through control points -> dense polyline
 function spline(ctrl, n = 18) {
   const out = [];
@@ -3678,16 +3713,36 @@ function petal(ax, ay, ang, len, wid, seed) {
 const PETALS = [
   [20.207, [['V', -95, 260, 170], ['O', 88, 330, 50], ['L', -60, 260, 60], ['E', -92, 250, 50], ['E', 95, 170, 45]]],
   [20.249, [['O', -90, 220, 40], ['V', 55, 330, 70], ['L', -80, 220, 50], ['E', -128, 290, 10], ['L', 100, 90, 70]]],
-  [20.29, [['V', 185, 300, 60], ['O', -82, 260, 90], ['O', -30, 400, 70], ['E', -12, 360, 75], ['L', 95, 300, 190], ['O', 60, 300, 30], ['V', -120, 140, 40]]],
+  [20.29, [['V', 182, 340, 50], ['O', -88, 280, 70], ['O', -35, 420, 60], ['O', 118, 220, 50], ['L', 108, 250, 185], ['L', -80, 90, 40], ['E', -12, 300, 70], ['E', -125, 240, 40], ['E', 80, 100, 50]]],
 ];
 // Frames 476-483: a fresh pen gesture every frame, measured from the source
 // [letter, angle deg, length, width, dx, dy] per frame.
 const PEN_FRAMES = {
+  420: [['V', 165, 62, 14], ['O', -52, 92, 10]],
+  459: [['V', -100, 90, 25], ['L', 200, 25, 10], ['E', -75, 95, 6]],
+  460: [['V', -80, 20, 8], ['O', -60, 40, 30], ['L', 120, 50, 40], ['E', -20, 35, 25]],
+  461: [['V', -90, 22, 8], ['L', 180, 35, 25]],
+  462: [['V', -10, 80, 35], ['O', 20, 70, 35], ['O', -85, 140, 4], ['E', 120, 100, 6]],
+  463: [['V', 120, 40, 20], ['O', -50, 70, 30], ['L', -60, 20, 10], ['E', -10, 30, 20]],
+  464: [['V', -95, 140, 40], ['O', 100, 60, 20], ['L', 95, 140, 30], ['E', 190, 40, 25]],
+  465: [['O', -130, 50, 35], ['L', -45, 75, 45]],
+  466: [['V', 125, 190, 60], ['V', -80, 60, 25], ['O', -88, 200, 8], ['L', -20, 60, 25], ['E', -85, 80, 4]],
+  467: [['V', 80, 70, 50], ['O', 0, 50, 30], ['L', 95, 120, 120], ['E', -90, 25, 8]],
+  468: [['V', -70, 40, 25], ['O', -110, 40, 25], ['L', -90, 35, 25], ['E', -40, 60, 40]],
+  469: [['V', -90, 120, 6, 0, 30], ['O', -120, 70, 45], ['L', -20, 60, 30], ['E', 80, 45, 40]],
+  470: [['V', -10, 60, 45], ['O', -90, 40, 15], ['L', 125, 120, 50], ['E', 150, 40, 30]],
+  471: [['V', -90, 100, 35], ['O', 75, 110, 15], ['L', 115, 130, 45], ['L', -85, 30, 8], ['E', -35, 170, 60]],
+  472: [['V', 150, 55, 25], ['L', -75, 60, 25]],
+  473: [['V', -100, 180, 70], ['O', -90, 35, 6], ['L', -80, 120, 30], ['E', -90, 25, 6]],
+  474: [['V', 130, 120, 15], ['O', 90, 70, 25], ['L', 115, 150, 40], ['E', -150, 170, 80]],
+  475: [['V', -40, 30, 25], ['O', -110, 80, 30], ['L', -85, 90, 25], ['E', -100, 50, 30]],
   476: [['V', 0, 60, 30], ['O', -90, 135, 25], ['L', 140, 70, 25], ['E', -20, 60, 40]],
   477: [['L', -62, 525, 50, 10, -10], ['V', 120, 60, 30], ['E', 180, 85, 35]],
   478: [['V', 30, 50, 35], ['O', 100, 125, 30, 0, -40], ['L', 120, 165, 32], ['E', 0, 40, 25]],
   479: [['V', 0, 40, 12], ['L', 125, 80, 30], ['E', -75, 140, 30]],
-  480: [['V', 52, 360, 75, -15, -15], ['O', -70, 140, 40], ['E', -80, 160, 35]],
+  // 480: a long thin loop starting with a hook left of the V and running down to (640,620),
+  // a tall loop above O plus a small one round its base, a loop on the L, a tall loop above E
+  480: [['V', 49, 470, 42, -64, -34], ['V', 200, 34, 22, -64, -34], ['O', -82, 150, 45], ['O', 160, 70, 30, -10, 15], ['L', -30, 45, 30, -15, 0], ['E', -78, 185, 55], ['E', 60, 22, 16, 10, -10]],
   481: [['V', -145, 180, 70, 20, 15], ['O', 90, 50, 25], ['E', 90, 60, 25]],
   482: [['V', 60, 40, 25], ['O', -85, 115, 25, 0, 30], ['L', 175, 100, 30], ['E', -10, 70, 30]],
   483: [['V', -115, 280, 140], ['O', -95, 160, 35, 0, 40], ['L', -90, 170, 15], ['E', 190, 170, 30]],
@@ -3695,6 +3750,11 @@ const PEN_FRAMES = {
 function finalePetals(ctx, t, pos) {
   const set = PETALS.find(([until]) => t < until);
   if (!set) return;
+  if (set[0] === 20.29) {
+    // spiky zig-zag flourish above-left of the V (frame 486)
+    const [vx, vy] = pos.V;
+    fx.strokePartial(ctx, spline([[vx - 20, vy - 60], [vx - 90, vy - 120], [vx - 60, vy - 75], [vx - 140, vy - 150], [vx - 95, vy - 95], [vx - 210, vy - 110], [vx - 120, vy - 85], [vx - 40, vy - 70]], 6), 0, 1, 1.8, '#e0402e');
+  }
   set[1].forEach(([ch, ang, len, wid], k) => {
     const [ax, ay] = pos[ch];
     fx.strokePartial(ctx, petal(ax, ay, ang * D, len, wid, k + Math.round(set[0] * 100)), 0, 1, 2, '#e0402e');
@@ -3728,7 +3788,7 @@ function paperTexture() {
     const py = r() * H;
     const cl = 0.5 + 0.5 * noise1(px * 0.01 + py * 0.007, 9);
     if (r() > cl) continue;
-    x.fillStyle = `rgba(70,62,66,${0.035 + r() * 0.035})`;
+    x.fillStyle = `rgba(70,62,66,${0.017 + r() * 0.017})`;
     x.beginPath();
     x.ellipse(px, py, 1.8 + r() * 1.8, 1.5 + r() * 1.4, r() * 3, 0, 7);
     x.fill();
@@ -3754,7 +3814,7 @@ function sceneFinale(ctx, t, f) {
   // sharpening and shrinking into small hooks as the letters scatter in
   if (t < 17.372) brushCut(ctx, t);
   const grow = ease.inOutCubic(inv(19.75, 20.05, t));
-  const size = t < 20.15 ? kf(t, [[19.52, 56], [19.853, 62], [20.02, 68], [20.145, 74]]) : kf(t, [[20.15, 74], [20.187, 83], [20.229, 111], [20.27, 139], [20.3, 190]]);
+  const size = t < 20.15 ? kf(t, [[19.52, 56], [19.853, 62], [20.02, 68], [20.145, 74]]) : kf(t, [[20.15, 74], [20.187, 83], [20.229, 111], [20.27, 128], [20.3, 190]]);
   if (t >= 20.29) {
     finaleCollapse(ctx);
     return;
@@ -3791,13 +3851,22 @@ function sceneFinale(ctx, t, f) {
     const r = kf(t, DOT_R[r0]);
     inkDot(ctx, x, y, r * lerp(1, 1.1, grow), r0 + Math.floor(t * 24) * 0.37, r0 === 7 && t > 17.99 && t < 18.06 ? 1 : 0);
   });
-  const pf = PEN_FRAMES[Math.round(t * C.FPS)];
+  const fr = Math.round(t * C.FPS);
+  if ([434, 435, 436, 437, 438, 440, 442, 444, 447, 448, 450, 452, 453, 454, 455, 456, 457, 458].includes(fr)) {
+    const r = rng(fr * 13);
+    ['V', 'L'].forEach((ch) => {
+      if (r() < 0.25) return;
+      const [ax, ay] = pos[ch];
+      fx.strokePartial(ctx, petal(ax + (r() - 0.5) * 16, ay + (r() - 0.5) * 16, r() * Math.PI * 2, 18 + r() * 24, 10 + r() * 16, fr), 0, 1, 1.6, '#e0402e');
+    });
+  }
+  const pf = PEN_FRAMES[fr];
   if (pf) pf.forEach(([ch, ang, len, wid, dx = 0, dy = 0], k) => {
     const [ax, ay] = pos[ch];
     fx.strokePartial(ctx, petal(ax + dx, ay + dy, ang * D, len, wid, k + Math.round(t * C.FPS) * 7), 0, 1, 1.8, '#e0402e');
   });
-  FIN_PEN.forEach(([ch, t0, t1, ang, len, wid], k) => {
-    if (t < t0 || t > t1 + 0.05 || t > 19.84) return;
+  FIN_PEN.forEach(([ch, t0, t1, ang, len, wid, lastF = 1e9], k) => {
+    if (t < t0 || t > t1 + 0.05 || Math.round(t * C.FPS) > lastF) return;
     const [ax, ay] = pos[ch];
     const d = len < 90 ? 0.04 : 0.07;
     fx.strokePartial(ctx, petal(ax, ay, ang * D, len, wid, k + 40), inv(t1, t1 + 0.05, t), inv(t0, t0 + d, t), 1.7, '#e0402e');
@@ -3813,6 +3882,13 @@ function sceneFinale(ctx, t, f) {
     const pts = [];
     for (let i = 0; i <= 40; i++) pts.push([150 + Math.sin((i / 40) * Math.PI * 1.2) * 50, 420 + i * 5.5]);
     fx.strokePartial(ctx, pts, inv(17.93, 17.99, t), inv(17.86, 17.92, t), 8, '#141212', true);
+  }
+  const soft = t > 17.37 && t < 17.56 ? kf(t, [[17.38, 4], [17.44, 3], [17.476, 2], [17.5175, 2.2], [17.55, 0]]) : 0;
+  if (soft > 0.3) {
+    const [bc, bx] = off(7);
+    bx.setTransform(1, 0, 0, 1, 0, 0);
+    bx.drawImage(ctx.canvas, 0, 0);
+    composite(ctx, bc, { blur: soft });
   }
 }
 
