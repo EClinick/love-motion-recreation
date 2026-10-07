@@ -1060,7 +1060,7 @@ function sceneProfile(ctx, t, f) {
       x.fillRect(-100, -100, 1000, 1100);
       x.restore();
     }
-    if (settle > 0.25 && settle < 0.9) {
+    if (settle > 0.25 && settle < 0.9 && !traced) {
       // 4.0: soft orange contour bands inside a crimson rim
       const k = Math.sin(Math.PI * inv(0.25, 0.9, settle));
       x.save();
@@ -1127,6 +1127,25 @@ function sceneProfile(ctx, t, f) {
       // drawn after the silhouette below
     } else drawHead(silhouette(traced.hot, t < 5.85 ? mixHex('#d8d4ca', '#7f7770', shc) : col));
     x.globalAlpha = 1;
+  }
+  if (traced && t >= 4.03 && t < 4.12) {
+    // frames 97-98: the heat reads as posterized iso-bands with dark red contour lines
+    const hex = (c) => [1, 3, 5].map((k) => parseInt(c.slice(k, k + 2), 16));
+    const f98 = t >= 4.07;
+    const bands = f98 ? [[0, hex('#921e19')], [0.52, hex('#990e16')], [0.68, hex('#ac4320')]] : [[0, hex('#a50618')], [0.52, hex('#960d16')], [0.65, hex('#9b1017')]];
+    const post = thermalImage(`head${traced.f}b${f98 ? 1 : 0}`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, front: 0.12, rimBack: 0.35, floor: 0.37, hot: [[0.42, 0.22, 210, 0.16], [0.55, 0.78, 260, -0.2], [0.85, 0.45, 160, -0.12]], poster: { bands, w: 0.035, jag: 0.06, line: hex(f98 ? '#970d18' : '#7a0c14') } });
+    x.save();
+    x.globalAlpha = 1;
+    x.globalCompositeOperation = 'source-over';
+    x.filter = 'none';
+    drawHead(post);
+    if (traced.hot) {
+      // the shirt still glows pale pink under the bands
+      x.filter = `blur(${18 * S}px)`;
+      x.globalCompositeOperation = 'source-atop';
+      drawHead(silhouette(traced.hot, '#e6aaa2'));
+    }
+    x.restore();
   }
   const thr = traced ? kf(t, [[6.01, -0.3], [6.048, 0.26], [6.089, 0.7], [6.131, 1.0], [6.15, 1.2]]) : 0;
   if (traced && thr > -0.15 && t < 6.15) {
@@ -1238,19 +1257,20 @@ function sceneProfile(ctx, t, f) {
   }
   if (fr === 96) {
     ctx.save();
-    ctx.filter = `blur(${12 * S}px)`;
-    ctx.fillStyle = 'rgba(208,16,16,0.95)';
+    ctx.filter = `blur(${22 * S}px)`;
+    ctx.fillStyle = 'rgba(200,16,22,0.9)';
     ctx.beginPath();
-    ctx.ellipse(985, 472, 135, 85, 0, 0, 7);
+    ctx.ellipse(985, 472, 140, 92, 0, 0, 7);
     ctx.fill();
     ctx.restore();
-    glowStroke([[830, 290], [870, 170], [960, 108], [1060, 118], [1130, 225]], 40, 'rgba(200,24,24,0.9)', 10);
-    glowStroke([[742, 553], [900, 575], [1080, 600]], 26, AMBER, 8);
+    glowStroke([[830, 290], [870, 170], [960, 108], [1060, 118], [1130, 225]], 58, 'rgba(132,24,32,0.9)', 18);
+    glowStroke([[742, 553], [900, 575], [1080, 600]], 36, AMBER, 13);
     softDot(1080, 600, 34, 'rgba(255,192,64,0.95)', 8);
     softDot(1280, 560, 46, 'rgba(130,112,40,0.55)', 14);
   }
   if (fr === 97) {
-    glowStroke([[450, 180], [650, 270], [855, 360]], 14, AMBER, 4);
+    glowStroke([[450, 180], [650, 270], [855, 360]], 32, 'rgba(200,150,50,0.75)', 15);
+    softDot(500, 200, 52, 'rgba(210,150,50,0.75)', 16);
     softDot(607, 810, 30, 'rgba(200,24,24,0.8)', 8);
     softDot(1080, 585, 12, '#ffd84a', 2);
   }
@@ -2965,6 +2985,20 @@ function thermalImage(key, mask, { depth = 28, base = 0.24, gain = 0.5, hot = []
       if (poster) {
         // posterized heat: cool band, a jagged black contour, then a flat hot fill
         const hj = h + poster.jag * (noiseField()[i] / 255 - 0.5);
+        if (poster.bands) {
+          // multi-level iso-heat bands with a contour line at each threshold
+          let c = poster.bands[0][1];
+          let line = false;
+          for (const [th, col] of poster.bands.slice(1)) {
+            if (Math.abs(hj - th) < poster.w / 2) line = true;
+            if (hj >= th) c = col;
+          }
+          if (line) c = poster.line;
+          d[i] = c[0];
+          d[i + 1] = c[1];
+          d[i + 2] = c[2];
+          continue;
+        }
         const c = hj < poster.t1 ? poster.lo : hj < poster.t1 + poster.w ? poster.line : poster.hi2 && h > poster.t2 ? poster.hi2 : poster.hi;
         if (!c) {
           d[i + 3] = 0; // hot fill left to the regular heat layer underneath

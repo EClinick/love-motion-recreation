@@ -74,7 +74,7 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       const mx = Math.max(r, g, b);
       const mn = Math.min(r, g, b);
       // the head has a dim red glow in front of the face: only count properly lit pixels
-      const warm = NAME === 'head' ? mx > 140 && mx - mn > 60 : mx > 70 && mx - mn > 45;
+      const warm = NAME === 'head' && t >= 4.19 ? mx > 140 && mx - mn > 60 : mx > 70 && mx - mn > 45; // the purple intro frames are dim
       const cream = mx > 170 && r >= b && mx - mn > 18; // pale lit skin (text is greyer)
       const white = NAME === 'head' && (r + g + b) / 3 > 150; // blown-out shirt / shoulder
       // hand: the white-lit thumb (14.1-14.35 s); skip the typing-cursor block to its right
@@ -142,8 +142,8 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
         bx0 = Math.min(bx0, xx); bx1 = Math.max(bx1, xx); by0 = Math.min(by0, yy); by1 = Math.max(by1, yy);
       }
     }
-    if (NAME === 'head' && (bx1 - bx0 > 760 || by1 - by0 < 500 || by0 > 400)) {
-      process.stdout.write(` [skip f${f} implausible head bbox]`);
+    if (NAME === 'head' && (bx1 - bx0 > 830 || by1 - by0 < 500 || by0 > 400)) {
+      process.stdout.write(` [skip f${f} implausible head bbox ${bx0},${by0}-${bx1},${by1}]`);
       continue;
     }
     if (area < (NAME === 'hand' && t > 15.5 ? 6000 : 20000)) {
