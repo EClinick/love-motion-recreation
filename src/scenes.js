@@ -3088,6 +3088,7 @@ function toneShade(mask, tone, lift = 0) {
   const md = mx.getImageData(0, 0, W, H);
   const tc = createCanvas(W, H);
   const tx = tc.getContext('2d');
+  if (lift > 0) tx.filter = 'blur(4px)'; // the lifted core would amplify the tone map's grain
   tx.drawImage(tone, 0, 0, W, H);
   const td = tx.getImageData(0, 0, W, H).data;
   const d = md.data;
@@ -3099,13 +3100,13 @@ function toneShade(mask, tone, lift = 0) {
     const kb0 = td[i + 3] ? (td[i + 1] / 255) * 2 : 0;
     // blue-leaning (violet) tones are darker than the lit-hand palette
     // `lift`: as the fist closes the pale core glows brighter than the palette's top (frames 375-379)
-    const R = Math.min(255, Math.round(toneLut[k * 3] * lerp(1, 0.55, clamp((kb0 - 0.6) / 0.4)) * (1 + lift * clamp((k - 222) / 18))));
+    const R = Math.min(255, Math.round(toneLut[k * 3] * (lift ? 1 : lerp(1, 0.55, clamp((kb0 - 0.6) / 0.4))) * (1 + lift * clamp((k - 222) / 18))));
     d[i] = R;
     d[i + 1] = Math.round((R * k) / 255);
     const kb = td[i + 3] ? (td[i + 1] / 255) * 2 : 0;
     d[i + 2] = td[i + 3] ? Math.min(255, Math.round(R * kb)) : toneLut[k * 3 + 2];
-    if (kb > 1) {
-      // blue-dominant: the dark violet fingers of the intro
+    if (kb > 1 && !lift) {
+      // blue-dominant: the dark violet fingers of the intro (not the pale lavender glow of the fist)
       const u = clamp((kb - 1) / 0.3);
       d[i] = Math.round(d[i] + (36 - d[i]) * u);
       d[i + 1] = Math.round(d[i + 1] + (17 - d[i + 1]) * u);
@@ -3359,7 +3360,7 @@ function sceneHand(ctx, t, f) {
     if (settle < 1) filt = `brightness(${lerp(0.92, 1, settle)}) blur(${(1 - settle) * 10 * S}px)`;
     // measured per frame (372-379): the hand dims as the fist closes, the pale core keeps glowing
     else if (t > 15.3) filt = `saturate(${kf(t, [[15.64, 1], [15.77, 0.85]])}) brightness(${kf(t, [[15.3, 1], [15.5, 0.93], [15.557, 0.92], [15.599, 0.855], [15.641, 0.84], [15.682, 0.79], [15.724, 0.74], [15.766, 0.74], [15.808, 0.67], [15.85, 0.62]])})`;
-    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0, handHotMask(t), kf(t, [[15.82, 0], [15.845, 1]]), t < 15.83 ? handToneMap(t) : null, t < 14.4 ? '#e4e3d6' : '#e3d9b6', kf(t, [[15.62, 0], [15.68, 0.3], [15.724, 0.5], [15.766, 0.35], [15.81, 0.35]]));
+    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0, handHotMask(t), kf(t, [[15.82, 0], [15.845, 1]]), t < 15.83 ? handToneMap(t) : null, t < 14.4 ? '#e4e3d6' : '#e3d9b6', kf(t, [[15.62, 0], [15.68, 0.1], [15.724, 0.08], [15.766, 0.01], [15.81, 0.01]]));
   }
   const hand = traced ? null : thermalHand(pose);
   const [c, x] = traced ? [null, null] : off(0);
