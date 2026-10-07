@@ -771,7 +771,7 @@ function sceneSparkle(ctx, t, f) {
     }
     x2.restore();
   }
-  x2.strokeStyle = rim > 0 ? `rgba(240,40,30,${rim})` : t > 3.68 ? `rgba(255,240,240,${inv(3.68, 3.71, t) * 0.8})` : `rgba(31,106,90,${inv(2.25, 2.45, t)})`;
+  x2.strokeStyle = rim > 0 ? `rgba(240,40,30,${rim})` : t > 3.68 ? `rgba(240,170,190,${inv(3.68, 3.71, t) * 0.3})` : `rgba(31,106,90,${inv(2.25, 2.45, t)})`;
   x2.lineWidth = rim > 0 ? 10 : t > 3.68 ? 2.5 : 3;
   armStar(x2, P.cx, P.cy, P.angs, P.lens, P.k);
   if (rim > 0) {
@@ -822,13 +822,9 @@ function sceneSparkle(ctx, t, f) {
       if (t > 3.69) fx.strokePartial(ctx, smoothPts([[470, 730], [440, 820], [405, 920]], 6), 0, 1, 5, '#1a1010');
     }
     if (t >= 3.735 && t < 3.775) {
-      const el = [];
-      for (let j = 0; j <= 48; j++) {
-        const a = (j / 48) * Math.PI * 2;
-        el.push([452 + Math.cos(a) * 180 + Math.sin(a) * 30, 540 + Math.sin(a) * 300]);
-      }
-      fx.strokePartial(ctx, el, 0, 1, 7, '#e0201a');
-      fx.strokePartial(ctx, smoothPts([[283, 445], [380, 280], [470, 243], [480, 500], [470, 823]], 8), 0, 1, 4, '#1a1010');
+      // an open red teardrop hanging from the top of a black loop (measured, frame 90)
+      fx.strokePartial(ctx, smoothPts([[472, 256], [553, 378], [621, 621], [607, 783], [553, 837], [459, 783], [364, 675], [283, 594]], 8), 0, 1, 9, '#e0201a');
+      fx.strokePartial(ctx, smoothPts([[283, 486], [351, 378], [445, 248], [500, 270], [513, 432], [486, 675], [459, 810]], 8), 0, 1, 4, '#1a1010');
     }
   }
 }
@@ -1145,9 +1141,16 @@ function sceneProfile(ctx, t, f) {
     softDot(630, 337, 30, 'rgba(236,160,40,0.85)', 8);
   }
   if (fr === 96) {
-    glowStroke([[800, 380], [850, 210], [975, 135], [1125, 112]], 34, 'rgba(200,24,24,0.9)', 10);
-    glowStroke([[742, 540], [900, 560], [1080, 585]], 14, AMBER, 5);
-    softDot(1080, 585, 18, '#ffd84a', 4);
+    ctx.save();
+    ctx.filter = `blur(${12 * S}px)`;
+    ctx.fillStyle = 'rgba(208,16,16,0.95)';
+    ctx.beginPath();
+    ctx.ellipse(985, 472, 135, 85, 0, 0, 7);
+    ctx.fill();
+    ctx.restore();
+    glowStroke([[830, 290], [870, 170], [960, 108], [1060, 118], [1130, 225]], 40, 'rgba(200,24,24,0.9)', 10);
+    glowStroke([[742, 553], [900, 575], [1080, 600]], 26, AMBER, 8);
+    softDot(1080, 600, 34, 'rgba(255,192,64,0.95)', 8);
     softDot(1280, 560, 46, 'rgba(130,112,40,0.55)', 14);
   }
   if (fr === 97) {
@@ -1158,7 +1161,7 @@ function sceneProfile(ctx, t, f) {
   if (fr >= 98 && fr <= 103) {
     const k = (fr - 98) / 5;
     softDot(lerp(405, 270, k), 180, lerp(40, 30, k), `rgba(236,150,40,${lerp(0.9, 0.35, k)})`, 14);
-    softDot(585, lerp(877, 922, k), 22, `rgba(170,20,20,${lerp(0.8, 0.3, k)})`, 10);
+    if (fr <= 101) softDot(585, lerp(877, 922, k), 22, `rgba(170,20,20,${lerp(0.8, 0.3, k)})`, 10);
     if (fr <= 102) softDot(1102, 585, lerp(12, 5, k), '#ffd84a', 1.5);
   }
   if (fr === 105) orbit(900, 472, 400, 130, -0.45, 2.3, 3.3, 4, '#f6f2ec');
@@ -1199,7 +1202,7 @@ function sceneProfile(ctx, t, f) {
     parts = [{ t: 'you', c: tc }, { t: 'just', c: tc }, { t: 'show', c: tc }, { t: 'it.', c: tc }];
   }
   // focus per frame, measured from the source's text sharpness (soft, sharp, soft again, then settling)
-  const tb = kf(t, [[3.82, 9], [3.837, 7], [3.879, 5], [3.921, 2.2], [3.962, 4.5], [4.004, 4.5], [4.046, 4], [4.088, 3], [4.129, 2.5], [4.171, 2], [4.213, 1.5], [4.254, 1.0], [4.296, 0.8], [4.338, 0.6], [4.5, 0.4]]);
+  const tb = kf(t, [[3.82, 9], [3.837, 7], [3.879, 5], [3.921, 2.2], [3.962, 6], [4.004, 6.5], [4.046, 6], [4.088, 4.8], [4.129, 4], [4.171, 3.2], [4.213, 2.2], [4.254, 1.4], [4.296, 0.8], [4.338, 0.6], [4.5, 0.4]]);
   fx.words(ctx, parts, 207, 533, BODY, { blur: tb });
   if (t < 4.36) fx.cursor(ctx, 647, 535, 44, 'rgba(160,156,150,0.8)', 3);
 }
