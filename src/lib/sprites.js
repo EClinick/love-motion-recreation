@@ -186,29 +186,62 @@ const builders = {
   },
 
   camera() {
-    const g = new Grid(34, 25);
+    // rangefinder: silver top plate with knobs and windows, dark textured body, big knurled lens
+    const g = new Grid(54, 37);
+    // knobs on top
+    g.rect(6, 1, 6, 3, '#8a8a90');
+    g.rect(7, 1, 2, 1, '#cfcfd4');
+    g.rect(15, 0, 7, 4, '#7c7c82');
+    for (let i = 15; i < 22; i += 2) g.rect(i, 0, 1, 4, '#b8b8be');
     // silver top plate
-    g.rect(2, 5, 30, 6, '#a4a4a8');
-    g.rect(5, 2, 7, 3, '#8e8e93');
-    g.rect(22, 3, 6, 2, '#8e8e93');
-    // black leatherette body (taller)
-    g.rect(2, 11, 30, 12, '#2a2b2e');
-    g.tint((x, y) => y > 21, '#1b1c1e');
-    g.tint((x, y) => y < 7, '#c8c8cc');
-    g.tint((x, y) => y > 11 && y < 13, '#3a3b3f');
+    g.rect(2, 4, 50, 7, '#a9a9ae');
+    g.rect(2, 4, 50, 1, '#cbcbd0');
+    g.rect(3, 5, 1, 6, '#e2e2e6');
+    g.rect(12, 5, 4, 6, '#8e8e94');
+    for (let j = 5; j < 11; j += 2) g.rect(13 + (j % 4 === 1 ? 0 : 1), j, 1, 1, '#c4c4ca');
+    g.rect(19, 6, 3, 3, '#8a1c24');
+    g.rect(20, 7, 1, 1, '#c8303a');
+    // rangefinder window
+    g.rect(26, 5, 11, 4, '#5a5a62');
+    g.rect(27, 6, 9, 1, '#d8d8de');
+    g.rect(27, 7, 9, 1, '#7a6a5a');
+    // viewfinder
+    g.rect(41, 6, 8, 5, '#1c1c22');
+    g.rect(44, 8, 3, 1, '#f2e8d0');
+    g.rect(49, 5, 2, 6, '#d0d0d6');
+    // body
+    g.rect(2, 11, 50, 20, '#3d3d43');
+    g.fill((x, y) => x > 3 && x < 15 && y > 12 && y < 30 && (Math.floor(x) + Math.floor(y)) % 2 === 0, '#323237');
+    g.rect(2, 11, 50, 1, '#2a2a2f');
+    g.rect(3, 12, 1, 18, '#8c8c92');
+    g.rect(50, 12, 1, 18, '#7c7c82');
+    // bottom rail
+    g.rect(2, 31, 50, 3, '#8e8e94');
+    g.rect(3, 32, 48, 1, '#c6c6cc');
+    // strap lugs
+    g.rect(0, 6, 2, 3, '#6a6a70');
+    g.rect(52, 6, 2, 3, '#6a6a70');
     g.outline(OUT);
-    // lens
-    g.circle(17, 14.5, 7.6, OUT);
-    g.circle(17, 14.5, 6.6, '#8d8d92');
-    g.circle(17, 14.5, 5.4, '#5e5e64');
-    g.circle(17, 14.5, 4.2, '#24242a');
-    g.circle(17, 14.5, 2.6, '#40485a');
-    g.rect(15, 12, 2, 2, '#a8b8d0');
-    // viewfinder window + red dot + shutter
-    g.rect(24, 6, 5, 3, '#2e2e34');
-    g.rect(25, 6, 2, 1, '#8e9aa8');
-    g.rect(6, 7, 2, 2, '#c8262e');
-    g.rect(7, 3, 3, 1, '#d8d8dc');
+    // lens: knurled outer ring, dark barrel, dashed inner ring, glass with a warm reflection
+    const lx = 31;
+    const ly = 21.5;
+    g.circle(lx, ly, 13.4, '#2a2a30');
+    g.circle(lx, ly, 12.6, '#4c4c53');
+    g.fill((x, y) => {
+      const r = Math.hypot(x - lx, y - ly);
+      const a = Math.atan2(y - ly, x - lx);
+      return r > 11.2 && r < 12.4 && Math.floor((a + Math.PI) * 6) % 2 === 0;
+    }, '#b6b6bc');
+    g.circle(lx, ly, 10.4, '#1e1e23');
+    g.fill((x, y) => {
+      const r = Math.hypot(x - lx, y - ly);
+      const a = Math.atan2(y - ly, x - lx);
+      return r > 4.6 && r < 5.6 && Math.floor((a + Math.PI) * 3) % 2 === 0;
+    }, '#9a9aa2');
+    g.circle(lx, ly, 4.4, '#26262c');
+    g.rect(lx - 2, ly - 4, 4, 1, '#6a6478');
+    g.rect(lx - 2, ly + 1, 4, 2, '#6e4e30');
+    g.rect(lx - 1, ly + 3, 3, 1, '#c8c8d0');
     return g;
   },
   book() {
