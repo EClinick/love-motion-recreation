@@ -3856,7 +3856,7 @@ function penMatte(fr, kind = 'p') {
   if (penCache.has(key)) return penCache.get(key);
   const file = pathMod.join(PEN_DIR, `${kind}_${String(fr).padStart(4, '0')}.bin`);
   // measured solid ink: neutral brush strokes (413-415), brown letters (416-431), near-black block (487)
-  const [cr, cg, cb] = kind === 'k' ? (fr <= 415 ? [27, 26, 27] : fr <= 431 ? [59, 27, 24] : [31, 21, 21]) : [214, 72, 56];
+  const [cr, cg, cb] = kind === 'k' ? (fr <= 415 ? [21, 20, 21] : fr <= 431 ? [46, 13, 10] : [24, 16, 16]) : [214, 72, 56];
   let c = null;
   if (fsMod.existsSync(file)) {
     const a = require('zlib').gunzipSync(fsMod.readFileSync(file));
