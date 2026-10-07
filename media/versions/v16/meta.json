@@ -12,7 +12,7 @@
     "Hand and finale: traced tone map for hand colour, full-frame red camera flash, per-frame letter spin, dots and pen loops",
     "Missing one-frame shots at 8.30 s and 13.76 s; render workers decode only the masks they need"
   ],
-  "note": "Rendered after the v15 judge round; not judged yet.",
+  "note": "Judged on index-aligned exact-frame pairs.",
   "duration": 20.458,
   "resolution": "1440x1080",
   "size": 11809089,
@@ -29,6 +29,10 @@
     "media/versions/v16/sheets/sheet_08.jpg",
     "media/versions/v16/sheets/sheet_09.jpg"
   ],
-  "scores": null,
+  "scores": [
+    6.0,
+    6.0,
+    7.5
+  ],
   "extras": []
 }

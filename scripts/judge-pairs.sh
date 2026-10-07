@@ -9,7 +9,7 @@ STEP=$(awk -v f="$FPS" 'BEGIN { printf "%d", 24 / f + 0.5 }')
 mkdir -p "$OUT"
 rm -f "$OUT"/pair_*.jpg
 ffmpeg -v error -y -i ref/reference.mp4 -i "$REN" -filter_complex "\
-[0:v]select='not(mod(n\,$STEP))',scale=800:600,drawtext=text='REF %{pts\:flt}':x=8:y=8:fontsize=22:fontcolor=yellow:box=1:boxcolor=black@0.6[a];\
-[1:v]select='not(mod(n\,$STEP))',scale=800:600,drawtext=text='OURS %{pts\:flt}':x=8:y=8:fontsize=22:fontcolor=cyan:box=1:boxcolor=black@0.6[b];\
+[0:v]drawtext=text='REF %{pts\:flt}':x=28:y=28:fontsize=80:fontcolor=yellow:box=1:boxcolor=black@0.6,select='not(mod(n\,$STEP))',setpts=N/TB/$FPS,scale=800:600[a];\
+[1:v]drawtext=text='OURS %{pts\:flt}':x=14:y=14:fontsize=40:fontcolor=cyan:box=1:boxcolor=black@0.6,select='not(mod(n\,$STEP))',setpts=N/TB/$FPS,scale=800:600[b];\
 [a][b]hstack" -q:v 3 -vsync vfr "$OUT/pair_%03d.jpg"
 ls "$OUT" | wc -l

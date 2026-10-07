@@ -1,0 +1,39 @@
+{
+  "id": "iter17",
+  "label": "v17",
+  "hash": "3bb4572",
+  "subject": "Iteration 17: redrawn sprites, ring and strip re-fit, measured pen marks and lock-up",
+  "commit_date": "2026-10-07T08:44:36-07:00",
+  "dirty": false,
+  "changelog": [
+    "Sprites redrawn from source crops: coin, cat, cash, plant, cap, camera lens, vinyl label",
+    "Icon ring (6.3-8.3 s) re-fit to source widths and positions; strips 9.1-11 s re-scaled with perspective",
+    "Opening: blue star fitted row by row, warm lighting, red loop and comet at 3.75-4 s, brown ink, frame-12 pixel type",
+    "Head: tracer closes the body and finds the grey shirt; white-hot shirt; tank top at 6.25 s",
+    "Finale: lock-up tilt and size, per-frame pen marks 19-20 s, softer paper, tilted camera, book transition fixed",
+    "Judge pairs and sheets pair frames strictly by frame index"
+  ],
+  "note": "Judged on index-aligned exact-frame pairs.",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 11476964,
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 27632832,
+  "sheets": [
+    "media/versions/v17/sheets/sheet_01.jpg",
+    "media/versions/v17/sheets/sheet_02.jpg",
+    "media/versions/v17/sheets/sheet_03.jpg",
+    "media/versions/v17/sheets/sheet_04.jpg",
+    "media/versions/v17/sheets/sheet_05.jpg",
+    "media/versions/v17/sheets/sheet_06.jpg",
+    "media/versions/v17/sheets/sheet_07.jpg",
+    "media/versions/v17/sheets/sheet_08.jpg",
+    "media/versions/v17/sheets/sheet_09.jpg"
+  ],
+  "scores": [
+    7.0,
+    7.0,
+    8.0
+  ],
+  "extras": []
+}

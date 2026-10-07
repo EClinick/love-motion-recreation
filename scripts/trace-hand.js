@@ -74,7 +74,7 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       const mx = Math.max(r, g, b);
       const mn = Math.min(r, g, b);
       // the head has a dim red glow in front of the face: only count properly lit pixels
-      const warm = NAME === 'head' ? mx > 140 && mx - mn > 60 : mx > 70 && mx - mn > 45;
+      const warm = NAME === 'head' && t >= 4.19 ? mx > 140 && mx - mn > 60 : mx > 70 && mx - mn > 45; // the purple intro frames are dim
       const cream = mx > 170 && r >= b && mx - mn > 18; // pale lit skin (text is greyer)
       const white = NAME === 'head' && (r + g + b) / 3 > 150; // blown-out shirt / shoulder
       // hand: the white-lit thumb (14.1-14.35 s); skip the typing-cursor block to its right
@@ -86,6 +86,13 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       m[i] = darkOnLight ? ((r + g + b) / 3 < 120 && i % W > 560 ? 1 : 0) : pale ? (warm || ((r + g + b) / 3 > 105 && !(px > 880 && py > 505 && py < 590 && mx - mn < 40)) ? 1 : 0) : warm || cream || white || whiteHand || violet ? 1 : 0;
     }
     largestComponent(m);
+    if (NAME === 'head') {
+      // the body runs off the bottom edge: close it there so a grey shirt (not lit enough to pass
+      // the colour test) becomes an interior hole and gets filled, instead of joining the background
+      let bl = W, br = -1;
+      for (let yy = H - 24; yy < H; yy++) for (let xx = 0; xx < W; xx++) if (m[yy * W + xx]) { bl = Math.min(bl, xx); br = Math.max(br, xx); }
+      for (let yy = H - 3; yy < H; yy++) for (let xx = bl; xx <= br; xx++) m[yy * W + xx] = 1;
+    }
     // fill interior holes: anything the outside background can't reach is inside the hand
     const out = new Uint8Array(W * H);
     const st = [];
@@ -122,7 +129,7 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
           if (!out[j] && !m[j] && !holeLab[j]) { holeLab[j] = hl; hs.push(j); }
         }
       }
-      if (pix.length < 2500) pix.forEach((k) => (m[k] = 1));
+      if (pix.length < 2500 || NAME === 'head') pix.forEach((k) => (m[k] = 1)); // the head has no real interior gaps
       hl++;
     }
     let area = 0;
@@ -135,8 +142,8 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
         bx0 = Math.min(bx0, xx); bx1 = Math.max(bx1, xx); by0 = Math.min(by0, yy); by1 = Math.max(by1, yy);
       }
     }
-    if (NAME === 'head' && (bx1 - bx0 > 760 || by1 - by0 < 500 || by0 > 400)) {
-      process.stdout.write(` [skip f${f} implausible head bbox]`);
+    if (NAME === 'head' && (bx1 - bx0 > 830 || by1 - by0 < 500 || by0 > 400)) {
+      process.stdout.write(` [skip f${f} implausible head bbox ${bx0},${by0}-${bx1},${by1}]`);
       continue;
     }
     if (area < (NAME === 'hand' && t > 15.5 ? 6000 : 20000)) {
@@ -168,15 +175,22 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
         const r = d[i * 4];
         const g = d[i * 4 + 1];
         const b = d[i * 4 + 2];
-        cur[i] = !darkOnLight && m[i] && (r + g + b) / 3 > 200 && Math.max(r, g, b) - Math.min(r, g, b) < 80 ? 1 : 0;
+        // white-hot shirt on a dark wall, or the greyer shirt once the wall turns mauve
+        const av = (r + g + b) / 3;
+        const sat = Math.max(r, g, b) - Math.min(r, g, b);
+        cur[i] = !darkOnLight && m[i] && ((av > 200 && sat < 80) || (av > 100 && sat < 45)) ? 1 : 0;
         n += cur[i];
         if (lastHot) nLast += lastHot[i];
       }
       const use = lastHot && n < 0.6 * nLast ? lastHot : cur;
       if (use === cur && n > 5000) lastHot = cur;
+      // on the dark wall the heat is graded: in the iron palette green rises steadily with heat,
+      // so the yellow fringe around the white-hot shirt comes through as partial heat
+      const graded = !darkOnLight && t < 5.92;
       for (let i = 0; i < W * H; i++) {
         hi.data[i * 4] = hi.data[i * 4 + 1] = hi.data[i * 4 + 2] = 255;
-        hi.data[i * 4 + 3] = use[i] ? 255 : 0;
+        const gr = graded && m[i] ? Math.max(0, Math.min(1, (d[i * 4 + 1] - 130) / 110)) : 0;
+        hi.data[i * 4 + 3] = Math.round(255 * Math.max(gr, use[i] && (!graded || t >= 5.6) ? 1 : 0));
       }
       mx2.putImageData(hi, 0, 0);
       sx.clearRect(0, 0, W, H);

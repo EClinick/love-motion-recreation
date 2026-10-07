@@ -43,7 +43,9 @@ Judge scores out of 10 for the three sections (0–7.25 s / 7.5–14.75 s / 15�
 | v12 | 7.0 | 8.0 | 8.2 | Head colour matched by measurement |
 | v14 | 6.8 | 7.9 | 8.4 | Hand rotoscoped from the source (IoU 0.95–0.96) |
 | v15 | 6.5 | 6.0 | 5.0 | Head rotoscoped; every section re-matched to exact frames (stricter judging, see below) |
-| v16 | – | – | – | Head shading, traced pen ink and hand tone, red camera flash (not judged yet) |
+| v16 | 6.0 | 6.0 | 7.5 | Head shading, traced pen ink and hand tone, red camera flash |
+| v17 | 7.0 | 7.0 | 8.0 | Redrawn sprites, ring re-fit, measured pen marks |
+| **v18** | **7.5** | **7.0** | **8.5** | **Source-grid sprites, traced pen and brush ink, graded shirt heat** |
 
 From v15 on, the judges compare larger reference/render pairs of the exact same frame, which is much stricter than the earlier contact sheets: re-judged that way, v14 scores 5.0 / 5.5 / 5.5. Earlier sheets were also shifted by 0.1–0.2 s, which is now fixed.
 
