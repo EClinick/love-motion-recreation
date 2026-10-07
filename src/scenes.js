@@ -2127,6 +2127,26 @@ const arcPts = (cx, cy, rx, ry, a0, a1, rot = 0) =>
   });
 
 function sceneScatter(ctx, t, f) {
+  if (t >= 13.75) {
+    // frame 330: the icons collapse into a tight cluster on black around a small white glow
+    fx.dark(ctx, '#121111');
+    const g = ctx.createRadialGradient(702, 486, 0, 702, 486, 170);
+    g.addColorStop(0, 'rgba(250,248,244,0.95)');
+    g.addColorStop(0.45, 'rgba(230,228,224,0.5)');
+    g.addColorStop(1, 'rgba(230,228,224,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.filter = `blur(${3 * S}px)`;
+    ctx.fillStyle = '#0d0c0c';
+    ctx.beginPath();
+    ctx.ellipse(846, 830, 70, 90, 0, 0, 7);
+    ctx.fill();
+    ctx.restore();
+    [['plant', 594, 205, 150, 0], ['cap', 590, 300, 150, -0.2], ['clapper', 740, 300, 210, 0], ['vinyl', 915, 430, 200, 0], ['controller', 640, 630, 250, 0], ['camera', 850, 640, 190, 0], ['book', 830, 720, 180, -0.25]].forEach(([n, a, b, w, r]) => drawSprite(ctx, n, a, b, w, r));
+    fx.text(ctx, 'through', 260, 545, BODY, CREAM, { glow: 'rgba(243,239,232,0.3)', glowBlur: 6 });
+    return;
+  }
   ctx.fillStyle = '#ededed';
   ctx.fillRect(0, 0, W, H);
   const spin = inv(11.85, 12.03, t);
@@ -3437,8 +3457,8 @@ const TIMELINE = [
   [9.84, 10.51, sceneIntention],
   [10.51, 11.01, sceneStripB],
   [11.01, 11.85, sceneCuriosity],
-  [11.85, 13.76, sceneScatter],
-  [13.76, 15.89, sceneHand],
+  [11.85, 13.78, sceneScatter],
+  [13.78, 15.89, sceneHand],
   [15.89, 17.2, sceneLove],
   [17.2, 99, sceneFinale],
 ];
