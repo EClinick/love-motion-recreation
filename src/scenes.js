@@ -123,7 +123,7 @@ function pixelText(ctx, str, x, base, size, block, color, opts = {}) {
   const h = Math.ceil(fs * 1.4);
   const c = createCanvas(w * q, h * q);
   const cx = c.getContext('2d');
-  fx.text(cx, str, 2 * q, Math.round(fs * 1.05 * q), fs * q, '#000', { baseline: 'alphabetic', tracking: opts.tracking ?? 0.02 });
+  fx.text(cx, str, 2 * q, Math.round(fs * 1.05 * q), fs * q, '#000', { baseline: 'alphabetic', tracking: opts.tracking ?? 0.02, weight: opts.weight ?? 900 });
   const d = cx.getImageData(0, 0, w * q, h * q).data;
   ctx.save();
   ctx.fillStyle = color;
@@ -196,13 +196,15 @@ function sceneOpen(ctx, t, f) {
   if (t >= 0.48) {
     // the line collapses: chunky pixel type, tiny blurred pixel type, then dashes
     if (t < 0.521) {
-      pixelText(ctx, 'do.you.communicate', 0, 626, 300, 28, '#141010', { thr: 85, tracking: 0.03, sy: 1.12 });
+      // the dashed baseline is still there under the pixel type
+      dashLine(ctx, -40, 1500, 616, '#6a2a14', 3, [26, 20]);
+      pixelText(ctx, 'do.you.communicate', 0, 610, 300, 18, '#141010', { thr: 120, tracking: 0.04, sy: 1.05, weight: 900 });
     } else if (t < 0.563) {
       const [c, x] = off(0);
       pixelText(x, 'how.do.you.communicate', 220, 552, 52, 11, '#1e1a1a', { thr: 105 });
       x.fillStyle = '#141010';
       x.fillRect(640, 536, 160, 12);
-      composite(ctx, c, { blur: 4 });
+      composite(ctx, c, { blur: 9 });
     } else {
       const k = t < 0.605 ? 0 : t < 0.646 ? 1 : 2;
       const [c, x] = off(0);
