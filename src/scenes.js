@@ -2117,7 +2117,7 @@ function sceneLove(ctx, t, f) {
       return;
     }
     const w = kf(t, [[15.91, 280], [16.08, 292], [16.14, 337, 'inQuad'], [16.19, 460, 'inQuad']]);
-    const crush = inv(16.08, 16.16, t);
+    const crush = inv(16.11, 16.17, t);
     if (crush > 0) {
       fx.vignette(ctx, crush * 0.97, '28,26,26', lerp(0.6, 0.12, crush), W / 2, H / 2, 0.6);
       fx.grain(ctx, f + 1, 0.3 * crush);
@@ -2184,7 +2184,7 @@ function sceneLove(ctx, t, f) {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
     }
-    drawSprite(ctx, 'vinyl', 729, 540, lerp(270, 290, q), 0, 1, { sx: lerp(0.18, 1, q), shadow: 'rgba(220,220,235,0.25)', shadowBlur: 18 });
+    drawSprite(ctx, 'vinyl', 729, 540, lerp(270, 290, q), 0, 1, { sx: lerp(0.18, 1, q) });
     const lo = CREAM;
     letter(ctx, 'L', LX[0], LY, LSIZE, lo);
     letter(ctx, 'O', LX[1], LY, LSIZE, lo);
@@ -2386,7 +2386,7 @@ function sceneFinale(ctx, t, f) {
   ctx.fillStyle = '#dededd';
   ctx.fillRect(0, 0, W, H);
   const gg = ctx.createLinearGradient(0, 0, W, H);
-  gg.addColorStop(0, 'rgba(255,255,255,0.12)');
+  gg.addColorStop(0, 'rgba(255,255,255,0.2)');
   gg.addColorStop(1, 'rgba(120,120,135,0.18)');
   ctx.fillStyle = gg;
   ctx.fillRect(0, 0, W, H);
