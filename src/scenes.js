@@ -3620,15 +3620,20 @@ function sceneLove(ctx, t, f) {
       ctx.fillRect(0, 0, W, H);
     }
     // measured per frame (403-410): disc height and width/height as it turns to face camera
-    const dh = kf(t, [[16.809, 140], [16.85, 221], [16.892, 240], [16.934, 250], [16.975, 255], [17.017, 257], [17.059, 258], [17.1, 262]]);
-    const dsx = kf(t, [[16.809, 0.35], [16.85, 0.48], [16.892, 0.75], [16.934, 0.86], [16.975, 0.91], [17.017, 0.92], [17.059, 0.96], [17.1, 1]]);
+    // re-fitted (v18) to the measured disc boxes with the current sprite: round from about 16.975 s
+    const dh = 0.957 * kf(t, [[16.809, 150], [16.85, 237.6], [16.892, 251], [16.934, 257.4], [16.975, 255], [17.017, 257], [17.059, 258], [17.1, 262]]);
+    const dsx = kf(t, [[16.809, 0.35], [16.85, 0.5], [16.892, 0.764], [16.934, 0.911], [16.975, 0.98], [17.017, 1], [17.1, 1]]);
     void q;
-    drawSprite(ctx, 'vinyl', 724, 537, dh / 0.748, 0, 1, { sx: dsx });
+    // measured: the record reads ~13% darker than the sprite (disc #34373f, label #c1323f)
+    const [vc, vx] = off(6);
+    const vcx = kf(t, [[16.85, 731], [16.892, 734], [16.934, 731.5], [16.975, 727], [17.017, 724]]);
+    drawSprite(vx, 'vinyl', vcx, 537, dh / 0.748, 0, 1, { sx: dsx });
+    composite(ctx, vc, { filter: 'brightness(0.87)' });
     if (t > 16.9) {
       // white sparkle on the label
       ctx.save();
       ctx.fillStyle = 'rgba(255,255,255,0.95)';
-      fx.starPath(ctx, 724, 537, 11, 0, 0.12);
+      fx.starPath(ctx, vcx, 537, 11, 0, 0.12);
       ctx.fill();
       ctx.restore();
     }
