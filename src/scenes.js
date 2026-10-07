@@ -2386,6 +2386,25 @@ const arcPts = (cx, cy, rx, ry, a0, a1, rot = 0) =>
     return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
   });
 
+// Catmull-Rom through traced points, so tapered brush strokes curve smoothly
+function smoothPts(pts, k = 10) {
+  const out = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    for (let j = 0; j < k; j++) {
+      const u = j / k;
+      const u2 = u * u;
+      const u3 = u2 * u;
+      out.push([0, 1].map((d) => 0.5 * (2 * p1[d] + (-p0[d] + p2[d]) * u + (2 * p0[d] - 5 * p1[d] + 4 * p2[d] - p3[d]) * u2 + (-p0[d] + 3 * p1[d] - 3 * p2[d] + p3[d]) * u3)));
+    }
+  }
+  out.push(pts[pts.length - 1]);
+  return out;
+}
+
 function sceneScatter(ctx, t, f) {
   if (t >= 13.75) {
     // frame 330: the icons collapse into a tight cluster on black around a small white glow
@@ -2441,7 +2460,8 @@ function sceneScatter(ctx, t, f) {
       }
       if (it.name === 'plant') {
         // tucked behind the clapper, then slides out to its left
-        const m = kf(t, [[13.5, [0, 0]], [13.68, [-120, -10]]]);
+        // (mostly hidden behind the clapper first: only a sliver of leaves shows in the source)
+        const m = kf(t, [[12.85, [0, 0]], [13.0, [0, 32]], [13.5, [0, 32]], [13.68, [-120, -10]]]);
         px += m[0];
         py += m[1];
       }
@@ -2469,6 +2489,7 @@ function sceneScatter(ctx, t, f) {
         heartAt = [px, py, w, r];
         return; // drawn last, over the text
       }
+      if (sil && it.name === 'heart') drawSprite(x, 'heart', px, py, w * 1.06, r, 1, { silhouette: '#b81c26' }); // thin red rim
       drawSprite(x, it.name, px, py, w, r, 1, sil ? { silhouette: '#121010' } : {});
     });
   if (t < 12.45) {
@@ -2476,28 +2497,10 @@ function sceneScatter(ctx, t, f) {
     const fr = Math.round(t * C.FPS);
     if (fr >= 286 && fr <= 289) {
       // frames 286-289: curved brush strokes whipping around the ring (traced from the source)
-      // Catmull-Rom through the traced points, so the tapered stroke curves smoothly
-      const curve = (pts, k = 10) => {
-        const out = [];
-        for (let i = 0; i < pts.length - 1; i++) {
-          const p0 = pts[Math.max(0, i - 1)];
-          const p1 = pts[i];
-          const p2 = pts[i + 1];
-          const p3 = pts[Math.min(pts.length - 1, i + 2)];
-          for (let j = 0; j < k; j++) {
-            const u = j / k;
-            const u2 = u * u;
-            const u3 = u2 * u;
-            out.push([0, 1].map((d) => 0.5 * (2 * p1[d] + (-p0[d] + p2[d]) * u + (2 * p0[d] - 5 * p1[d] + 4 * p2[d] - p3[d]) * u2 + (-p0[d] + 3 * p1[d] - 3 * p2[d] + p3[d]) * u3)));
-          }
-        }
-        out.push(pts[pts.length - 1]);
-        return out;
-      };
       const brush = (pts, w, col, blur = 0) => {
         x.save();
         if (blur) x.filter = `blur(${blur * S}px)`;
-        fx.strokePartial(x, curve(pts), 0, 1, w * 2, col, true);
+        fx.strokePartial(x, smoothPts(pts), 0, 1, w * 2, col, true);
         x.restore();
       };
       if (fr === 286) {
@@ -2530,6 +2533,17 @@ function sceneScatter(ctx, t, f) {
       sprayBlob(x, bx, by, t < 12.11 ? 54 : 40, 3, 0.95);
       x.restore();
     }
+  }
+  if (Math.round(t * C.FPS) === 306) {
+    // frame 306: three soft smoke strokes curling up from the smeared skateboard (traced)
+    x.save();
+    x.filter = `blur(${3 * S}px)`;
+    [
+      [[237, 284], [280, 305], [318, 342], [350, 395], [381, 450]],
+      [[381, 135], [430, 170], [453, 216], [430, 280], [417, 342], [426, 450]],
+      [[444, 360], [500, 325], [552, 306], [630, 288], [705, 279]],
+    ].forEach((pts) => fx.strokePartial(x, smoothPts(pts), 0, 1, 14, '#161414', true));
+    x.restore();
   }
   if (t > 12.93) {
     // the blot drops from the top right onto the coin and swallows it
@@ -2618,17 +2632,13 @@ function sceneScatter(ctx, t, f) {
     if (t > a && t < d) ribbon(x, pts, inv(c2, d, t), inv(a, b, t), 20);
   });
   if (t > 12.95) {
-    x.fillStyle = '#141212';
-    [[1320, 510, 0.5], [1245, 605, -0.4], [675, 715, 0.9]].forEach(([a, b, r]) => {
+    // small reddish-brown flecks scattered around (measured at 13.5 s), not black shards
+    [[90, 124, 0.4], [169, 551, -0.6], [293, 585, 1.1], [743, 315, 0.2], [743, 698, -1.0], [1294, 518, 0.7], [596, 1013, -0.3], [1320, 510, 0.5], [1245, 605, -0.4]].forEach(([a, b, r], i) => {
       x.save();
       x.translate(a, b);
       x.rotate(r);
-      x.beginPath();
-      x.moveTo(-14, -4);
-      x.lineTo(16, -2);
-      x.lineTo(-4, 9);
-      x.closePath();
-      x.fill();
+      x.fillStyle = i % 3 === 0 ? '#3a1612' : '#6a2a1e';
+      x.fillRect(-4, -1.5, 8 + (i % 3) * 2, 3);
       x.restore();
     });
   }
@@ -2653,6 +2663,7 @@ function sceneScatter(ctx, t, f) {
     // heartAt is already orbited; apply the layer zoom
     const sx0 = hx + kf(t, [[12.25, 0], [12.4, 30]]);
     const sy0 = hy;
+    drawSprite(x, 'heart', lerp(sx0, tgt[0], k), lerp(sy0, tgt[1], k), hw * 1.06, hr, 1, { silhouette: '#b81c26' });
     drawSprite(x, 'heart', lerp(sx0, tgt[0], k), lerp(sy0, tgt[1], k), hw, hr, 1, { silhouette: '#121010' });
     x.restore();
   }
