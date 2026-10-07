@@ -124,6 +124,30 @@ test('actual prompts lead, remain chronological, and precede the AI explanation'
   assert.match(html, /not a finished v17/);
 });
 
+test('walkthrough uses genuine pinned v18 media without replacing the original reference', () => {
+  const { createHash } = require('node:crypto');
+  const html = read(path.join(root, 'site', 'how-we-made-this.html'));
+  const prefix = '../media/how-we-made-this/v18/';
+  assert.match(html, /<video[^>]+aria-label="Archived v18 original reference versus Claude recreation"[^>]+src="\.\.\/media\/how-we-made-this\/v18\/sidebyside\.mp4"/);
+  assert.ok(html.includes(`src="${prefix}pair_030.jpg" width="1600" height="600"`));
+  assert.ok(html.includes('href="../media/original/original.mp4">Watch the original reference'));
+  assert.match(html, /do not extend the prompt snapshot/);
+  assert.doesNotMatch(html, /(?:src|href)="[^"\n]*(?:v14|v16)[^"\n]*\.(?:mp4|png|jpg)"/);
+  // Git blob hashes verified against the pinned upstream archive, not re-encoded copies.
+  const expected = {
+    'media/how-we-made-this/v18/sidebyside.mp4': 'a1658642350a640d2728f994f2602b15ec69c2c1',
+    'media/how-we-made-this/v18/pair_030.jpg': 'fbf72335faca86065d8683353ba2760f433c88d0',
+    'media/original/original.mp4': '1f5968622259667dbd890809c4a1889b0564548d'
+  };
+  for (const [file, hash] of Object.entries(expected)) {
+    for (const directory of [root, dist]) {
+      const bytes = fs.readFileSync(path.join(directory, file));
+      const actual = createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+      assert.equal(actual, hash, `${directory}: ${file}`);
+    }
+  }
+});
+
 test('shared theme persists and also works when storage is denied', () => {
   function boot(saved, denied = false) {
     const attrs = new Map();

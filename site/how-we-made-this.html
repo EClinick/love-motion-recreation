@@ -127,7 +127,7 @@
           <blockquote>okay if it's opus still for implementation, I okay with that</blockquote>
         </li>
       </ol>
-      <p class="note cutoff">The snapshot ends here, while v17 was still in progress. The showcase accompanying this page contains v1–v16, not a finished v17.</p>
+      <p class="note cutoff">The prompt snapshot ends here, while v17 was still in progress. Its archive checkpoint was v1–v16, not a finished v17. The v18 comparison shown below was archived later.</p>
     </section>
 
     <section class="response" id="workflow" aria-labelledby="workflow-title">
@@ -139,18 +139,18 @@
           <div><dt>It built a renderer, not a one-shot generated video.</dt><dd>Claude used <code>ffprobe</code> to inspect the 2880×2160, 24000/1001 fps source and <code>ffmpeg</code> to extract contact sheets and stills. After a browser-renderer test failed on a missing library, it used <code>@napi-rs/canvas</code> to draw <a href="https://github.com/EClinick/love-motion-recreation/blob/main/src/scenes.js">14 time-based shots</a>. <a href="https://github.com/EClinick/love-motion-recreation/blob/main/src/render.js">Node workers and ffmpeg</a> rendered frames, encoded video and added the MP3 soundtrack.</dd></div>
           <div><dt>It rendered, asked critics, and revised.</dt><dd>Three read-only Sonnet critics reviewed the opening, middle and finale against comparison images. Their discrepancy lists drove changes to type, timing, icons, silhouettes and colour, followed by new renders. The <a href="index.html#versions">version archive</a> keeps those iterations visible; critic scores are not proof of an identical match.</dd></div>
           <div><dt>The human hand feedback changed the method.</dt><dd>After the request to <a href="#prompt-measure">compare shapes programmatically</a>, Claude wrote <a href="https://github.com/EClinick/love-motion-recreation/blob/main/scripts/shape-compare.js">silhouette measurements and overlays</a>. When the hand still looked wrong and the user <a href="#prompt-trace">asked it to trace the frames</a>, it added <a href="https://github.com/EClinick/love-motion-recreation/blob/main/scripts/trace-hand.js">source-derived hand masks</a> and shaded them in code. Later iterations also used traced head masks, pen ink and hand tone maps. “From scratch” did not remain “every shape drawn independently of the source.”</dd></div>
-          <div><dt>It turned the iterations into this archive.</dt><dd>The website work added version history, side-by-side videos, scores and comparison sheets. Early overwritten previews were rebuilt from commits. Following the <a href="#prompt-archive">packaging instruction</a>, web encodes and metadata were committed under <a href="https://github.com/EClinick/love-motion-recreation/blob/main/media/README.md"><code>media/</code></a>. The named “final” export is v14; v16 is the latest archived iteration here.</dd></div>
+          <div><dt>It turned the iterations into this archive.</dt><dd>The website work added version history, side-by-side videos, scores and comparison sheets. Early overwritten previews were rebuilt from commits. Following the <a href="#prompt-archive">packaging instruction</a>, web encodes and metadata were committed under <a href="https://github.com/EClinick/love-motion-recreation/blob/main/media/README.md"><code>media/</code></a>. The named “final” export is v14. The session checkpoint covered v1–v16; the comparison below shows the later v18 result.</dd></div>
         </dl>
       </div>
       <div class="evidence-grid">
         <figure class="card">
           <div class="media-heading"><h3>What that produced</h3><p id="motion-note">Motion warning: fast cuts and flashing imagery. Playback is opt-in.</p></div>
-          <video controls playsinline preload="none" aria-label="Archived v14 reference versus recreation" aria-describedby="motion-note video-caption" src="../media/final/claude_v14_sidebyside.mp4"></video>
-          <figcaption id="video-caption"><b>v14 · reference left, Claude right.</b> The archived final comparison still has visible shape, shading and motion differences. <a href="../media/versions/v01/sidebyside.mp4">Watch the first archived version</a> or <a href="index.html#cmp">compare versions in the showcase</a>.</figcaption>
+          <video controls playsinline preload="none" aria-label="Archived v18 original reference versus Claude recreation" aria-describedby="motion-note video-caption" src="../media/how-we-made-this/v18/sidebyside.mp4"></video>
+          <figcaption id="video-caption"><b>v18 · original reference left, Claude recreation right.</b> This later iteration replaces the older v14 comparison on this page, not the original source. Shape, shading and motion differences remain. <a href="../media/original/original.mp4">Watch the original reference</a> or <a href="index.html#cmp">compare earlier versions in the showcase</a>.</figcaption>
         </figure>
         <figure class="card">
-          <a href="../media/versions/v14/extras/overlay_14.6.png" aria-label="Open full-size v14 hand silhouette overlay"><img class="overlay" loading="lazy" src="../media/versions/v14/extras/overlay_14.6.png" width="1440" height="1080" alt="Hand silhouette overlay at 14.6 seconds: cyan outlines the source and red outlines the recreation, with small edge differences."></a>
-          <figcaption><b>The traced hand, measured.</b> Selected v14 frames reached about 0.95–0.96 intersection-over-union: shared silhouette area divided by combined area. This measures outline overlap, not colour, motion or whole-video fidelity.</figcaption>
+          <a href="../media/how-we-made-this/v18/pair_030.jpg" aria-label="Open full-size v18 hand comparison"><img loading="lazy" src="../media/how-we-made-this/v18/pair_030.jpg" width="1600" height="600" alt="v18 hand comparison: original reference on the left and Claude recreation on the right, both labelled 14.514500 seconds, with visible colour and texture differences."></a>
+          <figcaption><b>v18 · the hand, side by side.</b> An unchanged still from the later, index-aligned v18 archive. This is a visual comparison, not the older v14 silhouette overlay or a whole-video fidelity score. <a href="https://github.com/EClinick/love-motion-recreation/blob/d2546690bbaf3dcdf1c8fe79079ac10dac31de70/media/versions/v18/meta.json">Check the v18 provenance.</a></figcaption>
         </figure>
       </div>
 
@@ -158,12 +158,12 @@
         <aside class="callout" id="lessons" aria-labelledby="lessons-title">
           <h3 id="lessons-title">“Make it identical” was the request, not the result.</h3>
           <p>The session also found mistakes in its own comparison tools: some reference/render images paired different frames, creating misleading timing critiques. Later corrections selected and paired frames by index and re-ran the judges.</p>
-          <p><b>Archive caveat:</b> the historical sheets and v15/v16 pairs here predate that correction. Their scores also span changing judging criteria, so they are not a consistent benchmark. A failed render once left an older preview behind, too. Check frame alignment and output freshness before trusting a critique.</p>
+          <p><b>Archive caveat:</b> the historical sheets and v15/v16 pairs in the showcase predate that correction; they are not the later v18 comparison shown above. Historical scores also span changing judging criteria, so they are not a consistent benchmark. A failed render once left an older preview behind, too. Check frame alignment and output freshness before trusting a critique.</p>
         </aside>
 
         <details id="try-it" class="reproduce">
           <summary>Run this repository yourself</summary>
-          <p class="note">These are present-day instructions for the checked-in code, not prompts or a historical command transcript. Run them from the repository root in your own checkout.</p>
+          <p class="note">These are instructions for the checked-in code, not prompts, a historical command transcript or a guarantee of reproducing the later v18 render. Run them from the repository root in your own checkout.</p>
           <h3>Just browse the website</h3>
           <p>A current Node.js LTS release and npm are enough. The committed media needs no model account, ffmpeg, font download or npm dependency install for this route.</p>
           <div class="snippet"><div class="snippet-header"><span>Repository root · shell</span><button class="copy" type="button" data-copy="site-commands" aria-label="Copy website commands" hidden>Copy</button></div><pre><code id="site-commands">npm run site:build
@@ -205,6 +205,7 @@ ffmpeg -v error -y -i out/reference-120.png \
         <section class="provenance" id="sources" aria-labelledby="sources-title">
           <h3 id="sources-title">About this record</h3>
           <p>Checked against a read-only snapshot of the project’s Claude Code session through <time datetime="2026-10-07T15:36:40Z">7 October 2026, 15:36 UTC</time>, and the committed v1–v16 archive. Queued human instructions and the answer to Claude’s hand-source question are included; automated notifications and AI-generated conversation summaries are not treated as human prompts.</p>
+          <p>The displayed video and hand still were added from the later v18 archive, whose metadata identifies render commit <a href="https://github.com/EClinick/love-motion-recreation/commit/fda013a">fda013a</a>. They are copied unchanged from <a href="https://github.com/EClinick/love-motion-recreation/tree/d2546690bbaf3dcdf1c8fe79079ac10dac31de70/media/versions/v18">this pinned archive revision</a>; they do not extend the prompt snapshot or imply that it contains the v18 instructions.</p>
           <p>Private paths, session identifiers, raw transcripts, unrelated conversation and internal reasoning are not published. The code and commands are available to try, but neither bit-for-bit reproduction nor a perfect visual match is promised.</p>
           <p><a href="https://github.com/EClinick/love-motion-recreation">Source repository</a> · <a href="https://github.com/EClinick/love-motion-recreation/blob/main/media/README.md">Media and version notes</a> · <a href="index.html#versions">Explore every archived version</a></p>
         </section>
