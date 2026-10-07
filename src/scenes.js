@@ -3851,9 +3851,11 @@ const PEN_FRAMES = {
 // alpha at 1440x1080). Shapes come from the user's own frames; the colour is the measured pen red.
 const PEN_DIR = pathMod.join(__dirname, '..', 'ref', 'derived', 'pen');
 const penCache = new Map();
-function penMatte(fr) {
-  if (penCache.has(fr)) return penCache.get(fr);
-  const file = pathMod.join(PEN_DIR, `p_${String(fr).padStart(4, '0')}.bin`);
+function penMatte(fr, kind = 'p') {
+  const key = kind + fr;
+  if (penCache.has(key)) return penCache.get(key);
+  const file = pathMod.join(PEN_DIR, `${kind}_${String(fr).padStart(4, '0')}.bin`);
+  const [cr, cg, cb] = kind === 'k' ? [26, 18, 17] : [214, 72, 56];
   let c = null;
   if (fsMod.existsSync(file)) {
     const a = require('zlib').gunzipSync(fsMod.readFileSync(file));
@@ -3862,15 +3864,15 @@ function penMatte(fr) {
     const id = x.createImageData(W, H);
     for (let i = 0; i < W * H; i++) {
       // measured pen core (214, 72, 56); the matte's soft edges read light, so lift them a little
-      id.data[i * 4] = 214;
-      id.data[i * 4 + 1] = 72;
-      id.data[i * 4 + 2] = 56;
-      id.data[i * 4 + 3] = Math.min(255, a[i] * 1.25);
+      id.data[i * 4] = cr;
+      id.data[i * 4 + 1] = cg;
+      id.data[i * 4 + 2] = cb;
+      id.data[i * 4 + 3] = kind === 'k' ? a[i] : Math.min(255, a[i] * 1.25);
     }
     x.putImageData(id, 0, 0);
   }
   if (penCache.size > 4) penCache.delete(penCache.keys().next().value);
-  penCache.set(fr, c);
+  penCache.set(key, c);
   return c;
 }
 function finalePetals(ctx, t, pos) {
@@ -3944,7 +3946,10 @@ function sceneFinale(ctx, t, f) {
   const fr = Math.round(t * C.FPS);
   const pen = penMatte(fr);
   if (t >= 20.29) {
-    finaleCollapse(ctx, !!pen);
+    // last frame: the collapsed black letter block and ink hooks are traced from the source
+    const ink = penMatte(fr, 'k');
+    if (ink) ctx.drawImage(ink, 0, 0, W, H);
+    else finaleCollapse(ctx, !!pen);
     if (pen) ctx.drawImage(pen, 0, 0, W, H);
     return;
   }
