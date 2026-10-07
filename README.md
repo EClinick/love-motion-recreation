@@ -41,7 +41,10 @@ Judge scores out of 10 for the three sections (0–7.25 s / 7.5–14.75 s / 15�
 | v8 | 6.8 | 7.8 | 7.6 | Rebuilt head, hand and film grain |
 | v10 | 7.0 | 7.9 | 8.0 | Measured silhouette fitting (head IoU 0.82) |
 | v12 | 7.0 | 8.0 | 8.2 | Head colour matched by measurement |
-| **v14** | **6.8** | **7.9** | **8.4** | **Hand rotoscoped from the source (IoU 0.95–0.96)** |
+| v14 | 6.8 | 7.9 | 8.4 | Hand rotoscoped from the source (IoU 0.95–0.96) |
+| v15 | 6.5 | 6.0 | 5.0 | Head rotoscoped; every section re-matched to exact frames (stricter judging, see below) |
+
+From v15 on, the judges compare larger reference/render pairs of the exact same frame, which is much stricter than the earlier contact sheets: re-judged that way, v14 scores 5.0 / 5.5 / 5.5. Earlier sheets were also shifted by 0.1–0.2 s, which is now fixed.
 
 The full table, with every version's files, is in [`media/README.md`](media/README.md).
 

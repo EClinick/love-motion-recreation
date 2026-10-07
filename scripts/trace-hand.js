@@ -73,7 +73,8 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       const b = d[i * 4 + 2];
       const mx = Math.max(r, g, b);
       const mn = Math.min(r, g, b);
-      const warm = mx > 70 && mx - mn > 45;
+      // the head has a dim red glow in front of the face: only count properly lit pixels
+      const warm = NAME === 'head' ? mx > 140 && mx - mn > 60 : mx > 70 && mx - mn > 45;
       const cream = mx > 170 && r >= b && mx - mn > 18; // pale lit skin (text is greyer)
       const white = NAME === 'head' && (r + g + b) / 3 > 150; // blown-out shirt / shoulder
       // hand: the white-lit thumb (14.1-14.35 s); skip the typing-cursor block to its right
@@ -152,7 +153,7 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
     mx2.putImageData(mi, 0, 0);
     const sm = createCanvas(W, H);
     const sx = sm.getContext('2d');
-    sx.filter = 'blur(2.5px)';
+    sx.filter = NAME === 'head' ? 'blur(1.2px)' : 'blur(2.5px)'; // keep the head's curls crisp
     sx.drawImage(mc, 0, 0);
     fs.writeFileSync(path.join(outDir, `f_${String(f).padStart(4, '0')}.png`), sm.toBuffer('image/png'));
     if (NAME === 'head') {

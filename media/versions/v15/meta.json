@@ -1,0 +1,36 @@
+{
+  "id": "iter15",
+  "label": "v15",
+  "hash": "ae94953",
+  "subject": "Iteration 15: traced head, frame-matched sections, aligned judge tooling",
+  "commit_date": "2026-10-06T22:02:13-07:00",
+  "dirty": false,
+  "changelog": [
+    "Head rotoscoped from the source every frame: thermal colormap, white-hot shirt, measured fade, ghost plates, burn-through",
+    "Opening, icon ring, middle and hand/finale rebuilt against exact source frames by three parallel workers",
+    "Judge pairs and contact sheets now select by frame index (earlier sheets were shifted ~0.1-0.2 s)"
+  ],
+  "note": "Head rotoscoped; every section re-timed and re-measured against exact source frames. Judged on larger exact-frame pairs, which score lower than the old contact-sheet judging.",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 12848578,
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 29260628,
+  "sheets": [
+    "media/versions/v15/sheets/sheet_01.jpg",
+    "media/versions/v15/sheets/sheet_02.jpg",
+    "media/versions/v15/sheets/sheet_03.jpg",
+    "media/versions/v15/sheets/sheet_04.jpg",
+    "media/versions/v15/sheets/sheet_05.jpg",
+    "media/versions/v15/sheets/sheet_06.jpg",
+    "media/versions/v15/sheets/sheet_07.jpg",
+    "media/versions/v15/sheets/sheet_08.jpg",
+    "media/versions/v15/sheets/sheet_09.jpg"
+  ],
+  "scores": [
+    6.5,
+    6.0,
+    5.0
+  ],
+  "extras": []
+}

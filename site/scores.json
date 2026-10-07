@@ -1,8 +1,8 @@
 {
   "sections": [
-    "0 – 7.25 s",
-    "7.5 – 14.75 s",
-    "15 – 20.4 s"
+    "0 \u2013 7.25 s",
+    "7.5 \u2013 14.75 s",
+    "15 \u2013 20.4 s"
   ],
   "rounds": [
     {
@@ -100,6 +100,15 @@
         8.0,
         8.2
       ]
+    },
+    {
+      "round": 15,
+      "scores": [
+        6.5,
+        6.0,
+        5.0
+      ],
+      "method": "exact-frame pairs (stricter than rounds 1-14)"
     }
   ],
   "pending": "Iteration 6 (final consolidated fixes) applied after round 5; 4K final render in progress"
