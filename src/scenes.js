@@ -1077,7 +1077,7 @@ function typed(ctx, word, t0, t, x, y, curX, hold = 0) {
   const slide = 36 * (1 - ease.outCubic(inv(t0 + 0.05, t0 + 0.3 + hold, t)));
   x -= slide;
   curX -= slide * 0.3;
-  fx.text(ctx, word, x, y, CARD, CREAM, { blur: p < 0.3 && !hold ? 2.5 : 0, glow: 'rgba(243,239,232,0.35)', glowBlur: 6 });
+  fx.text(ctx, word, x, y, CARD, CREAM, { blur: p < 0.3 && !hold ? 2.5 : 0.8, glow: 'rgba(243,239,232,0.35)', glowBlur: 6 });
   // trailing block shrinks into the caret, which stays bright
   // block collapses to a fat caret, holds, then thins
   const cw = lerp(lerp(120, 30, ease.outCubic(p)), 12, ease.inOutQuad(inv(t0 + 0.32 + hold, t0 + 0.55 + hold, t)));
@@ -1420,7 +1420,7 @@ function sceneCuriosity(ctx, t, f) {
   ctx.save();
   const vin = ease.outBack(inv(11.01, 11.15, t));
   const vx = kf(t, [[11.01, 500], [11.08, 496], [11.25, 430, 'outCubic'], [11.6, 410], [11.81, 250, 'inQuad']]);
-  drawSprite(ctx, 'vinyl', vx, 545, 400 * lerp(0.85, 1, vin), noise1(t, 9) * 0.05);
+  drawSprite(ctx, 'vinyl', vx, 545, 400 * lerp(0.85, 1, vin), noise1(t, 9) * 0.05 - 1.5 * Math.max(0, t - 11.26));
   if (t < 11.16) {
     const q = inv(11.01, 11.16, t);
     const drift = q * 40;
@@ -1441,7 +1441,7 @@ function sceneCuriosity(ctx, t, f) {
   }
   const pop = (t0) => ease.outBack(inv(t0, t0 + 0.12, t), 2.2);
   const nd = ease.inQuad(inv(11.6, 11.81, t));
-  if (t > 11.1) note(ctx, 'quarter', 1044 - 130 * nd, 800, pop(11.1) * 1.7, 0.12 - 0.9 * nd + noise1(t, 1) * 0.08);
+  if (t > 11.1) note(ctx, 'quarter', 1044 - 130 * nd, 800, pop(11.1) * 1.7, -0.33 - 0.3 * nd + noise1(t, 1) * 0.08);
   if (t > 11.35) note(ctx, 'beam', 750 - 120 * nd, 270 - 30 * nd, pop(11.35) * 1.9, -0.12 + 0.6 * nd + noise1(t, 2) * 0.08);
   if (t > 11.42) note(ctx, 'eighth', 630 - 140 * nd, 815, pop(11.42) * 1.9, 0.15 + 0.1 * nd + noise1(t, 3) * 0.08);
   ctx.restore();

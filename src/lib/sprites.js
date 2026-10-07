@@ -212,31 +212,32 @@ const builders = {
     return g;
   },
   book() {
-    const g = new Grid(34, 24);
+    const g = new Grid(34, 21);
     // cover (top face, slanted)
     const cover = [[1, 9], [20, 1], [33, 7], [14, 16]];
-    g.poly(cover, '#b8262c');
+    g.poly(cover, '#9e2228');
+    g.tint((x, y) => x + y * 2 < 24, '#b02a2e');
     // page block (front-right face)
-    g.poly([[14, 16], [33, 7], [33, 13], [14, 22]], '#efe5cc');
+    g.poly([[14, 16], [33, 7], [33, 11], [14, 20]], '#efe5cc');
     // spine (front-left face)
-    g.poly([[1, 9], [14, 16], [14, 22], [1, 15]], '#8c1a20');
+    g.poly([[1, 9], [14, 16], [14, 20], [1, 13]], '#7a161c');
     g.outline(OUT);
     // label on cover
     g.poly([[9, 8], [18, 4], [24, 7], [15, 11]], '#86ab62');
     g.poly([[11, 8], [18, 5], [21, 7], [15, 10]], '#9cc072');
     // page lines and stickers
-    for (let i = 0; i < 4; i++) g.line(16, 19 - i, 31, 12 - i, '#d8cba8');
-    g.rect(24, 13, 2, 2, '#d23aa0');
-    g.rect(28, 11, 2, 2, '#9ce04a');
+    for (let i = 0; i < 2; i++) g.line(16, 18 - i, 31, 11 - i, '#d8cba8');
+    g.rect(24, 12, 2, 2, '#d23aa0');
+    g.rect(28, 10, 2, 2, '#9ce04a');
     // bookmark band
-    g.poly([[6, 12], [9, 13.5], [9, 19.5], [6, 18]], '#c99a6a');
+    g.poly([[6, 12], [9, 13.5], [9, 17.5], [6, 16]], '#c99a6a');
     return g;
   },
   vinyl() {
     const g = new Grid(40, 40);
     const c = 20;
-    g.circle(c, c, 18.6, '#1a1c2a');
-    g.circle(c, c, 17.2, '#272a3e');
+    g.circle(c, c, 18.6, '#1c1e24');
+    g.circle(c, c, 17.2, '#2c3038');
     // smooth curved sheen wedges, upper-left and lower-right
     const wedge = (lo, hi, a0, half, col) =>
       g.tint((x, y) => {
@@ -246,8 +247,8 @@ const builders = {
         return r > lo && r < hi && d < half;
       }, col);
     [-2.3, 0.84].forEach((a0) => {
-      wedge(7.5, 16.5, a0, 0.36, '#7f7a9c');
-      wedge(9, 15, a0, 0.2, '#a29cc0');
+      wedge(7.5, 16.5, a0, 0.36, '#7c7488');
+      wedge(9, 15, a0, 0.2, '#968fa6');
     });
     g.circle(c, c, 6.4, '#e0303c');
     g.circle(c, c, 4.4, '#cc2430');
