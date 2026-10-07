@@ -2995,6 +2995,37 @@ const FIN = {
   V: [[17.35, [140, 730, -120]], [17.47, [417, 745, -200]], [17.56, [588, 475, 10]], [17.64, [719, 281, 180]], [17.77, [855, 43, 110]], [17.93, [713, 80, 60]], [18.02, [626, 119, 90]], [18.1, [562, 151, 150]], [18.25, [450, 205, 190]], [18.5, [354, 249, 270]], [18.75, [338, 252, 285]], [19.0, [330, 255, 300]], [19.25, [340, 262, 345]], [19.5, [348, 267, 360]], [19.75, [369, 276, 360]], [20.0, [429, 324, 360]], [20.15, [429, 324, 360]], [20.187, [460, 340, 360]], [20.229, [490, 360, 360]], [20.27, [550, 400, 360]], [20.3, [690, 500, 360]]],
   E: [[17.31, [700, 1000, 200]], [17.47, [313, 76, 300]], [17.56, [447, 162, 90]], [17.64, [620, 339, -90]], [17.77, [799, 518, -60]], [17.93, [955, 659, -50]], [18.02, [1009, 713, 90]], [18.1, [1050, 756, 120]], [18.25, [1134, 834, 170]], [18.5, [1173, 870, 170]], [18.75, [1185, 880, 150]], [19.0, [1188, 885, 50]], [19.25, [1176, 878, 40]], [19.5, [1164, 873, 0]], [19.75, [1149, 843, 0]], [20.0, [1101, 810, 0]], [20.15, [1101, 810, 0]], [20.187, [1040, 770, 0]], [20.229, [1000, 730, 0]], [20.27, [930, 670, 0]], [20.3, [800, 560, 0]]],
 };
+// V, L and E spin together, clockwise and slowing, from 17.68 s until upright at 19.75 s.
+// Fitted per frame by matching rendered glyphs to the source ink (frames 424-468).
+const SPIN = [[17.684, -129], [17.768, -60], [17.851, -3], [17.935, 50], [18.018, 89], [18.101, 123], [18.185, 153], [18.268, 181], [18.352, 202], [18.435, 225], [18.518, 238], [18.602, 252], [18.685, 265], [18.769, 275], [19.019, 303], [19.269, 322], [19.52, 333], [19.75, 360]];
+const SPIN_OFF = { L: 0, E: 0, V: 360 };
+// dot radii measured per frame from the source ink areas (they flicker frame to frame)
+const DOT_R = {
+  11: [[17.6, 4], [17.85, 5.3], [18.02, 4.7], [18.18, 7], [18.35, 6.3], [18.52, 9.6], [18.69, 6.8], [18.85, 8.8], [19.02, 4.5], [19.19, 5.7], [19.35, 2.7], [19.52, 6.9], [19.85, 4.9], [20.0, 7]],
+  8: [[17.6, 4.3], [17.85, 5.4], [18.02, 7.7], [18.18, 8], [18.35, 7.6], [18.52, 7.5], [18.69, 7.5], [18.85, 6.7], [19.02, 8.2], [19.19, 7], [19.35, 7.1], [19.52, 7.7], [19.85, 8.7]],
+  7: [[17.6, 5.2], [17.85, 3.7], [17.98, 6.5], [18.02, 10], [18.1, 7.5], [18.18, 6.8], [18.35, 5.7], [18.52, 6.2], [18.69, 6], [18.85, 5.9], [19.02, 6], [19.52, 3.9], [19.85, 8.4]],
+};
+// small irregular ink blob (slightly elongated, wobbly edge); `tail` adds a comma tail
+function inkDot(ctx, x, y, r, seed, tail = 0) {
+  ctx.save();
+  ctx.fillStyle = '#2a1714';
+  ctx.beginPath();
+  for (let i = 0; i <= 18; i++) {
+    const a = (i / 18) * Math.PI * 2;
+    const rr = r * (1 + 0.16 * noise1(a * 1.7 + seed, seed) + (i % 5 === 0 ? 0.05 : 0));
+    ctx.lineTo(x + Math.cos(a) * rr * 1.12, y + Math.sin(a) * rr * 0.92);
+  }
+  ctx.closePath();
+  ctx.fill();
+  if (tail > 0) {
+    ctx.beginPath();
+    ctx.moveTo(x + r * 0.4, y + r * 0.2);
+    ctx.quadraticCurveTo(x + r * 0.2, y + r * 1.8 * tail, x - r * 0.8, y + r * 2.4 * tail);
+    ctx.quadraticCurveTo(x - r * 0.1, y + r * 1.2 * tail, x - r * 0.6, y + r * 0.3);
+    ctx.fill();
+  }
+  ctx.restore();
+}
 const DOTS = [
   // keyframes, radius
   [[[17.47, [864, 579]], [17.56, [836, 616]], [17.64, [821, 609]], [17.8, [790, 470]], [17.93, [750, 326]], [18.02, [741, 324]], [18.5, [735, 306]], [19.5, [702, 273]], [19.75, [672, 279]], [20.0, [657, 381]], [20.15, [657, 381]], [20.187, [666, 396]], [20.229, [660, 416]], [20.27, [650, 436]]], 11, 6],
@@ -3190,7 +3221,9 @@ function sceneFinale(ctx, t, f) {
   Object.keys(FIN).forEach((ch) => {
     const keys = [];
     FIN[ch].forEach(([tt, v]) => keys.push([tt, v, tt < 18.1 ? 'linear' : 'inOutCubic']));
-    const [x, y, r] = kf(t, keys);
+    let [x, y, r] = kf(t, keys);
+    if (ch !== 'O' && t >= 17.684 && t < 19.75) r = kf(t, SPIN) + SPIN_OFF[ch];
+    else if (ch !== 'O' && t > 17.64 && t < 17.684) r = lerp(FIN[ch].find((k) => k[0] === 17.64)[1][2], SPIN[0][1] + SPIN_OFF[ch], inv(17.64, 17.684, t));
     pos[ch] = [x, y];
     if (t < FIN[ch][0][0] - 0.02) return;
     const fly = 1 - inv(17.42, 17.6, t);
@@ -3212,8 +3245,9 @@ function sceneFinale(ctx, t, f) {
       fx.strokePartial(ctx, spline(sq, 8), 0, 1, r0 === 8 ? 9 : 6, '#1a1212', true);
       return;
     }
-    const r = t < 17.9 ? 4 : r0 === 11 ? kf(t, [[18.0, 11], [18.4, 4], [18.75, 7], [19.5, 6], [20.0, 7]]) : r0 === 8 ? kf(t, [[18.0, 8], [18.25, 4], [18.5, 10], [18.75, 4], [19.5, 6], [19.8, 9]]) : lerp(r0, r1, inv(19.2, 19.7, t));
-    dot(ctx, x, y, r * (t > 19.2 && t < 19.4 ? 0.5 : 1) * lerp(1, 1.1, grow), '#2a1714');
+    void r1;
+    const r = kf(t, DOT_R[r0]);
+    inkDot(ctx, x, y, r * lerp(1, 1.1, grow), r0 + Math.floor(t * 24) * 0.37, r0 === 7 && t > 17.99 && t < 18.06 ? 1 : 0);
   });
   FIN_PEN.forEach(([ch, t0, t1, ang, len, wid], k) => {
     if (t < t0 || t > t1 + 0.05) return;
@@ -3227,16 +3261,6 @@ function sceneFinale(ctx, t, f) {
     const [lx, ly] = pos.L;
     const tail = Array.from({ length: 24 }, (_, i) => { const u = i / 23; return [lerp(lx - 140, lx + 4, u) + Math.sin(u * Math.PI) * 30, lerp(ly - 120, ly + 18, u)]; });
     fx.strokePartial(ctx, tail, 0, inv(19.95, 20.08, t), 1.6, '#e0402e');
-    if (t > 20.0) {
-      const [ex, ey] = pos.E;
-      ctx.fillStyle = '#e0402e';
-      ctx.beginPath();
-      ctx.moveTo(ex + 22, ey - 8);
-      ctx.lineTo(ex + 44, ey + 2);
-      ctx.lineTo(ex + 24, ey + 14);
-      ctx.closePath();
-      ctx.fill();
-    }
     fx.strokePartial(ctx, smoothLoop(12, 10, 1.2, 77).map(([a, b]) => [a + lx + 12, b + ly + 26]), 0, inv(20.05, 20.15, t), 1.6, '#e0402e');
   }
   // black hook strokes
@@ -3245,10 +3269,10 @@ function sceneFinale(ctx, t, f) {
     for (let i = 0; i <= 30; i++) pts.push([830 + Math.sin((i / 30) * Math.PI) * 30, 300 + i * 3.4]);
     fx.strokePartial(ctx, pts, inv(17.71, 17.77, t), inv(17.63, 17.69, t), 7, '#141212', true);
   }
-  if (t > 17.86 && t < 18.02) {
+  if (t > 17.86 && t < 18.0) {
     const pts = [];
     for (let i = 0; i <= 40; i++) pts.push([150 + Math.sin((i / 40) * Math.PI * 1.2) * 50, 420 + i * 5.5]);
-    fx.strokePartial(ctx, pts, inv(17.94, 18.02, t), inv(17.86, 17.92, t), 8, '#141212', true);
+    fx.strokePartial(ctx, pts, inv(17.93, 17.99, t), inv(17.86, 17.92, t), 8, '#141212', true);
   }
 }
 
@@ -3275,7 +3299,7 @@ function renderFrame(ctx, t, f) {
   const sc = TIMELINE.find(([a, b]) => t >= a && t < b) || TIMELINE[TIMELINE.length - 1];
   sc[2](ctx, t, f);
   ctx.restore();
-  const isDark = (t > 3.78 && t < 5.7) || (t > 8.3 && t < 9.13) || (t > 9.84 && t < 10.51) || (t > 11.01 && t < 11.85) || (t > 13.76 && t < 15.89) || (t > 16.2 && t < 16.52) || (t > 16.77 && t < 17.18);
+  const isDark = (t > 3.78 && t < 5.7) || (t > 8.3 && t < 9.13) || (t > 9.84 && t < 10.51) || (t > 11.01 && t < 11.85) || (t > 13.76 && t < 15.89) || (t > 16.2 && t < 16.5) || (t > 16.77 && t < 17.18);
   const figure = (t > 3.82 && t < 6.3) || (t > 13.76 && t < 15.89);
   fx.grain(ctx, f, t > 15.6 && t < 15.89 ? 0.07 : t > 5.9 && t < 6.3 ? 0.07 : figure ? 0.1 : isDark ? 0.15 : 0.1);
   if (isDark) fx.mottle(ctx, f, figure ? 0.5 : 1);
