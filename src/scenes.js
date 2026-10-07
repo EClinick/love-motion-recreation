@@ -756,12 +756,18 @@ function sceneSparkle(ctx, t, f) {
     const [c, x] = off(0);
     fx.words(x, sentenceParts(1.9, '#3a2410', '#3a2410').slice(0, 8), 20, 540, BODY);
     x.fillStyle = '#e6f532';
-    armStar(x, 580, 380, [-1.414, 0.288, 1.855, 3.107], [385, 563, 500, 580], 0.06);
+    // centre and arm tips re-measured on a grid (core ~95 px lower than before)
+    armStar(x, 555, 495, [-1.37, 0.275, 1.82, 3.27], [459, 478, 600, 500], 0.0);
     x.fill();
     [[180, 202, 1080, 315], [500, 120, 1000, 260], [430, 860, 1250, 640], [650, 1000, 1300, 760]].forEach(([a, b, c2, d]) => fx.strokePartial(x, [[a, b], [c2, d]], 0, 1, 12, 'rgba(250,244,230,0.85)', false));
     [['book', 945, 416, 70, -0.3], ['clapper', 1113, 427, 70, 0.3], ['coin', 1068, 607, 60, 0], ['camera', 1158, 720, 70, 0.4]].forEach(([n, a, b, w, r]) => drawSprite(x, n, a, b, w, r));
-    x.fillStyle = '#2a1a10';
-    for (let yy = 210; yy < 860; yy += 70) x.fillRect(1237 + ((yy / 70) % 2) * 20, yy, 110, 46);
+    // the word 'change?' still stood on end from frame 47, defocused
+    x.save();
+    x.translate(1305, 520);
+    x.rotate(Math.PI / 2);
+    x.scale(0.95, 0.95);
+    fx.text(x, 'change?', 0, 0, 150, '#2a1a10', { baseline: 'middle', align: 'center' });
+    x.restore();
     composite(ctx, c, { blur: 16 });
     return;
   }
