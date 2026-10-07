@@ -482,7 +482,7 @@ function starColors(t) {
   const p = inv(2.3, 3.4, t);
   const purple = inv(3.63, 3.71, t);
   const red = inv(3.71, 3.755, t);
-  const deep = (c) => mixHex(mixHex(c, '#5020b0', purple), '#a8183c', red);
+  const deep = (c) => mixHex(mixHex(c, '#5020b0', purple), '#7a1030', red);
   return {
     edge: deep(mixHex(mixHex('#c8f2ec', '#46f2e2', inv(2.06, 2.2, t)), '#3fd8f0', ease.inOutQuad(p))),
     mid: deep(mixHex(mixHex('#b4ece6', '#3ee6dc', inv(2.06, 2.2, t)), mixHex('#2a8af2', '#2a4af0', p), inv(2.3, 2.6, t))),
@@ -611,7 +611,8 @@ const DOODLES = [
   ]],
   [2.148, 2.19, [
     [[[300, 140], [330, 120], [370, 130], [400, 150], [380, 165]], 7, '#d8241c'],
-    [[[470, 1050], [450, 800], [520, 650], [560, 760], [540, 900]], 3, 'rgba(40,36,36,0.75)'],
+    [[[360, 320], [380, 560], [420, 760], [460, 840], [520, 780], [590, 520], [640, 280]], 5, 'rgba(40,36,36,0.8)'],
+    [[[640, 820], [760, 790], [880, 760]], 4, 'rgba(40,36,36,0.75)'],
     [[[1000, 360], [1150, 330], [1300, 400]], 4, 'rgba(40,36,36,0.75)'],
     [[[640, 980], [720, 960], [800, 945]], 3, 'rgba(40,36,36,0.75)'],
   ]],
@@ -725,7 +726,7 @@ function sceneSparkle(ctx, t, f) {
   }));
   const [tc, tx] = off(2);
   fx.words(tx, parts, 40, 533, BODY);
-  const tBlur = kf(t, [[2.022, 7], [2.064, 3], [2.106, 2], [2.27, 1.5], [2.45, 0]]);
+  const tBlur = kf(t, [[2.022, 7], [2.064, 4], [2.106, 3.5], [2.148, 5.5], [2.19, 4.5], [2.27, 2], [2.42, 0.8], [2.6, 0]]);
 
   if (t < 2.064) {
     // frame 49: everything defocused on bare paper, dark streaks
@@ -814,9 +815,10 @@ function sceneSparkle(ctx, t, f) {
   ctx.restore();
 
   if (t >= 3.6) {
-    if (t > 3.66 && t < 3.735) {
-      const k2 = t < 3.69 ? 0.6 : 1;
-      fx.strokePartial(ctx, smoothPts([[450, 270], [520, 110], [750, 95], [900, 180], [975, 330], [990, 380], [960, 400], [975, 320]], 8), 0, k2, 7, '#d8201a');
+    // frame 88: only a small red tick; the big red loop lands on frame 89
+    if (t > 3.66 && t < 3.69) fx.strokePartial(ctx, [[1032, 272], [1046, 248]], 0, 1, 7, '#d8201a');
+    if (t > 3.69 && t < 3.735) {
+      fx.strokePartial(ctx, smoothPts([[450, 270], [520, 110], [750, 95], [900, 180], [975, 330], [990, 380], [960, 400], [975, 320]], 8), 0, 1, 7, '#d8201a');
       if (t > 3.69) fx.strokePartial(ctx, smoothPts([[470, 730], [440, 820], [405, 920]], 6), 0, 1, 5, '#1a1010');
     }
     if (t >= 3.735 && t < 3.775) {
