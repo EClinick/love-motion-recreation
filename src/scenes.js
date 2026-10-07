@@ -2801,26 +2801,28 @@ function sceneHand(ctx, t, f) {
   // text (drifts left with a horizontal smear at the end)
   const ti = ease.inQuad(inv(13.85, 14.17, t));
   const grey = inv(15.5, 15.75, t);
-  const col = mixHex(CREAM, '#a09898', grey);
+  // measured: neutral light grey strokes (#dcdcdc), slightly soft, 6 px higher than v15
+  const col = mixHex('#dfdfdf', '#a09898', grey);
   const dx = -235 * ease.inCubic(fallP);
-  const glow = { glow: 'rgba(243,239,232,0.3)', glowBlur: 6 };
-  fx.text(ctx, t < 13.87 ? 'through' : 'through ones', 215 + dx, 545, BODY, col, { blur: (1 - ti) * 8 + fallP * 3, ...glow });
+  const glow = { glow: 'rgba(230,230,230,0.3)', glowBlur: 6 };
+  const HB = BODY * 1.02;
+  fx.text(ctx, t < 13.87 ? 'through' : 'through ones', 208 + dx, 539, HB, col, { blur: (1 - ti) * 8 + fallP * 3 + 0.6, ...glow });
   // typing cursor (measured per frame): wide block, then "own", block shrinking to a bar
-  ctx.fillStyle = '#efe9e4';
-  if (t > 14.2 && t < 14.243) ctx.fillRect(880, 520, 166, 46);
-  else if (t >= 14.243 && t < 14.285) ctx.fillRect(1052, 520, 150, 46);
-  else if (t >= 14.285 && t < 14.327) ctx.fillRect(1110, 520, 30, 46);
-  else if (t >= 14.327 && t < 14.41) ctx.fillRect(1130, 520, 7, 46);
+  ctx.fillStyle = '#e4e2df';
+  if (t > 14.2 && t < 14.243) ctx.fillRect(880, 514, 166, 46);
+  else if (t >= 14.243 && t < 14.285) ctx.fillRect(1052, 514, 150, 46);
+  else if (t >= 14.285 && t < 14.327) ctx.fillRect(1110, 514, 30, 46);
+  else if (t >= 14.327 && t < 14.41) ctx.fillRect(1130, 514, 7, 46);
   if (t >= 14.243) {
     const word = t < 14.49 ? 'own' : t < 15.665 ? 'own ability' : 'own ability to';
-    fx.text(ctx, word, 950 + dx, 545, BODY, col, { blur: fallP * 3 + (t > 14.44 && t < 14.49 ? 4 : 0), ...glow });
+    fx.text(ctx, word, 944 + dx, 539, HB, col, { blur: fallP * 3 + 0.6 + (t > 14.44 && t < 14.49 ? 4 : 0), ...glow });
   }
 }
 
 // =====================================================================
 // 9. L-O-V-E build.
 // =====================================================================
-const LSIZE = 62;
+const LSIZE = 66;
 function letter(ctx, ch, x, y, size, color, rot = 0) {
   ctx.save();
   ctx.translate(x, y);
@@ -2830,8 +2832,8 @@ function letter(ctx, ch, x, y, size, color, rot = 0) {
 }
 
 function sceneLove(ctx, t, f) {
-  const LX = [129, 522, 918, 1317];
-  const LY = 540;
+  const LX = [132, 522, 921, 1314];
+  const LY = 528;
   if (t < 16.2) {
     ctx.fillStyle = '#e3e3e3';
     ctx.fillRect(0, 0, W, H);
