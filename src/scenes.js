@@ -3335,7 +3335,7 @@ function handMarks(ctx, fr) {
 }
 function sceneHand(ctx, t, f) {
   // background warms to red-brown then mauve-grey as the hand closes (measured per frame)
-  const bg = bgRamp(t, [[13.76, '#141313'], [15.52, '#161414'], [15.557, '#221417'], [15.599, '#251619'], [15.641, '#2a191b'], [15.682, '#2e1c1e'], [15.724, '#362426'], [15.766, '#3f2c2f'], [15.808, '#463437'], [15.849, '#4d3d41'], [15.89, '#524347']]);
+  const bg = bgRamp(t, [[13.76, '#151515'], [15.52, '#171717'], [15.557, '#221417'], [15.599, '#251619'], [15.641, '#2a191b'], [15.682, '#2e1c1e'], [15.724, '#362426'], [15.766, '#3f2c2f'], [15.808, '#463437'], [15.849, '#4d3d41'], [15.89, '#524347']]);
   fx.dark(ctx, bg);
   const flatWall = inv(15.5, 15.7, t);
   if (flatWall > 0) {
@@ -3443,12 +3443,15 @@ function sceneHand(ctx, t, f) {
   // text (drifts left with a horizontal smear at the end)
   const ti = ease.inQuad(inv(13.85, 14.17, t));
   const grey = inv(15.5, 15.75, t);
-  // measured: neutral light grey strokes (#dcdcdc), slightly soft, 6 px higher than v15
-  const col = mixHex('#dfdfdf', '#a09898', grey);
+  // measured: warm off-white strokes (mean #e1ddda at 15.0 s), slightly soft; grey from 15.5 s
+  const col = mixHex('#ece7e3', '#a09898', grey);
   const dx = -235 * ease.inCubic(fallP);
-  const glow = { glow: 'rgba(230,230,230,0.3)', glowBlur: 6 };
+  // measured: soft at 345, heavily defocused at 348, sharp from 351 with a warm orange halo
+  const soft2 = kf(t, [[14.33, 0], [14.389, 1.3], [14.47, 3.2], [14.53, 3.2], [14.6, 0]]);
+  const warm = t > 14.58 && t < 15.6 ? 1 - inv(15.45, 15.6, t) : 0;
+  const glow = warm > 0 ? { glow: `rgba(222,92,46,${0.95 * warm})`, glowBlur: 4 } : { glow: 'rgba(236,230,226,0.3)', glowBlur: 6 };
   const HB = BODY * 1.02;
-  fx.text(ctx, t < 13.87 ? 'through' : 'through ones', 208 + dx, 539, HB, col, { blur: (1 - ti) * 8 + fallP * 3 + 0.6, ...glow });
+  fx.text(ctx, t < 13.87 ? 'through' : 'through ones', 208 + dx, 539, HB, col, { blur: (1 - ti) * 8 + fallP * 3 + 0.3 + soft2, ...glow });
   // typing cursor (measured per frame): wide block, then "own", block shrinking to a bar
   ctx.fillStyle = '#e4e2df';
   if (t > 14.2 && t < 14.243) ctx.fillRect(880, 514, 166, 46);
@@ -3457,7 +3460,7 @@ function sceneHand(ctx, t, f) {
   else if (t >= 14.327 && t < 14.41) ctx.fillRect(1130, 514, 7, 46);
   if (t >= 14.243) {
     const word = t < 14.49 ? 'own' : t < 15.72 ? 'own ability' : 'own ability to';
-    fx.text(ctx, word, 944 + dx, 539, HB, col, { blur: fallP * 3 + 0.6 + (t > 14.44 && t < 14.49 ? 4 : 0), ...glow });
+    fx.text(ctx, word, 944 + dx, 539, HB, col, { blur: fallP * 3 + 0.3 + Math.max(soft2, t > 14.44 && t < 14.49 ? 4 : 0), ...glow });
   }
 }
 
