@@ -870,7 +870,7 @@ function sceneProfile(ctx, t, f) {
     else if (traced) {
       const bri = kf(t, [[4.35, 0.87], [5.5, 0.87], [5.85, 0.55], [6.0, 0.45], [6.05, 0.4], [6.13, 0.33]]);
       const sep = kf(t, [[5.5, 0], [5.85, 0.35], [6.0, 0.55], [6.13, 0.7]]);
-      const sat = kf(t, [[4.35, 1.15], [5.5, 1.15], [5.85, 1.2], [6.0, 1.0], [6.13, 0.8]]);
+      const sat = kf(t, [[4.35, 1.15], [5.5, 1.15], [5.85, 1.35], [6.0, 1.3], [6.13, 0.9]]);
       const hue = kf(t, [[4.35, -6], [4.9, 0]]);
       x.filter = `hue-rotate(${hue}deg) sepia(${sep}) saturate(${sat}) brightness(${bri})`;
     } else if (toTan > 0 && traced) x.filter = `sepia(${lerp(0.3, 0.55, toTan)}) saturate(${lerp(1.2, 1.45, toTan)}) brightness(${lerp(0.92, 0.9, toTan)})`;
