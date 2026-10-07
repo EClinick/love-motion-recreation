@@ -1312,7 +1312,7 @@ function inkBall(ctx, x, y, r, trail = [], soft = 2.5) {
 }
 
 // Perspective ring fitted to the source (frame 167): centre, radii, depth k; icons scale with depth.
-const RING_BASE = { clapper: 173, skateboard: 190, vinyl: 224, book: 214, camera: 230, cat: 176, coin: 166, controller: 220, cap: 182, heart: 205, cash: 215, plant: 168 };
+const RING_BASE = { clapper: 173, skateboard: 190, vinyl: 224, book: 214, camera: 230, cat: 176, coin: 166, controller: 220, cap: 182, heart: 190, cash: 215, plant: 168 };
 const RING_ROT = { skateboard: -0.45, cash: 0.42 };
 const ringSpin = (t) =>
   kf(t, [
@@ -1359,7 +1359,7 @@ function drawRing2(x, t, tint = null) {
   const hitAmt = (name) => {
     let a = 0;
     HITS2.forEach(([ht, n]) => {
-      if (n === name && t > ht - 0.02) a = Math.max(a, 1 - (t - ht) / 0.19);
+      if (n === name && t > ht - 0.02) a = Math.max(a, 1 - (t - ht) / 0.28);
     });
     return clamp(a);
   };
@@ -1717,10 +1717,7 @@ function sceneRing(ctx, t, f) {
   }
   if (fr === 178) inkBlob(x, 367, 107, 76, 40, 0.1, 4);
   if (fr === 179) inkBlob(x, 425, 94, 62, 44, 0.2, 4);
-  if (fr === 180) {
-    inkTrail(x, [[607, 90], [520, 200], [450, 400], [400, 520]], 28, 0.5, 10);
-    inkStroke(x, [[560, 120], [500, 220], [470, 300]], 14);
-  }
+  if (fr === 180) inkTrail(x, [[800, 120], [620, 110], [470, 170], [400, 300], [410, 450], [440, 570]], 30, 0.55, 8);
   if (fr === 181) {
     const [px, py] = hitPos('cash');
     inkBlob(x, px - 20, py - 20, 34, 26, 0.3, 3);
@@ -1752,8 +1749,13 @@ function sceneRing(ctx, t, f) {
   }
   if (fr === 190) inkBlob(x, 720, 495, 22, 22, 0, 2);
   if (fr >= 191 && fr <= 195) {
-    const r = lerp(28, 66, (fr - 191) / 4);
-    inkBlob(x, lerp(675, 675, (fr - 191) / 4), lerp(450, 495, (fr - 191) / 4), r, r, 0, 4);
+    // a soft grey spray ball that darkens as it grows
+    const k = (fr - 191) / 4;
+    const r = lerp(28, 66, k);
+    x.save();
+    x.globalAlpha = lerp(0.6, 0.95, k);
+    inkBlob(x, 675, lerp(450, 495, k), r, r, 0, lerp(7, 4, k));
+    x.restore();
   }
   if (fr >= 196) inkBlob(x, 900, 450, 70, 70, 0, 6);
   x.restore();
