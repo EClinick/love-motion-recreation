@@ -1442,7 +1442,7 @@ function inkBall(ctx, x, y, r, trail = [], soft = 2.5) {
 // Perspective ring fitted to the source (frame 167): centre, radii, depth k; icons scale with depth.
 // sizes re-fitted to the v17 sprites from source widths at 8.008 s and 6.673 s (front items)
 const RING_BASE = { clapper: 168, skateboard: 181, vinyl: 157, book: 165, camera: 184, cat: 176, coin: 161, controller: 176, cap: 152, heart: 180, cash: 204, plant: 155 };
-const RING_ROT = { skateboard: -0.45, cash: 0 };
+const RING_ROT = { skateboard: -0.2, cash: 0 };
 const ringSpin = (t) =>
   kf(t, [
     [6.38, -0.6],
@@ -1500,7 +1500,8 @@ function drawRing2(x, t, tint = null) {
   ring2(t)
     .sort((a, b) => a.s - b.s)
     .forEach((it) => {
-      const rot = noise1(t * 2 + it.i, it.i) * 0.04 + (RING_ROT[it.name] || 0);
+      // the source's skateboard lies flatter while it sweeps past the front (-24 deg at 6.59 s, -31 at 7.0)
+      const rot = noise1(t * 2 + it.i, it.i) * 0.04 + (RING_ROT[it.name] || 0) + (it.name === 'skateboard' ? kf(t, [[6.59, 0.18], [6.85, 0]]) : 0);
       drawSprite(x, it.name, it.x, it.y, it.w, rot);
       const hit = tint ? 0 : hitAmt(it.name);
       if (hit > 0 && it.name === 'heart') {
@@ -1859,11 +1860,11 @@ function sceneRing(ctx, t, f) {
   const hitPos = (n) => ring2Pos(HITS2.find((h) => h[1] === n)[0], n);
 
   // the ink ball, frame by frame as in the source
-  if (fr === 167) inkCrescent(x, [[732, 412], [724, 450], [690, 476], [660, 484]], 18, 16, 4);
-  if (fr === 168) inkCrescent(x, [[642, 420], [668, 480], [712, 500], [752, 474], [778, 436]], 6, 22, 5);
+  if (fr === 167) inkCrescent(x, [[732, 412], [724, 450], [690, 476], [660, 484]], 22, 22, 6, 3.5);
+  if (fr === 168) inkCrescent(x, [[642, 420], [668, 480], [712, 500], [752, 474], [778, 436]], 9, 34, 7, 4.5);
   if (fr === 169) {
     inkTrail(x, [[770, 100], [860, 40], [960, 0]], 30, 0.35, 12);
-    inkCrescent(x, [[772, 96], [722, 200], [712, 330], [740, 450], [800, 505], [886, 512]], 7, 24, 8, 2.5);
+    inkCrescent(x, [[772, 96], [722, 200], [712, 330], [740, 450], [800, 505], [886, 512]], 9, 34, 10, 4);
   }
   if (fr === 170) {
     inkTrail(x, [[630, 202], [700, 140], [855, 112], [980, 220], [1060, 430]], 26, 0.5, 8);
