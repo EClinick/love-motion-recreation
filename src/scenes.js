@@ -2643,12 +2643,15 @@ const headMasks = {};
 const headHot = {};
 // Image decoding is async in @napi-rs/canvas, so masks are preloaded before rendering.
 const handTone = {};
-async function preload() {
+// `frames` = [f0, f1) limits decoding to masks near that range (a few frames of slack for
+// nearest-frame lookups); null loads everything.
+async function preload(frames = null) {
   const { loadImage } = require('@napi-rs/canvas');
   for (const [dir, into, hotInto] of [[HAND_DIR, handMasks, handHot], [HEAD_DIR, headMasks, headHot]]) {
     if (!fsMod.existsSync(dir)) continue;
     for (const name of fsMod.readdirSync(dir)) {
       const m = /^(f|hot|tone)_(\d+)\.png$/.exec(name);
+      if (m && frames && (Number(m[2]) < frames[0] - 8 || Number(m[2]) > frames[1] + 8)) continue;
       if (m) (m[1] === 'hot' ? hotInto : m[1] === 'tone' ? handTone : into)[Number(m[2])] = await loadImage(fsMod.readFileSync(pathMod.join(dir, name)));
     }
   }

@@ -24,10 +24,10 @@ function args() {
   return o;
 }
 
-async function renderer(scale, samples) {
+async function renderer(scale, samples, frames = null) {
   const { createCanvas } = require('@napi-rs/canvas');
   const { renderFrame, setScale, preload } = require('./scenes');
-  await preload();
+  await preload(frames);
   setScale(scale);
   const { W, H } = require('./lib/core');
   const canvas = createCanvas(W * scale, H * scale);
@@ -65,7 +65,8 @@ if (!isMainThread) {
     '-pix_fmt', 'yuv420p', segPath,
   ], { stdio: ['pipe', 'inherit', 'inherit'] });
   (async () => {
-    const draw = await renderer(scale, samples);
+    // decode only the traced masks this chunk needs: all of them in every worker exhausts memory
+    const draw = await renderer(scale, samples, [start, end]);
     for (let f = start; f < end; f++) {
       const c = draw(f);
       const buf = c.data();
