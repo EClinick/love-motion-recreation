@@ -1965,7 +1965,7 @@ const ROW_A = [
 const BELT = ['plant', 'cash', 'heart', 'cap', 'controller', 'coin', 'cat', 'camera', 'book', 'vinyl', 'skateboard', 'clapper'];
 const BELT_W = { plant: 270, cash: 430, heart: 365, cap: 330, controller: 390, coin: 430, cat: 420, camera: 280, book: 330, vinyl: 310, skateboard: 430, clapper: 350 };
 const BELT_DY = { plant: -15, cash: 0, heart: 10, cap: 5, controller: 0, coin: 5, cat: 10, camera: -5, book: 0, vinyl: -10, skateboard: 5, clapper: 5 };
-const BELT_R = { skateboard: -0.25, cash: 0.12, cap: -0.05 };
+const BELT_R = { skateboard: -0.25, cash: 0, cap: -0.05 };
 function belt(ctx, heartDeg, t) {
   const items = BELT.map((name, i) => {
     const th = ((heartDeg + (i - 2) * 30) * Math.PI) / 180;
@@ -2267,6 +2267,8 @@ function sceneCuriosity(ctx, t, f) {
 // 7. Ring again (top view) then the ink scatter.
 // =====================================================================
 const TOP_W = { clapper: 225, skateboard: 255, vinyl: 210, book: 210, camera: 210, cat: 200, coin: 235, controller: 235, cap: 235, heart: 285, cash: 290, plant: 210 };
+// measured: between 12.1 and 12.45 s these icons recede to about 0.75x while the rest keep their size
+const TOP_RECEDE = { clapper: 1, skateboard: 1, vinyl: 1, coin: 1, cat: 1, heart: 1, cash: 1, plant: 1 };
 const SCATTER = {
   vinyl: [600, 171, 135, 0],
   clapper: [174, 470, 210, 0],
@@ -2407,7 +2409,7 @@ function sceneScatter(ctx, t, f) {
   ctx.fillStyle = '#ededed';
   ctx.fillRect(0, 0, W, H);
   const spin = inv(11.85, 12.03, t);
-  const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.388, 0.36, 'linear'], [12.45, 0.75, 'inQuad'], [12.49, 1.9, 'inQuad']]);
+  const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.388, 0.36, 'linear'], [12.45, 0.75, 'inQuad'], [12.49, 1.9, 'inQuad'], [12.52, 2.65, 'linear']]);
   const burstP = ease.inOutCubic(inv(12.49, 12.555, t));
   const z = kf(t, [[12.6, 1], [13.47, 0.95, 'linear'], [13.68, 0.88, 'inQuad'], [13.722, 0.7], [13.76, 0.62]]);
   const turn = kf(t, [[12.6, 0], [13.47, 0.21, 'linear'], [13.68, 0.65, 'inQuad'], [13.722, 1.0, 'inQuad'], [13.76, 1.3]]);
@@ -2421,7 +2423,7 @@ function sceneScatter(ctx, t, f) {
   const sa = Math.sin(turn);
   const orbit = (px, py) => [700 + z * ((px - 700) * ca - (py - 560) * sa), 560 + z * ((px - 700) * sa + (py - 560) * ca)];
   const ring = ringLayout(phi - 0.21, { tilt: 0.4, R: 385, cx: 715, cy: 511, F: 4000, xs: 0.9 });
-  const RING_ROT = { skateboard: -0.5, cash: 0.4, cap: -0.15, book: 0.12 };
+  const RING_ROT = { skateboard: -0.5, cash: 0, cap: -0.15, book: 0.12 };
   ring
     .slice()
     .sort((a, b) => (burstP > 0.5 ? (a.name === 'plant' ? -1 : b.name === 'plant' ? 1 : b.z - a.z) : b.z - a.z))
@@ -2449,7 +2451,7 @@ function sceneScatter(ctx, t, f) {
         px += m[0];
         py += m[1];
       }
-      const w = lerp(TOP_W[it.name], tgt[2], burstP);
+      const w = lerp(TOP_W[it.name] * (TOP_RECEDE[it.name] ? kf(t, [[12.1, 1], [12.45, 0.75]]) : 1), tgt[2], burstP);
       const sil = SIL[it.name] && t > SIL[it.name];
       const r = burstP * tgt[3] * noise1(t * 1.5 + it.i, it.i) * 0.45 + (1 - burstP) * (RING_ROT[it.name] || 0);
       if (it.name === 'cash' && t > 13.2) {
