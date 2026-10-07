@@ -1,5 +1,49 @@
 [
   {
+    "id": "iter18",
+    "label": "v18",
+    "hash": "fda013a",
+    "subject": "Iteration 18: source-grid sprites, traced pen and brush ink, graded shirt heat, ring and fist refits",
+    "commit_date": "2026-10-07T09:47:32-07:00",
+    "dirty": false,
+    "changelog": [
+      "Sprites sampled at the source's own pixel grid (plant, coin, cat, clapper, skateboard); new cap and camera lens; no logos",
+      "Scatter ring fitted to source icon centres, depth-scaled widths, soft single-pass ink strokes, traced per-frame gestures",
+      "Head: graded shirt heat from the source, missing intro masks traced, frame-144 contour transition; ring refit to new sprites",
+      "Finale: red pen scribbles and brush ink traced from the source (trace-pen.js), fist glow, heart/vinyl/book fixes, measured dot paths"
+    ],
+    "note": "Judged on index-aligned exact-frame pairs.",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 11542284,
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 27693538,
+    "sheets": [
+      "../media/versions/v18/sheets/sheet_01.jpg",
+      "../media/versions/v18/sheets/sheet_02.jpg",
+      "../media/versions/v18/sheets/sheet_03.jpg",
+      "../media/versions/v18/sheets/sheet_04.jpg",
+      "../media/versions/v18/sheets/sheet_05.jpg",
+      "../media/versions/v18/sheets/sheet_06.jpg",
+      "../media/versions/v18/sheets/sheet_07.jpg",
+      "../media/versions/v18/sheets/sheet_08.jpg",
+      "../media/versions/v18/sheets/sheet_09.jpg"
+    ],
+    "scores": [
+      7.5,
+      7,
+      8.5
+    ],
+    "extras": [],
+    "video": "../media/versions/v18/render.mp4",
+    "sidebyside": "../media/versions/v18/sidebyside.mp4",
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ]
+  },
+  {
     "id": "iter17",
     "label": "v17",
     "hash": "3bb4572",
