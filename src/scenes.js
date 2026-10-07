@@ -1488,7 +1488,7 @@ function drawRing2(x, t, tint = null) {
   const hitAmt = (name) => {
     let a = 0;
     HITS2.forEach(([ht, n]) => {
-      if (n === name && t > ht - 0.02) a = Math.max(a, 1 - (t - ht) / 0.28);
+      if (n === name && t > ht - 0.02) a = Math.max(a, 1 - (t - ht) / (name === 'heart' ? 0.28 : 0.18));
     });
     return clamp(a);
   };
@@ -1512,7 +1512,7 @@ function drawRing2(x, t, tint = null) {
         x.setTransform(1, 0, 0, 1, 0, 0);
         x.drawImage(hc, 0, 0);
         x.restore();
-      } else if (hit > 0) drawSprite(x, it.name, it.x, it.y, it.w, rot, hit * 0.75, { silhouette: '#f0a030' });
+      } else if (hit > 0) drawSprite(x, it.name, it.x, it.y, it.w, rot, hit * 0.5, { silhouette: '#f0a030' });
     });
 }
 
