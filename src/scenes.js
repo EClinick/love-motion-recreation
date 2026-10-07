@@ -1064,7 +1064,7 @@ function sceneRing(ctx, t, f) {
 // =====================================================================
 // 6. Word cards: action. / intention. / curiosity. (dark)
 // =====================================================================
-function typed(ctx, word, t0, t, x, y, curX, hold = 0) {
+function typed(ctx, word, t0, t, x, y, curX, hold = 0, soft = 0) {
   if (t < t0) return;
   const wFull = fx.measure(ctx, word, CARD);
   if (t < t0 + 0.05) {
@@ -1077,7 +1077,7 @@ function typed(ctx, word, t0, t, x, y, curX, hold = 0) {
   const slide = 36 * (1 - ease.outCubic(inv(t0 + 0.05, t0 + 0.3 + hold, t)));
   x -= slide;
   curX -= slide * 0.3;
-  fx.text(ctx, word, x, y, CARD, CREAM, { blur: p < 0.3 && !hold ? 2.5 : 0.8, glow: 'rgba(243,239,232,0.35)', glowBlur: 6 });
+  fx.text(ctx, word, x, y, CARD, CREAM, { blur: (p < 0.3 && !hold ? 2.5 : 0.8) + soft, glow: 'rgba(243,239,232,0.35)', glowBlur: 6 });
   // trailing block shrinks into the caret, which stays bright
   // block collapses to a fat caret, holds, then thins
   const cw = lerp(lerp(120, 30, ease.outCubic(p)), 12, ease.inOutQuad(inv(t0 + 0.32 + hold, t0 + 0.55 + hold, t)));
@@ -1122,7 +1122,7 @@ function sceneAction(ctx, t, f) {
   const rot = kf(t, [[8.3, -0.12], [8.383, -0.15], [8.59, -0.2], [8.675, 1.85, 'inOutCubic'], [8.84, 1.85], [8.93, -0.18, 'inOutCubic'], [9.13, -0.22]]);
   const width = kf(t, [[8.3, 392], [8.59, 400], [8.675, 640, 'inOutCubic'], [8.84, 640], [8.93, 880, 'inOutCubic'], [9.13, 860]]);
   const sy = kf(t, [[8.3, 1], [8.84, 1], [8.93, 0.24, 'inOutCubic'], [9.13, 0.22]]);
-  const blur = kf(t, [[8.3, 3], [8.36, 1.5], [8.383, 0.5], [8.405, 3], [8.425, 4], [8.467, 3], [8.5, 1.5], [8.55, 0.5], [8.59, 1], [8.63, 0], [8.65, 3], [8.675, 0], [8.88, 0], [8.9, 3], [8.93, 0]]);
+  const blur = kf(t, [[8.3, 3], [8.36, 1.5], [8.383, 0.5], [8.405, 6], [8.425, 9], [8.467, 8], [8.5, 4], [8.55, 0.5], [8.59, 1], [8.63, 0], [8.65, 3], [8.675, 0], [8.88, 0], [8.9, 3], [8.93, 0]]);
   const [c, x] = off(0);
   x.save();
   x.filter = 'saturate(0.8)';
@@ -1173,7 +1173,11 @@ function sceneAction(ctx, t, f) {
   }
   if (t > 8.95) fx.strokePartial(ctx, [[900, 456], [990, 452]], 0, inv(8.95, 9.02, t), 4, CREAM);
   sparks(ctx, t, 2, 7);
-  typed(ctx, 'action.', 8.32, t, 966, 530, 1300);
+  const soft = kf(t, [[8.39, 0], [8.425, 6], [8.467, 5], [8.51, 0]]);
+  ctx.save();
+  if (soft > 0.3) ctx.filter = `blur(${soft * S}px)`;
+  typed(ctx, 'action.', 8.32, t, 966, 530, 1300, 0, soft);
+  ctx.restore();
 }
 
 // Rows of overlapping icons (light shots between the cards). Items: [name, relX, dy, width, z]
@@ -1467,7 +1471,7 @@ const SCATTER = {
   cat: [1080, 735, 180, 0],
   plant: [215, 395, 110, 0],
 };
-const SIL = { heart: 12.45, skateboard: 12.7 };
+const SIL = { heart: 12.575, skateboard: 12.7 };
 
 // Spray-paint ink blot: soft dense core with a stippled, speckled rim.
 function sprayBlob(ctx, cx, cy, r, seed, sy = 1) {
@@ -1542,8 +1546,8 @@ function ribbon(ctx, pts, p0, p1, w, color = '#1c1414', nib = 0.6) {
 const RIBBONS = [
   [[[90, 790], [120, 700], [175, 650], [245, 650], [300, 600], [330, 555], [300, 535]], 12.53, 12.57, 12.6, 12.65],
   [[[150, 830], [205, 800], [262, 838], [228, 885], [292, 905], [336, 870]], 12.54, 12.58, 12.6, 12.65],
-  [[[140, 290], [175, 225], [215, 240], [240, 170], [300, 120], [345, 140], [300, 190], [262, 150]], 12.76, 12.79, 12.83, 12.87],
-  [[[745, 285], [770, 180], [800, 95], [860, 70], [905, 110], [880, 180], [810, 230]], 12.76, 12.8, 12.83, 12.87],
+  [[[140, 290], [175, 225], [215, 240], [240, 170], [300, 120], [345, 140], [300, 190], [262, 150]], 12.77, 12.79, 12.81, 12.84],
+  [[[745, 285], [770, 180], [800, 95], [860, 70], [905, 110], [880, 180], [810, 230]], 12.77, 12.79, 12.81, 12.84],
   [[[1300, 470], [1350, 520], [1320, 570], [1380, 610], [1350, 650]], 12.98, 13.0, 13.05, 13.09],
   [[[890, 1010], [940, 960], [980, 1010], [1030, 955], [1070, 1010], [1105, 965]], 12.98, 13.0, 13.05, 13.09],
   [[[60, 690], [120, 640], [200, 620], [255, 640], [220, 660]], 13.22, 13.25, 13.29, 13.33],
@@ -1573,25 +1577,26 @@ function sceneScatter(ctx, t, f) {
   ctx.fillStyle = '#e2e2e2';
   ctx.fillRect(0, 0, W, H);
   const spin = inv(11.85, 12.03, t);
-  const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.42, 0.36, 'linear']]);
-  const burstP = ease.inOutCubic(inv(12.43, 12.56, t));
+  const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.388, 0.36, 'linear'], [12.43, 0.75, 'inQuad'], [12.47, 1.9, 'inQuad']]);
+  const burstP = ease.inOutCubic(inv(12.49, 12.555, t));
   const z = kf(t, [[12.6, 1], [13.47, 0.95, 'linear'], [13.68, 0.88, 'inQuad'], [13.722, 0.7], [13.76, 0.62]]);
   const turn = kf(t, [[12.6, 0], [13.47, 0.21, 'linear'], [13.68, 0.65, 'inQuad'], [13.722, 1.0, 'inQuad'], [13.76, 1.3]]);
   const [c, x] = off(0);
   x.save();
-  camera(x, { z, cx: 700, cy: 560, x: kf(t, [[12.25, 0], [12.4, 30]]) });
+  // zoom compresses positions only; the icons keep their size
+  camera(x, { cx: 700, cy: 560, x: kf(t, [[12.25, 0], [12.4, 30]]) });
   let heartAt = null;
   // the layout orbits clockwise about (700, 560); icons themselves stay upright
   const ca = Math.cos(turn);
   const sa = Math.sin(turn);
-  const orbit = (px, py) => [700 + (px - 700) * ca - (py - 560) * sa, 560 + (px - 700) * sa + (py - 560) * ca];
+  const orbit = (px, py) => [700 + z * ((px - 700) * ca - (py - 560) * sa), 560 + z * ((px - 700) * sa + (py - 560) * ca)];
   const ring = ringLayout(phi - 0.21, { tilt: 0.4, R: 385, cx: 715, cy: 511, F: 4000 });
   const RING_ROT = { skateboard: -0.5, cash: 0.4, cap: -0.15, book: 0.12 };
   ring
     .slice()
     .sort((a, b) => (burstP > 0.5 ? (a.name === 'plant' ? -1 : b.name === 'plant' ? 1 : b.z - a.z) : b.z - a.z))
     .forEach((it) => {
-      if (it.name === 'cat' && t > 12.4) return; // cat is reborn from the ink blot
+      if (it.name === 'cat' && t > 12.53) return; // cat is reborn from the ink blot
       if (it.name === 'coin' && t > 12.92) return; // coin turns into the blot
       const tgt = SCATTER[it.name];
       let px = lerp(it.x, tgt[0], burstP);
@@ -1723,7 +1728,7 @@ function sceneScatter(ctx, t, f) {
   x.restore();
   if (t > 12.7 && t < 13.0) fx.strokePartial(x, [[814, 322], [826, 334], [834, 326], [842, 334], [856, 320]], 0, 1, 4, '#141212');
   RIBBONS.forEach(([pts, a, b, c2, d]) => {
-    if (t > a && t < d) ribbon(x, pts, inv(c2, d, t), inv(a, b, t), 14);
+    if (t > a && t < d) ribbon(x, pts, inv(c2, d, t), inv(a, b, t), 20);
   });
   if (t > 12.95) {
     x.fillStyle = '#141212';
@@ -1759,14 +1764,14 @@ function sceneScatter(ctx, t, f) {
     x.setTransform(S, 0, 0, S, 0, 0);
     // screen position of the drifting heart
     // heartAt is already orbited; apply the layer zoom
-    const sx0 = 700 + (hx - 700) * z + kf(t, [[12.25, 0], [12.4, 30]]);
-    const sy0 = 560 + (hy - 560) * z;
-    drawSprite(x, 'heart', lerp(sx0, tgt[0], k), lerp(sy0, tgt[1], k), hw * z, hr, 1, { silhouette: '#121010' });
+    const sx0 = hx + kf(t, [[12.25, 0], [12.4, 30]]);
+    const sy0 = hy;
+    drawSprite(x, 'heart', lerp(sx0, tgt[0], k), lerp(sy0, tgt[1], k), hw, hr, 1, { silhouette: '#121010' });
     x.restore();
   }
   x.restore();
   // motion-blur flashes on the ink hits, then the whip into the hand shot
-  const flashBlur = kf(t, [[12.73, 0], [12.76, 4], [12.79, 0], [12.97, 0], [13.01, 8], [13.05, 0], [13.7, 0], [13.722, 1.5], [13.76, 4]]);
+  const flashBlur = kf(t, [[12.5, 0], [12.535, 6], [12.575, 0], [12.73, 0], [12.76, 4], [12.79, 0], [12.97, 0], [13.01, 8], [13.05, 0], [13.7, 0], [13.722, 1.5], [13.76, 4]]);
   composite(ctx, c, { blur: spin < 1 ? (1 - spin) * 14 : flashBlur });
   if (t > 13.69) {
     // thin black speed arcs sweeping with the turn
