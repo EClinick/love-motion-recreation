@@ -3481,7 +3481,10 @@ function sceneLove(ctx, t, f) {
     ctx.ellipse(735, 425, w * 0.4, w * 0.14, 0, 0, 7);
     ctx.fill();
     ctx.restore();
-    drawSprite(ctx, 'heart', kf(t, [[15.91, 706], [15.975, 718]]), 551, w, kf(t, [[15.91, 0.17], [15.975, 0]]), 1, { sy: 0.92, shadow: 'rgba(30,16,16,0.35)', shadowBlur: 14, shadowY: -8 });
+    // measured box and colour (frames 382-386): ~5 px higher, slightly taller, deeper red
+    const [hc, hx] = off(6);
+    drawSprite(hx, 'heart', kf(t, [[15.91, 706], [15.975, 718]]), 545.5, w, kf(t, [[15.91, 0.17], [15.975, 0]]), 1, { sy: 0.935, shadow: 'rgba(30,16,16,0.35)', shadowBlur: 14, shadowY: -8 });
+    composite(ctx, hc, { filter: 'brightness(0.92)' });
     letter(ctx, 'L', LX[0], LY, LSIZE, mixHex('#3b1d18', '#8a8888', crush));
     return;
   }
