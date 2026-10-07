@@ -1,5 +1,89 @@
 [
   {
+    "id": "iter16",
+    "label": "v16",
+    "hash": "4b382d2",
+    "subject": "Iteration 16: head shading, traced pen ink and hand tone, red camera flash, frame-accurate cuts",
+    "commit_date": "2026-10-06T23:15:27-07:00",
+    "dirty": false,
+    "changelog": [
+      "Head: asymmetric thermal rim, measured red settle, soft focus to 4.85 s, crisper traced curls",
+      "Opening: source handwriting traced (trace-ink.js), re-measured sparkle lighting, depth-map ring arrival",
+      "Middle: rangefinder camera and chunky heart sprites, curiosity/book/action shots re-timed per frame",
+      "Hand and finale: traced tone map for hand colour, full-frame red camera flash, per-frame letter spin, dots and pen loops",
+      "Missing one-frame shots at 8.30 s and 13.76 s; render workers decode only the masks they need"
+    ],
+    "note": "Rendered after the v15 judge round; not judged yet.",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 11809089,
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 28109306,
+    "sheets": [
+      "../media/versions/v16/sheets/sheet_01.jpg",
+      "../media/versions/v16/sheets/sheet_02.jpg",
+      "../media/versions/v16/sheets/sheet_03.jpg",
+      "../media/versions/v16/sheets/sheet_04.jpg",
+      "../media/versions/v16/sheets/sheet_05.jpg",
+      "../media/versions/v16/sheets/sheet_06.jpg",
+      "../media/versions/v16/sheets/sheet_07.jpg",
+      "../media/versions/v16/sheets/sheet_08.jpg",
+      "../media/versions/v16/sheets/sheet_09.jpg"
+    ],
+    "scores": null,
+    "extras": [],
+    "video": "../media/versions/v16/render.mp4",
+    "sidebyside": "../media/versions/v16/sidebyside.mp4",
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ]
+  },
+  {
+    "id": "iter15",
+    "label": "v15",
+    "hash": "ae94953",
+    "subject": "Iteration 15: traced head, frame-matched sections, aligned judge tooling",
+    "commit_date": "2026-10-06T22:02:13-07:00",
+    "dirty": false,
+    "changelog": [
+      "Head rotoscoped from the source every frame: thermal colormap, white-hot shirt, measured fade, ghost plates, burn-through",
+      "Opening, icon ring, middle and hand/finale rebuilt against exact source frames by three parallel workers",
+      "Judge pairs and contact sheets now select by frame index (earlier sheets were shifted ~0.1-0.2 s)"
+    ],
+    "note": "Head rotoscoped; every section re-timed and re-measured against exact source frames. Judged on larger exact-frame pairs, which score lower than the old contact-sheet judging.",
+    "duration": 20.458,
+    "resolution": "1440x1080",
+    "size": 12848578,
+    "sbs_resolution": "2880x1080",
+    "sbs_size": 29260628,
+    "sheets": [
+      "../media/versions/v15/sheets/sheet_01.jpg",
+      "../media/versions/v15/sheets/sheet_02.jpg",
+      "../media/versions/v15/sheets/sheet_03.jpg",
+      "../media/versions/v15/sheets/sheet_04.jpg",
+      "../media/versions/v15/sheets/sheet_05.jpg",
+      "../media/versions/v15/sheets/sheet_06.jpg",
+      "../media/versions/v15/sheets/sheet_07.jpg",
+      "../media/versions/v15/sheets/sheet_08.jpg",
+      "../media/versions/v15/sheets/sheet_09.jpg"
+    ],
+    "scores": [
+      6.5,
+      6,
+      5
+    ],
+    "extras": [],
+    "video": "../media/versions/v15/render.mp4",
+    "sidebyside": "../media/versions/v15/sidebyside.mp4",
+    "score_sections": [
+      "0 – 7.25 s",
+      "7.5 – 14.75 s",
+      "15 – 20.4 s"
+    ]
+  },
+  {
     "id": "iter14",
     "label": "v14",
     "hash": "ce0afd5",
