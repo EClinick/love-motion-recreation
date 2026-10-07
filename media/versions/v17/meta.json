@@ -13,7 +13,7 @@
     "Finale: lock-up tilt and size, per-frame pen marks 19-20 s, softer paper, tilted camera, book transition fixed",
     "Judge pairs and sheets pair frames strictly by frame index"
   ],
-  "note": "Not judged yet.",
+  "note": "Judged on index-aligned exact-frame pairs.",
   "duration": 20.458,
   "resolution": "1440x1080",
   "size": 11476964,
@@ -30,6 +30,10 @@
     "media/versions/v17/sheets/sheet_08.jpg",
     "media/versions/v17/sheets/sheet_09.jpg"
   ],
-  "scores": null,
+  "scores": [
+    7.0,
+    7.0,
+    8.0
+  ],
   "extras": []
 }
