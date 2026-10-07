@@ -1314,7 +1314,7 @@ function drawRing2(x, t, tint = null) {
   const hitAmt = (name) => {
     let a = 0;
     HITS2.forEach(([ht, n]) => {
-      if (n === name && t > ht - 0.02) a = Math.max(a, 1 - (t - ht) / 0.12);
+      if (n === name && t > ht - 0.02) a = Math.max(a, 1 - (t - ht) / 0.19);
     });
     return clamp(a);
   };
@@ -1526,6 +1526,22 @@ function inkDonut(x, cx, cy, rx, ry) {
   x.fill();
   x.restore();
 }
+// tapered ink crescent through points (radius r0 -> peak -> r1)
+function inkCrescent(x, pts, r0, rm, r1, soft = 2) {
+  const sp = smoothPts(pts, 10);
+  x.save();
+  x.filter = `blur(${soft * S}px)`;
+  x.fillStyle = '#0d0b0b';
+  x.beginPath();
+  sp.forEach(([a, b], i) => {
+    const u = i / (sp.length - 1);
+    const r = u < 0.5 ? lerp(r0, rm, u * 2) : lerp(rm, r1, (u - 0.5) * 2);
+    x.moveTo(a + r, b);
+    x.arc(a, b, r, 0, 7);
+  });
+  x.fill();
+  x.restore();
+}
 function inkBallEarly(x, fr) {
   if (fr === 157) {
     // thick comma: round head upper right, tail sweeping down-left
@@ -1604,16 +1620,16 @@ function sceneRing(ctx, t, f) {
     g.addColorStop(1, 'rgba(255,160,50,0)');
     x.fillStyle = g;
     x.fillRect(px - 240, py - 240, 480, 480);
-    if (t < ht + 0.065) spikes(x, px, py, k2 * 7 + 3, 6);
+    if (t < ht + 0.065) spikes(x, px, py, k2 * 7 + 3, 6, n === 'cash' ? '#141010' : '#e8a020');
   });
   const hitPos = (n) => ring2Pos(HITS2.find((h) => h[1] === n)[0], n);
 
   // the ink ball, frame by frame as in the source
-  if (fr === 167) inkBlob(x, 697, 427, 22, 34, 0.5);
-  if (fr === 168) inkBlob(x, 652, 450, 22, 34, 0.7);
+  if (fr === 167) inkCrescent(x, [[732, 412], [724, 450], [690, 476], [660, 484]], 18, 16, 4);
+  if (fr === 168) inkCrescent(x, [[642, 420], [668, 480], [712, 500], [752, 474], [778, 436]], 6, 22, 5);
   if (fr === 169) {
-    inkTrail(x, [[607, 472], [700, 300], [810, 67]], 34, 0.4, 12);
-    inkStroke(x, [[675, 90], [600, 180], [562, 270], [575, 380], [607, 472]], 26);
+    inkTrail(x, [[770, 100], [860, 40], [960, 0]], 30, 0.35, 12);
+    inkCrescent(x, [[772, 96], [722, 200], [712, 330], [740, 450], [800, 505], [886, 512]], 7, 24, 8, 2.5);
   }
   if (fr === 170) {
     inkTrail(x, [[630, 202], [700, 140], [855, 112], [980, 220], [1060, 430]], 26, 0.5, 8);
@@ -1624,11 +1640,20 @@ function sceneRing(ctx, t, f) {
     inkStroke(x, [[px - 110, py - 40], [px - 60, py - 10], [px - 20, py + 5]], 30);
   }
   if (fr === 172) {
-    const [px, py] = hitPos('cap');
-    inkTrail(x, [[495, 180], [700, 260], [900, 380], [px - 60, py - 30]], 30, 0.5, 10);
+    // a hollow grey ring left behind at top left, and a long grey trail down to the cap
+    x.save();
+    x.filter = `blur(${3 * S}px)`;
+    x.strokeStyle = 'rgba(60,56,56,0.75)';
+    x.lineWidth = 12;
+    x.beginPath();
+    x.arc(502, 182, 20, 0, 7);
+    x.stroke();
+    x.restore();
+    inkTrail(x, [[520, 220], [640, 335], [800, 430], [960, 482], [1050, 505]], 22, 0.55, 7);
+    inkCrescent(x, [[960, 492], [1010, 506], [1062, 512]], 4, 10, 6, 2);
   }
-  if (fr === 173) inkBlob(x, 675, 99, 14, 16, 0, 2);
-  if (fr === 174) inkBlob(x, 720, 112, 16, 18, 0, 2);
+  if (fr === 173) inkBlob(x, 678, 111, 60, 46, 0.2, 4);
+  if (fr === 174) inkBlob(x, 729, 109, 44, 38, 0, 4);
   if (fr === 175) {
     inkTrail(x, [[800, 160], [806, 450], [810, 760]], 30, 0.45, 14);
     inkStroke(x, [[787, 90], [800, 140], [810, 200]], 26);
@@ -1636,7 +1661,7 @@ function sceneRing(ctx, t, f) {
   if (fr === 176) {
     const [px, py] = hitPos('heart');
     const pts = [];
-    for (let i = 0; i <= 30; i++) pts.push([px - 150 + i * 10, py - 70 + Math.sin(i * 0.6) * 18]);
+    for (let i = 0; i <= 30; i++) pts.push([px - 150 + i * 10, py - 150 + Math.sin(i * 0.6) * 16]);
     inkStroke(x, pts, 40);
   }
   if (fr === 177) {
@@ -1644,8 +1669,8 @@ function sceneRing(ctx, t, f) {
     inkTrail(x, [[180, 90], [450, 330], [px, py - 60]], 30, 0.5, 10);
     inkStroke(x, [[px - 60, py - 140], [px - 20, py - 90]], 10);
   }
-  if (fr === 178) inkBlob(x, 360, 90, 22, 20, 0, 3);
-  if (fr === 179) inkBlob(x, 427, 90, 22, 20, 0, 3);
+  if (fr === 178) inkBlob(x, 367, 107, 76, 40, 0.1, 4);
+  if (fr === 179) inkBlob(x, 425, 94, 62, 44, 0.2, 4);
   if (fr === 180) {
     inkTrail(x, [[607, 90], [520, 200], [450, 400], [400, 520]], 28, 0.5, 10);
     inkStroke(x, [[560, 120], [500, 220], [470, 300]], 14);
@@ -1659,9 +1684,9 @@ function sceneRing(ctx, t, f) {
     inkTrail(x, [[px, py - 30], [px + 120, py - 200], [px + 200, py - 320]], 24, 0.45, 10);
     inkStroke(x, [[px + 40, py - 60], [px + 110, py - 180]], 10);
   }
-  if (fr === 183) inkBlob(x, 1035, 135, 26, 20, 0.3, 3);
-  if (fr === 184) inkBlob(x, 1057, 157, 22, 18, 0.3, 3);
-  if (fr === 185) inkBlob(x, 1057, 180, 22, 18, 0.3, 3);
+  if (fr === 183) inkBlob(x, 1049, 134, 66, 48, 0.3, 4);
+  if (fr === 184) inkBlob(x, 1073, 166, 36, 35, 0.3, 4);
+  if (fr === 185) inkBlob(x, 1055, 177, 38, 46, 0.3, 4);
   if (fr === 186) {
     inkTrail(x, [[1046, 180], [800, 300], [600, 380], [405, 450]], 30, 0.45, 12);
     inkStroke(x, [[1040, 130], [1050, 180], [1040, 230]], 22);
