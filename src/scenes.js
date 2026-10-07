@@ -1074,9 +1074,13 @@ function typed(ctx, word, t0, t, x, y, curX, hold = 0) {
     return;
   }
   const p = inv(t0 + 0.05 + hold, t0 + 0.16 + hold, t);
+  const slide = 36 * (1 - ease.outCubic(inv(t0 + 0.05, t0 + 0.3 + hold, t)));
+  x -= slide;
+  curX -= slide * 0.3;
   fx.text(ctx, word, x, y, CARD, CREAM, { blur: p < 0.3 && !hold ? 2.5 : 0, glow: 'rgba(243,239,232,0.35)', glowBlur: 6 });
   // trailing block shrinks into the caret, which stays bright
-  const cw = lerp(120, 12, ease.outCubic(p));
+  // block collapses to a fat caret, holds, then thins
+  const cw = lerp(lerp(120, 30, ease.outCubic(p)), 12, ease.inOutQuad(inv(t0 + 0.32 + hold, t0 + 0.55 + hold, t)));
   const cx = lerp(x + wFull + (hold ? 30 : 70), curX - 6, ease.outCubic(p));
   ctx.fillStyle = CREAM;
   ctx.fillRect(cx, y - 45, cw, 90);
@@ -1221,6 +1225,9 @@ function sceneIntention(ctx, t, f) {
   const u1 = kf(t, [[9.84, 0.3], [10.0, 0.62, 'outCubic'], [10.18, 0.66], [10.28, 1.0, 'inOutCubic']]);
   const u0 = lerp(0, 0.2, ease.inCubic(inv(10.1, 10.51, t)));
   const wmax = kf(t, [[9.84, 60], [10.0, 200], [10.18, 220], [10.28, 900, 'inOutCubic']]);
+  x.save();
+  // the ribbon rides in attached to the book
+  x.translate(kf(t, [[9.84, 270], [9.926, 0, 'outCubic']]), kf(t, [[9.84, -40], [9.926, 0]]));
   x.fillStyle = '#e2211b';
   x.beginPath();
   const N = 50;
@@ -1243,46 +1250,48 @@ function sceneIntention(ctx, t, f) {
   x.shadowBlur = 25 * S;
   x.fill();
   x.shadowBlur = 0;
-  const bp = kf(t, [[9.84, [730, 525]], [9.9, [700, 520]], [10.0, [440, 500], 'outCubic'], [10.51, [425, 505]]]);
+  x.restore();
+  const bp = kf(t, [[9.84, [720, 560]], [9.885, [500, 580]], [9.926, [445, 575], 'outCubic'], [10.51, [425, 570]]]);
   const bw = kf(t, [[9.84, 470], [10.1, 500], [10.51, 520]]);
-  if (t < 9.98) x.filter = 'brightness(0.7)';
+  if (t < 9.87) x.filter = 'brightness(0.85)';
   drawSprite(x, 'book', bp[0], bp[1], bw, kf(t, [[9.84, -0.25], [10.0, -0.06]]) + noise1(t * 2, 4) * 0.04, 1, { shadow: 'rgba(255,40,30,0.25)', shadowBlur: 30 });
   x.filter = 'none';
-  composite(ctx, c, { blur: (1 - ease.outCubic(inv(9.84, 9.98, t))) * 25 });
-  if (t < 9.97) {
-    // grainy red band sweeping in from the top right + bold slash at the bottom
-    const a = 1 - inv(9.92, 9.97, t);
+  composite(ctx, c, { blur: kf(t, [[9.84, 16], [9.885, 4], [9.926, 0]]) });
+  if (t < 9.88) {
+    // first frame: grainy dark-red glow over the top left, thin red slashes
     ctx.save();
-    ctx.globalAlpha = a;
-    ctx.filter = `blur(${10 * S}px)`;
     ctx.beginPath();
-    ctx.moveTo(960, 0);
-    ctx.lineTo(1440, 0);
-    ctx.lineTo(260, 1080);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(1250, 0);
     ctx.lineTo(0, 1080);
-    ctx.lineTo(0, 700);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(200,26,20,0.35)';
+    ctx.filter = `blur(${30 * S}px)`;
+    ctx.fillStyle = 'rgba(150,22,22,0.45)';
     ctx.fill();
     ctx.filter = 'none';
     ctx.clip();
-    fx.grain(ctx, f + 11, 0.8);
+    fx.grain(ctx, f + 11, 0.7);
     ctx.restore();
     ctx.save();
-    ctx.globalAlpha = a;
-    ctx.fillStyle = '#e2211b';
-    ctx.beginPath();
-    [[594, 1080], [1074, 672], [990, 760], [1050, 742], [960, 840], [1010, 830], [880, 940], [700, 1080]].forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)));
-    ctx.fill();
-    ctx.beginPath();
-    fx.strokePartial(ctx, Array.from({ length: 16 }, (_, i) => [lerp(774, 1014, i / 15), lerp(372, 252, i / 15)]), 0, 1, 10, '#e2211b', true);
-    ctx.closePath();
-    ctx.fill();
+    ctx.filter = `blur(${3 * S}px)`;
+    [[[930, 190], [1070, 90]], [[930, 860], [1190, 790]]].forEach((seg) => fx.strokePartial(ctx, seg, 0, 1, 9, '#e2211b'));
     ctx.restore();
-    fx.grain(ctx, f + 5, 0.3);
+  }
+  // thin white scribbles flicking out as the word types
+  if (t > 9.865 && t < 10.0) {
+    const k = inv(9.865, 10.0, t);
+    ctx.save();
+    ctx.filter = `blur(${1.5 * S}px)`;
+    const sc = [
+      [[640, 380], [700, 250], [740, 360], [800, 270], [900, 300], [1150, 250]],
+      [[730, 660], [900, 700], [1100, 780], [1340, 830], [1250, 790]],
+      [[760, 720], [820, 790], [770, 850], [840, 900]],
+    ];
+    sc.forEach((pts) => fx.strokePartial(ctx, pts.map(([a, b]) => [a + k * 120, b]), inv(0.35, 1, k), Math.min(1, k * 4), 4, 'rgba(236,232,226,0.85)'));
+    ctx.restore();
   }
   sparks(ctx, t, 4, 6);
-  typed(ctx, 'intention.', 9.95, t, 834, 540, 1322);
+  typed(ctx, 'intention.', 9.87, t, 834, 540, 1322);
 }
 
 const ROW_B = [
@@ -1356,8 +1365,8 @@ function note(ctx, kind, x, y, s, rot = 0) {
 
 function sceneCuriosity(ctx, t, f) {
   fx.dark(ctx, '#141313');
-  if (t > 11.72) {
-    // dim greyscale negative of the icon row before the cut
+  if (t > 11.825) {
+    // one frame: dim greyscale negative of the icon row before the cut
     fx.dark(ctx, '#121112');
     drawSprite(ctx, 'heart', 750, 555, 430, 0, 1, { silhouette: '#c0c0c0' });
     ctx.save();
@@ -1370,11 +1379,10 @@ function sceneCuriosity(ctx, t, f) {
     ctx.restore();
     return;
   }
-  const pan = kf(t, [[11.55, 0], [11.72, -200, 'inCubic']]);
+  const pan = 0;
   ctx.save();
-  ctx.translate(pan, 0);
   const vin = ease.outBack(inv(11.01, 11.15, t));
-  const vx = kf(t, [[11.01, 500], [11.08, 496], [11.25, 430, 'outCubic']]);
+  const vx = kf(t, [[11.01, 500], [11.08, 496], [11.25, 430, 'outCubic'], [11.6, 410], [11.81, 250, 'inQuad']]);
   drawSprite(ctx, 'vinyl', vx, 545, 400 * lerp(0.85, 1, vin), noise1(t, 9) * 0.05);
   if (t < 11.16) {
     const q = inv(11.01, 11.16, t);
@@ -1395,9 +1403,10 @@ function sceneCuriosity(ctx, t, f) {
     });
   }
   const pop = (t0) => ease.outBack(inv(t0, t0 + 0.12, t), 2.2);
-  if (t > 11.1) note(ctx, 'quarter', 1044, 800, pop(11.1) * 1.7, 0.12 + noise1(t, 1) * 0.08);
-  if (t > 11.35) note(ctx, 'beam', 750, 270, pop(11.35) * 1.9, -0.12 + noise1(t, 2) * 0.08);
-  if (t > 11.42) note(ctx, 'eighth', 630, 815, pop(11.42) * 1.9, 0.15 + noise1(t, 3) * 0.08);
+  const nd = ease.inQuad(inv(11.6, 11.81, t));
+  if (t > 11.1) note(ctx, 'quarter', 1044 - 130 * nd, 800, pop(11.1) * 1.7, 0.12 - 0.9 * nd + noise1(t, 1) * 0.08);
+  if (t > 11.35) note(ctx, 'beam', 750 - 120 * nd, 270 - 30 * nd, pop(11.35) * 1.9, -0.12 + 0.6 * nd + noise1(t, 2) * 0.08);
+  if (t > 11.42) note(ctx, 'eighth', 630 - 140 * nd, 815, pop(11.42) * 1.9, 0.15 + 0.1 * nd + noise1(t, 3) * 0.08);
   ctx.restore();
   sparks(ctx, t, 6, 5);
   typed(ctx, 'curiosity.', 10.9, t, 804 + pan, 536, 1323 + pan, 0.17);
@@ -1419,23 +1428,130 @@ const SCATTER = {
   controller: [1260, 800, 210, 0],
   cash: [300, 960, 210, 1],
   cat: [1080, 735, 180, 0],
-  plant: [150, 420, 80, 0],
+  plant: [215, 395, 110, 0],
 };
 const SIL = { heart: 12.45, skateboard: 12.7 };
 
+// Spray-paint ink blot: soft dense core with a stippled, speckled rim.
+function sprayBlob(ctx, cx, cy, r, seed, sy = 1) {
+  if (r <= 1) return;
+  ctx.save();
+  ctx.fillStyle = '#0e0d0d';
+  ctx.filter = `blur(${1.5 * S}px)`;
+  ctx.beginPath();
+  for (let i = 0; i <= 40; i++) {
+    const a = (i / 40) * Math.PI * 2;
+    const rr = r * 0.9 * (1 + noise1(a * 3, seed) * 0.1);
+    ctx.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * sy);
+  }
+  ctx.fill();
+  ctx.filter = 'none';
+  const g = rng(seed);
+  const n = Math.round(r * 9);
+  for (let i = 0; i < n; i++) {
+    const a = g() * Math.PI * 2;
+    const d = r * (0.8 + Math.pow(g(), 2) * 0.45);
+    const sz = 1.5 + g() * 3.5;
+    ctx.globalAlpha = 0.5 + g() * 0.5;
+    ctx.fillRect(cx + Math.cos(a) * d - sz / 2, cy + Math.sin(a) * d * sy - sz / 2, sz, sz);
+  }
+  ctx.restore();
+}
+
+// Calligraphic ink ribbon: a broad nib held at an angle, so width follows the stroke direction.
+function ribbon(ctx, pts, p0, p1, w, color = '#1c1414', nib = 0.6) {
+  const sm = [];
+  // Catmull-Rom densify for smooth curves
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[Math.max(0, i - 1)];
+    const b = pts[i];
+    const c = pts[i + 1];
+    const d = pts[Math.min(pts.length - 1, i + 2)];
+    for (let k = 0; k < 12; k++) {
+      const u = k / 12;
+      const u2 = u * u;
+      const u3 = u2 * u;
+      sm.push([0, 1].map((j) => 0.5 * (2 * b[j] + (-a[j] + c[j]) * u + (2 * a[j] - 5 * b[j] + 4 * c[j] - d[j]) * u2 + (-a[j] + 3 * b[j] - 3 * c[j] + d[j]) * u3)));
+    }
+  }
+  sm.push(pts[pts.length - 1]);
+  const n = sm.length - 1;
+  const i0 = Math.floor(clamp(p0) * n);
+  const i1 = Math.ceil(clamp(p1) * n);
+  if (i1 - i0 < 2) return;
+  const L = [];
+  const R = [];
+  for (let i = i0; i <= i1; i++) {
+    const [x0, y0] = sm[Math.max(i0, i - 1)];
+    const [x1, y1] = sm[Math.min(i1, i + 1)];
+    const ang = Math.atan2(y1 - y0, x1 - x0);
+    const end = Math.min(1, (i - i0) / 6, (i1 - i) / 6);
+    const hw = (w / 2) * (0.18 + 0.82 * Math.abs(Math.sin(ang - nib))) * (0.3 + 0.7 * end);
+    const nx = -Math.sin(ang);
+    const ny = Math.cos(ang);
+    L.push([sm[i][0] + nx * hw, sm[i][1] + ny * hw]);
+    R.push([sm[i][0] - nx * hw, sm[i][1] - ny * hw]);
+  }
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  L.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)));
+  R.reverse().forEach(([a, b]) => ctx.lineTo(a, b));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+// [path, t in, t fully drawn, t erase start, t gone]
+const RIBBONS = [
+  [[[90, 790], [120, 700], [175, 650], [245, 650], [300, 600], [330, 555], [300, 535]], 12.53, 12.57, 12.6, 12.65],
+  [[[150, 830], [205, 800], [262, 838], [228, 885], [292, 905], [336, 870]], 12.54, 12.58, 12.6, 12.65],
+  [[[140, 290], [175, 225], [215, 240], [240, 170], [300, 120], [345, 140], [300, 190], [262, 150]], 12.76, 12.79, 12.83, 12.87],
+  [[[745, 285], [770, 180], [800, 95], [860, 70], [905, 110], [880, 180], [810, 230]], 12.76, 12.8, 12.83, 12.87],
+  [[[1300, 470], [1350, 520], [1320, 570], [1380, 610], [1350, 650]], 12.98, 13.0, 13.05, 13.09],
+  [[[890, 1010], [940, 960], [980, 1010], [1030, 955], [1070, 1010], [1105, 965]], 12.98, 13.0, 13.05, 13.09],
+  [[[60, 690], [120, 640], [200, 620], [255, 640], [220, 660]], 13.22, 13.25, 13.29, 13.33],
+  [[[100, 870], [55, 900], [50, 950], [90, 960]], 13.22, 13.25, 13.29, 13.33],
+  [[[520, 1040], [490, 960], [550, 900], [640, 920], [610, 990], [560, 960], [620, 940], [675, 1040]], 13.22, 13.25, 13.29, 13.33],
+];
+
+// Grey motion trail of the ink ball: a broad soft arc that sweeps in and fades.
+function inkArc(ctx, pts, t, s, d, w = 34) {
+  if (t < s || t > s + d) return;
+  const k = inv(s, s + d, t);
+  ctx.save();
+  ctx.filter = `blur(${7 * S}px)`;
+  ctx.globalAlpha = Math.sin(Math.PI * k) * 0.75;
+  fx.strokePartial(ctx, pts, Math.max(0, k * 1.6 - 0.6), Math.min(1, k * 2), w, 'rgba(40,38,38,0.85)', true);
+  ctx.restore();
+}
+const arcPts = (cx, cy, rx, ry, a0, a1, rot = 0) =>
+  Array.from({ length: 40 }, (_, i) => {
+    const a = lerp(a0, a1, i / 39);
+    const x = Math.cos(a) * rx;
+    const y = Math.sin(a) * ry;
+    return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+  });
+
 function sceneScatter(ctx, t, f) {
-  flat(ctx, '#e0dfdd', 'rgba(60,56,56,0.18)', W, H);
-  const spin = inv(11.85, 12.0, t);
-  const phi = kf(t, [[11.85, -1.6], [12.0, 0, 'outCubic'], [12.25, 0.26, 'linear'], [12.42, 0.36, 'linear']]);
-  const burstP = ease.outCubic(inv(12.38, 12.58, t));
-  const z = kf(t, [[12.5, 1], [13.76, 1.06, 'linear']]);
+  ctx.fillStyle = '#e2e2e2';
+  ctx.fillRect(0, 0, W, H);
+  const spin = inv(11.85, 12.03, t);
+  const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.42, 0.36, 'linear']]);
+  const burstP = ease.inOutCubic(inv(12.43, 12.56, t));
+  const z = kf(t, [[12.6, 1], [13.47, 0.95, 'linear'], [13.68, 0.88, 'inQuad'], [13.722, 0.7], [13.76, 0.62]]);
+  const turn = kf(t, [[12.6, 0], [13.47, 0.21, 'linear'], [13.68, 0.65, 'inQuad'], [13.722, 1.0, 'inQuad'], [13.76, 1.3]]);
   const [c, x] = off(0);
   x.save();
-  camera(x, { z, x: kf(t, [[12.25, 0], [12.4, 30]]) });
+  camera(x, { z, cx: 700, cy: 560, x: kf(t, [[12.25, 0], [12.4, 30]]) });
+  let heartAt = null;
+  // the layout orbits clockwise about (700, 560); icons themselves stay upright
+  const ca = Math.cos(turn);
+  const sa = Math.sin(turn);
+  const orbit = (px, py) => [700 + (px - 700) * ca - (py - 560) * sa, 560 + (px - 700) * sa + (py - 560) * ca];
   const ring = ringLayout(phi - 0.21, { tilt: 0.4, R: 405, cx: 760, cy: 545, F: 4000 });
   ring
     .slice()
-    .sort((a, b) => b.z - a.z)
+    .sort((a, b) => (burstP > 0.5 ? (a.name === 'plant' ? -1 : b.name === 'plant' ? 1 : b.z - a.z) : b.z - a.z))
     .forEach((it) => {
       if (it.name === 'cat' && t > 12.4) return; // cat is reborn from the ink blot
       if (it.name === 'coin' && t > 12.92) return; // coin turns into the blot
@@ -1443,7 +1559,20 @@ function sceneScatter(ctx, t, f) {
       let px = lerp(it.x, tgt[0], burstP);
       let py = lerp(it.y, tgt[1], burstP);
       if (it.name === 'controller') {
-        const m = kf(t, [[13.0, [0, 0]], [13.25, [-48, 36]], [13.5, [-207, 132]], [13.76, [-300, 180]]]);
+        const m = kf(t, [[13.4, [0, 0]], [13.68, [-60, -60]]]);
+        px += m[0];
+        py += m[1];
+      }
+      if (it.name === 'plant') {
+        // tucked behind the clapper, then slides out to its left
+        const m = kf(t, [[13.5, [0, 0]], [13.68, [-120, -10]]]);
+        px += m[0];
+        py += m[1];
+      }
+      [px, py] = orbit(px, py);
+      if (it.name === 'cap') {
+        // the cap creeps in toward the heart
+        const m = kf(t, [[12.6, [0, 0]], [13.26, [-87, -27]], [13.47, [-127, -27]], [13.55, [-181, -27]], [13.6, [-208, -41]], [13.68, [-262, -108]], [13.76, [-300, -160]]]);
         px += m[0];
         py += m[1];
       }
@@ -1455,40 +1584,43 @@ function sceneScatter(ctx, t, f) {
         const q = inv(13.2, 13.35, t);
         x.save();
         x.filter = `blur(${3 * S}px)`;
-        const dab = kf(t, [[13.2, [250, 895]], [13.5, [219, 735]], [13.76, [210, 680]]]);
+        const dab = orbit(...kf(t, [[13.2, [250, 895]], [13.76, [250, 895]]]));
         drawSprite(x, 'cash', lerp(px, dab[0], q), lerp(py, dab[1], q), w * lerp(1, 1.0, q), lerp(r, -0.3, q), 1, { silhouette: '#121010' });
         x.restore();
         return;
       }
+      if (it.name === 'heart' && t > 13.4) {
+        heartAt = [px, py, w, r];
+        return; // drawn last, over the text
+      }
       drawSprite(x, it.name, px, py, w, r, 1, sil ? { silhouette: '#121010' } : {});
     });
   if (t < 12.45) {
-    const keys = [[11.9, [640, 400]], [12.05, [740, 545]], [12.45, [750, 545]]];
+    const keys = [[11.85, [1300, 560]], [11.887, [664, 564]], [11.928, [330, 650]], [11.97, [240, 760]], [12.012, [460, 290]], [12.054, [700, 500]], [12.1, [740, 540]], [12.45, [750, 545]]];
     const trail = [];
-    for (let i = 0; i <= 6; i++) trail.push(kf(t - i * 0.02, keys));
+    for (let i = 0; i <= 12; i++) trail.push(kf(Math.max(11.85, t - i * 0.006), keys));
     inkBall(x, trail[0][0], trail[0][1], 50, trail, 15);
   }
-  if (t > 12.85) {
-    const br = kf(t, [[12.85, 20], [13.0, 68, 'outBack'], [13.76, 80]]);
-    x.save();
-    x.filter = `blur(${3 * S}px)`;
-    x.fillStyle = '#0e0d0d';
-    x.beginPath();
-    for (let i = 0; i <= 40; i++) {
-      const a = (i / 40) * Math.PI * 2;
-      const rr = br * (1 + noise1(a * 3 + t * 4, 7) * 0.08);
-      x.lineTo(1080 + Math.cos(a) * rr, kf(t, [[13.0, 670], [13.25, 650], [13.5, 735]]) + Math.sin(a) * rr * 1.1);
-    }
-    x.fill();
-    if (t > 13.3) {
+  if (t > 12.93) {
+    // the blot drops from the top right onto the coin and swallows it
+    const br = kf(t, [[12.93, 30], [13.0, 78, 'outBack'], [13.76, 84]]);
+    const by = kf(t, [[12.93, 420], [12.99, 600, 'inQuad']]);
+    if (t < 13.0) {
       x.save();
-      x.beginPath();
-      x.rect(900, 520, 400, 205);
-      x.clip();
-      drawSprite(x, 'cat', 1090, 720, lerp(120, 190, ease.outBack(inv(13.3, 13.5, t))), 0, 1, { silhouette: '#0e0d0d' });
+      x.filter = `blur(${8 * S}px)`;
+      fx.strokePartial(x, [[1140, 170], [1120, 300], [1100, by]], 0, 1, 50, 'rgba(20,18,18,0.8)');
       x.restore();
     }
-    x.restore();
+    const [bx, bby] = t < 13.0 ? [1100, by] : orbit(1100, 600);
+    sprayBlob(x, bx, bby, br, 7, 1.1);
+    if (t > 13.33) {
+      x.save();
+      x.beginPath();
+      x.rect(bx - 120, bby - 160, 300, 180);
+      x.clip();
+      drawSprite(x, 'cat', bx + 30, bby, lerp(120, 190, ease.outBack(inv(13.33, 13.5, t))), 0, 1, { silhouette: '#0e0d0d' });
+      x.restore();
+    }
   }
   if (t > 12.4) {
     // thick calligraphic swirls and grey brush strokes
@@ -1517,17 +1649,7 @@ function sceneScatter(ctx, t, f) {
   if (t > 12.4 && t < 12.85) {
     const p = inv(12.4, 12.5, t);
     const e = inv(12.7, 12.85, t);
-    [[110, 580, 360, 880, 0], [90, 640, 300, 900, 1]].forEach(([x0, y0, x1, y1, k]) => {
-      const pts = [];
-      for (let i = 0; i <= 80; i++) {
-        const u = i / 80;
-        const bx = lerp(x0, x1, u);
-        const by = lerp(y0, y1, u);
-        const a = u * Math.PI * (5 + k);
-        pts.push([bx + Math.cos(a) * 34 - Math.sin(u * 7) * 20, by + Math.sin(a) * 26]);
-      }
-      fx.strokePartial(x, pts, e, p, 16, '#1c1414', false);
-    });
+
     const arc = [];
     for (let i = 0; i <= 40; i++) {
       const u = i / 40;
@@ -1541,27 +1663,30 @@ function sceneScatter(ctx, t, f) {
     fx.strokePartial(x, arc, 0, p, 32, '#2a2a2a', true);
     x.restore();
   }
+  // grey trails of the ink ball whipping between icons
+  inkArc(x, arcPts(780, 380, 560, 210, Math.PI * 1.05, Math.PI * 2.1, 0.15), t, 12.46, 0.12, 30);
+  inkArc(x, arcPts(860, 430, 340, 380, 2.79, -0.61), t, 12.75, 0.1, 30);
+  inkArc(x, arcPts(720, 560, 330, 300, 3.49, 5.76), t, 12.97, 0.1, 30);
+  inkArc(x, arcPts(470, 620, 210, 420, Math.PI * 0.6, Math.PI * 1.45), t, 13.17, 0.1, 30);
   // extra ink: blob top right, fuzzy dots, shards
   x.save();
   x.filter = `blur(${3 * S}px)`;
-  if (t > 12.62 && t < 12.95) {
-    x.beginPath();
-    for (let i = 0; i <= 30; i++) {
-      const a = (i / 30) * Math.PI * 2;
-      const rr = 64 * ease.outBack(inv(12.62, 12.72, t)) * (1 + noise1(a * 3, 9) * 0.18);
-      x.lineTo(1140 + Math.cos(a) * rr, 185 + Math.sin(a) * rr);
-    }
-    x.fillStyle = '#0e0d0d';
-    x.fill();
+  x.filter = 'none';
+  if (t > 12.83 && t < 12.95) sprayBlob(x, 1140, 165, 42 * ease.outBack(inv(12.83, 12.87, t)), 9);
+  // the ball parks top left, fuzzy, and fades
+  if (t > 13.24 && t < 13.45) {
+    x.save();
+    x.filter = `blur(${4 * S}px)`;
+    sprayBlob(x, 370, 195, lerp(38, 22, inv(13.24, 13.45, t)), 11, 0.8);
+    x.restore();
   }
-  if (t > 13.2) dot(x, 130, 70, 22, '#141212');
-  x.filter = `blur(${8 * S}px)`;
   x.filter = `blur(${6 * S}px)`;
-  if (t > 13.15 && t < 13.4) dot(x, 354, 180, 22, '#141212');
   if (t > 12.95 && t < 13.12) dot(x, 795, 800, 22, '#141212');
   x.restore();
   if (t > 12.7 && t < 13.0) fx.strokePartial(x, [[814, 322], [826, 334], [834, 326], [842, 334], [856, 320]], 0, 1, 4, '#141212');
-  if (t > 12.6 && t < 13.0) fx.strokePartial(x, fx.scribblePoints(321, 120, 60, 3, 50).map(([a, b]) => [a + 60, b + 260]), 0, inv(12.6, 12.7, t), 8, '#1c1414');
+  RIBBONS.forEach(([pts, a, b, c2, d]) => {
+    if (t > a && t < d) ribbon(x, pts, inv(c2, d, t), inv(a, b, t), 14);
+  });
   if (t > 12.95) {
     x.fillStyle = '#141212';
     [[1320, 510, 0.5], [1245, 605, -0.4], [675, 715, 0.9]].forEach(([a, b, r]) => {
@@ -1577,14 +1702,48 @@ function sceneScatter(ctx, t, f) {
       x.restore();
     });
   }
-  if (t > 13.45) {
-    fx.text(x, 'through', 440, 545, 34, '#1d1a18');
+  if (t > 13.52) {
+    x.save();
+    x.setTransform(S, 0, 0, S, 0, 0);
+    fx.text(x, 'through', 318, 548, 38, '#1d1a18');
+    const b0 = kf(t, [[13.52, 380], [13.6, 600], [13.64, 660], [13.68, 680]]);
+    const b1 = kf(t, [[13.52, 640], [13.6, 800], [13.64, 720], [13.68, 720]]);
     x.fillStyle = '#0e0d0d';
-    x.fillRect(582, 524, lerp(0, 200, ease.outExpo(inv(13.45, 13.52, t))), 44);
+    x.fillRect(b0, 522, b1 - b0, 44);
+    x.restore();
+  }
+  if (heartAt) {
+    // the heart breaks from the drift and slides over the word
+    const [hx, hy, hw, hr] = heartAt;
+    const k = inv(13.4, 13.5, t);
+    const tgt = kf(t, [[13.47, [480, 600]], [13.51, [460, 600]], [13.55, [440, 560]], [13.6, [400, 540]], [13.64, [395, 530]], [13.68, [380, 430]], [13.76, [360, 330]]]);
+    x.save();
+    x.setTransform(S, 0, 0, S, 0, 0);
+    // screen position of the drifting heart
+    // heartAt is already orbited; apply the layer zoom
+    const sx0 = 700 + (hx - 700) * z + kf(t, [[12.25, 0], [12.4, 30]]);
+    const sy0 = 560 + (hy - 560) * z;
+    drawSprite(x, 'heart', lerp(sx0, tgt[0], k), lerp(sy0, tgt[1], k), hw * z, hr, 1, { silhouette: '#121010' });
+    x.restore();
   }
   x.restore();
-  composite(ctx, c, { blur: spin < 1 ? (1 - spin) * 14 : 0 });
-  fx.vignette(ctx, lerp(0.3, 0.5, inv(12.5, 13.7, t)), '24,20,20', 0.55, W / 2, H / 2, 0.8);
+  // motion-blur flashes on the ink hits, then the whip into the hand shot
+  const flashBlur = kf(t, [[12.73, 0], [12.76, 4], [12.79, 0], [12.97, 0], [13.01, 8], [13.05, 0], [13.7, 0], [13.722, 1.5], [13.76, 4]]);
+  composite(ctx, c, { blur: spin < 1 ? (1 - spin) * 14 : flashBlur });
+  if (t > 13.69) {
+    // thin black speed arcs sweeping with the turn
+    const k = inv(13.69, 13.76, t);
+    [[560, 620, 330, 240, 3.0, 4.3], [620, 660, 430, 330, 1.75, 2.85], [780, 600, 380, 230, -0.35, 0.6], [470, 440, 120, 160, 3.5, 4.6]].forEach(([cx, cy, rx, ry, a0, a1]) =>
+      ribbon(ctx, arcPts(cx, cy, rx, ry, a0 + k * 0.4, a1 + k * 0.4), 0, Math.min(1, k * 3), 8, 'rgba(20,18,18,0.9)', 1.2));
+  }
+  // symmetric vignette that deepens through the shot (corners #a3 -> #83 -> #58)
+  const va = kf(t, [[11.85, 0.26], [12.6, 0.28], [13.47, 0.42], [13.68, 0.61], [13.722, 0.78], [13.76, 0.85]]);
+  const vg = ctx.createRadialGradient(W / 2, H / 2, 260, W / 2, H / 2, 900);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(0.5, `rgba(0,0,0,${va * 0.32})`);
+  vg.addColorStop(1, `rgba(0,0,0,${va})`);
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, W, H);
 }
 
 // =====================================================================
