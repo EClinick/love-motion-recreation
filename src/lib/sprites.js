@@ -121,70 +121,70 @@ const builders = {
     return g;
   },
   controller() {
-    const g = new Grid(38, 22);
-    const body = '#f3f0e8';
-    g.ellipse(7, 9, 6.5, 6.8, body);
-    g.ellipse(31, 9, 6.5, 6.8, body);
-    g.rect(7, 3, 24, 12, body);
-    g.poly([[3, 12], [10, 12], [9, 19], [4, 18]], body);
-    g.poly([[28, 12], [35, 12], [34, 18], [29, 19]], body);
-    g.tint((x, y) => y > 14, '#d9d4c8');
+    // chunky gamepad: two round lobes, grips hanging below, d-pad and a diamond of buttons
+    const g = new Grid(31, 18);
+    const body = '#f2f1ec';
+    g.ellipse(8, 7, 7.5, 6.5, body);
+    g.ellipse(23, 7, 7.5, 6.5, body);
+    g.rect(8, 1, 15, 11, body);
+    g.poly([[1, 8], [11, 9], [9, 17], [3, 16]], body);
+    g.poly([[20, 9], [30, 8], [28, 16], [22, 17]], body);
+    g.tint((x, y) => y > 11.5, '#d8d6d0');
+    g.tint((x, y) => y > 9.5 && y < 11.5 && x > 10 && x < 21, '#e2e0da');
     g.outline(OUT);
     // d-pad
-    g.rect(5, 8, 7, 2, OUT);
-    g.rect(7, 6, 2, 6, OUT);
+    g.rect(4, 6, 8, 2, OUT);
+    g.rect(7, 3, 2, 8, OUT);
     // select / start
-    g.rect(15, 8, 3, 1, '#4a4a4a');
-    g.rect(20, 8, 3, 1, '#4a4a4a');
-    // face buttons
-    g.rect(30, 5, 2, 2, '#e8c22a');
-    g.rect(27, 8, 2, 2, '#3c62e8');
-    g.rect(33, 8, 2, 2, '#e23a2c');
-    g.rect(30, 11, 2, 2, '#3fb44a');
+    g.rect(13, 6, 2, 1, OUT);
+    g.rect(17, 6, 2, 1, OUT);
+    // face buttons: blue top, green left, red right, yellow bottom
+    g.rect(22, 2, 2, 2, '#3aa7e0');
+    g.rect(20, 5, 2, 2, '#43b648');
+    g.rect(25, 5, 2, 2, '#e3282c');
+    g.rect(22, 8, 2, 2, '#f0d81e');
     return g;
   },
+
   cap() {
-    const g = new Grid(32, 24);
-    const c = '#f7f6f2';
-    g.fill((x, y) => y < 16 && ((x - 13) / 11.5) ** 2 + ((y - 16) / 13) ** 2 <= 1, c);
-    // brim sweeping out to the right
-    g.poly([[13, 14], [30, 13], [31, 17], [24, 21], [12, 18]], c);
-    g.tint((x, y) => y > 16.5 && x > 12, '#dcd9d0');
-    g.tint((x, y) => x < 6 && y > 9, '#e2dfd6');
+    // baseball cap in side view: round crown on the right, long brim reaching left
+    const g = new Grid(32, 22);
+    const c = '#f6f4ec';
+    g.fill((x, y) => y < 15.5 && ((x - 19) / 11) ** 2 + ((y - 15) / 13.5) ** 2 <= 1, c);
+    g.poly([[16, 12], [9, 13], [1, 18], [3, 20], [14, 19], [23, 16]], c);
+    g.tint((x, y) => y > 15.5 && x < 20, '#e3e0d4');
+    g.tint((x, y) => y > 18 && x < 15, '#d2cebf');
+    g.tint((x, y) => x > 25 && y > 6, '#e6e3d8');
     g.outline(OUT);
     // panel seams + button
-    g.line(13, 4, 9, 15, '#b9b29c');
-    g.line(17, 4, 19, 14, '#b9b29c');
-    g.rect(14, 3, 2, 1, '#9f977f');
-    g.tint((x, y) => x > 20 && x < 25 && y > 7 && y < 10, '#e4dfd0');
+    g.line(19, 2, 14, 13, '#c4bfae');
+    g.line(21, 2, 25, 13, '#c4bfae');
+    g.rect(19, 1, 2, 1, '#a59f8a');
     return g;
   },
+
   cat() {
-    const g = new Grid(30, 28);
+    // blocky black cat: big square head with tall white eyes, short legs
+    const g = new Grid(28, 28);
     const k = '#121114';
-    // body
-    g.ellipse(13, 18, 9, 6, k);
-    // head
-    g.ellipse(21, 9, 6, 5.2, k);
-    g.poly([[16, 6], [17, 0], [20, 4]], k);
-    g.poly([[22, 4], [26, 0], [26, 6]], k);
-    // legs
-    g.rect(5, 20, 3, 7, k);
-    g.rect(10, 21, 3, 6, k);
-    g.rect(16, 21, 3, 6, k);
-    g.rect(20, 19, 3, 8, k);
-    // tail curling up
-    g.line(5, 16, 2, 11, k);
-    g.line(4, 16, 1, 11, k);
-    g.line(1, 11, 2, 5, k);
-    g.line(2, 11, 3, 5, k);
-    g.line(3, 5, 5, 3, k);
-    g.tint((x, y) => y < 14 && x > 8 && x < 18, '#26242a');
+    g.rect(4, 5, 17, 12, k);
+    g.poly([[4, 6], [5, 0], [10, 5]], k);
+    g.poly([[15, 5], [20, 0], [21, 6]], k);
+    g.ellipse(15, 19, 11, 6, k);
+    g.rect(5, 21, 4, 6, k);
+    g.rect(11, 22, 3, 5, k);
+    g.rect(17, 22, 3, 5, k);
+    g.rect(22, 20, 4, 7, k);
+    // short tail up at the back
+    g.rect(24, 10, 2, 8, k);
+    g.rect(25, 8, 2, 3, k);
+    g.tint((x, y) => y < 4 && (x < 8 || x > 17), '#2a282e');
     // eyes
-    g.px(19, 8, '#f2f0e6');
-    g.px(23, 8, '#f2f0e6');
+    g.rect(8, 9, 2, 3, '#f2f0e6');
+    g.rect(15, 9, 2, 3, '#f2f0e6');
     return g;
   },
+
   camera() {
     const g = new Grid(34, 25);
     // silver top plate
@@ -212,31 +212,32 @@ const builders = {
     return g;
   },
   book() {
-    const g = new Grid(34, 24);
+    const g = new Grid(34, 21);
     // cover (top face, slanted)
     const cover = [[1, 9], [20, 1], [33, 7], [14, 16]];
-    g.poly(cover, '#b8262c');
+    g.poly(cover, '#9e2228');
+    g.tint((x, y) => x + y * 2 < 24, '#b02a2e');
     // page block (front-right face)
-    g.poly([[14, 16], [33, 7], [33, 13], [14, 22]], '#efe5cc');
+    g.poly([[14, 16], [33, 7], [33, 11], [14, 20]], '#efe5cc');
     // spine (front-left face)
-    g.poly([[1, 9], [14, 16], [14, 22], [1, 15]], '#8c1a20');
+    g.poly([[1, 9], [14, 16], [14, 20], [1, 13]], '#7a161c');
     g.outline(OUT);
     // label on cover
     g.poly([[9, 8], [18, 4], [24, 7], [15, 11]], '#86ab62');
     g.poly([[11, 8], [18, 5], [21, 7], [15, 10]], '#9cc072');
     // page lines and stickers
-    for (let i = 0; i < 4; i++) g.line(16, 19 - i, 31, 12 - i, '#d8cba8');
-    g.rect(24, 13, 2, 2, '#d23aa0');
-    g.rect(28, 11, 2, 2, '#9ce04a');
+    for (let i = 0; i < 2; i++) g.line(16, 18 - i, 31, 11 - i, '#d8cba8');
+    g.rect(24, 12, 2, 2, '#d23aa0');
+    g.rect(28, 10, 2, 2, '#9ce04a');
     // bookmark band
-    g.poly([[6, 12], [9, 13.5], [9, 19.5], [6, 18]], '#c99a6a');
+    g.poly([[6, 12], [9, 13.5], [9, 17.5], [6, 16]], '#c99a6a');
     return g;
   },
   vinyl() {
     const g = new Grid(40, 40);
     const c = 20;
-    g.circle(c, c, 18.6, '#1a1c2a');
-    g.circle(c, c, 17.2, '#272a3e');
+    g.circle(c, c, 18.6, '#1c1e24');
+    g.circle(c, c, 17.2, '#2c3038');
     // smooth curved sheen wedges, upper-left and lower-right
     const wedge = (lo, hi, a0, half, col) =>
       g.tint((x, y) => {
@@ -246,8 +247,8 @@ const builders = {
         return r > lo && r < hi && d < half;
       }, col);
     [-2.3, 0.84].forEach((a0) => {
-      wedge(7.5, 16.5, a0, 0.36, '#7f7a9c');
-      wedge(9, 15, a0, 0.2, '#a29cc0');
+      wedge(7.5, 16.5, a0, 0.36, '#7c7488');
+      wedge(9, 15, a0, 0.2, '#968fa6');
     });
     g.circle(c, c, 6.4, '#e0303c');
     g.circle(c, c, 4.4, '#cc2430');
@@ -257,18 +258,22 @@ const builders = {
     return g;
   },
   skateboard() {
-    const g = new Grid(40, 14);
-    g.ellipse(5, 5, 4.5, 3.6, '#2e2d33');
-    g.ellipse(35, 5, 4.5, 3.6, '#2e2d33');
-    g.rect(5, 2, 30, 6, '#2e2d33');
-    g.tint((x, y) => y < 4, '#47464e');
+    // deck seen from three-quarters above: dark grip with bolts, wooden side edge, red wheels
+    const g = new Grid(40, 17);
+    const grip = '#30343c';
+    g.ellipse(6, 6.5, 5.5, 5.5, grip);
+    g.ellipse(34, 6.5, 5.5, 5.5, grip);
+    g.rect(6, 1, 28, 11, grip);
+    g.tint((x, y) => y < 3.5, '#3c414b');
+    g.poly([[2, 10], [38, 10], [36, 13], [4, 13]], '#cbbd94');
+    g.tint((x, y) => y > 12, '#a8986e');
     g.outline(OUT);
-    g.rect(8, 9, 6, 1, '#8b8b90');
-    g.rect(26, 9, 6, 1, '#8b8b90');
-    g.rect(8, 10, 3, 3, '#d93a34');
-    g.rect(29, 10, 3, 3, '#d93a34');
+    [[8, 4], [11, 6], [8, 8], [29, 4], [32, 6], [29, 8]].forEach(([x, y]) => g.rect(x, y, 2, 2, '#8e9098'));
+    g.rect(6, 14, 5, 3, '#d93a34');
+    g.rect(29, 14, 5, 3, '#d93a34');
     return g;
   },
+
   clapper() {
     const g = new Grid(32, 30);
     // board body
@@ -288,26 +293,37 @@ const builders = {
     return g;
   },
   plant() {
-    const g = new Grid(28, 32);
-    const leaf = (cx, cy, rx, ry, c) => g.ellipse(cx, cy, rx, ry, c);
-    leaf(14, 9, 6, 7, '#3e8a3c');
-    leaf(7, 12, 6, 4, '#3e8a3c');
-    leaf(21, 12, 6, 4, '#3e8a3c');
-    leaf(9, 6, 4, 4, '#4f9e42');
-    leaf(19, 6, 4, 4, '#4f9e42');
-    leaf(14, 3, 3, 3, '#5fb046');
-    g.tint((x, y) => (x + y * 1.3) % 6 < 2, '#6fbe4e');
-    g.tint((x, y) => (x * 1.7 + y) % 9 < 1.5 && y < 13, '#c9dc6a');
-    // stems
-    g.rect(13, 14, 2, 5, '#2e6a2e');
+    // leafy pothos in a slate pot
+    const g = new Grid(28, 31);
+    const leaf = (cx, cy, a, L, w, c) => {
+      const dx = Math.cos(a);
+      const dy = Math.sin(a);
+      g.poly([[cx + dx * L, cy + dy * L], [cx - dy * w, cy + dx * w], [cx - dx * L * 0.5, cy - dy * L * 0.5], [cx + dy * w, cy - dx * w]], c);
+    };
+    const d2 = Math.PI / 180;
+    g.ellipse(14, 11, 8, 5, '#24583c');
+    leaf(14, 9, -90 * d2, 7, 4.5, '#3f8a46');
+    leaf(5, 13, 195 * d2, 5, 3, '#2f6e4a');
+    leaf(23, 13, -15 * d2, 5, 3, '#2f6e4a');
+    leaf(8, 9, 215 * d2, 6, 3.5, '#3f8a46');
+    leaf(20, 9, -35 * d2, 6, 3.5, '#3f8a46');
+    leaf(11, 6, 245 * d2, 6, 3.5, '#4f9e48');
+    leaf(17, 6, -65 * d2, 6, 3.5, '#4f9e48');
+    leaf(14, 5, -90 * d2, 5, 3, '#5aac4c');
+    leaf(10, 12, 200 * d2, 4, 2.5, '#2a6040');
+    leaf(18, 12, -20 * d2, 4, 2.5, '#2a6040');
+    g.tint((x, y) => (x * 1.3 + y * 0.7) % 5 < 1.2 && y < 14, '#9fcb5a');
+    g.tint((x, y) => (x * 0.9 + y * 1.7) % 11 < 1.1 && y < 12, '#d4e070');
+    g.rect(13, 13, 2, 5, '#1e4a34');
     // pot
-    g.poly([[5, 18], [23, 18], [21, 30], [7, 30]], '#9dbbe6');
-    g.rect(4, 17, 20, 3, '#c6dcf6');
-    g.tint((x, y) => x > 16 && y > 20, '#7898cc');
-    g.tint((x, y) => x < 9 && y > 20, '#b6d0f2');
+    g.poly([[6, 18], [22, 18], [20, 30], [8, 30]], '#8ea2c8');
+    g.rect(5, 17, 18, 3, '#c8d2ea');
+    g.tint((x, y) => x > 16 && y > 20, '#6f84ac');
+    g.tint((x, y) => x < 10 && y > 20, '#b4c4e2');
     g.outline('#1b2240');
     return g;
   },
+
   cash() {
     const g = new Grid(40, 26);
     // isometric bill stack
