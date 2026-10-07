@@ -512,9 +512,9 @@ const STAR_KEYS = [
   [2.064, 90, 480, [-1.77, -0.09, 0.92, 3.0], [500, 520, 560, 300], 0.04],
   [2.25, 40, 420, [-1.2, 0.18, 1.52, 3.0], [450, 380, 660, 400], 0.04],
   [2.5, -70, 505, [-0.8, 0.57, 2.0, 3.0], [820, 800, 520, 600], 0.04],
-  [3.0, -70, 505, [-0.78, 0.71, 2.2, 3.0], [900, 760, 500, 500], 0.035],
-  [3.5, -70, 505, [-0.76, 0.825, 2.3, 3.0], [900, 820, 500, 500], 0.03],
-  [3.71, -70, 505, [-0.75, 0.84, 2.3, 3.0], [900, 820, 500, 500], 0.03],
+  [3.0, -95, 505, [-0.71, 0.65, 2.2, 3.0], [925, 785, 500, 500], 0.02],
+  [3.5, -100, 505, [-0.67, 0.73, 2.3, 3.0], [930, 850, 500, 500], 0.018],
+  [3.71, -100, 505, [-0.66, 0.75, 2.3, 3.0], [930, 850, 500, 500], 0.018],
   [3.79, -80, 540, [-0.55, 0.58, 2.3, 3.0], [740, 700, 500, 500], 0.06],
   [3.83, -80, 540, [-0.55, 0.58, 2.3, 3.0], [740, 700, 500, 500], 0.06],
 ];
@@ -752,7 +752,7 @@ function sceneSparkle(ctx, t, f) {
   const rim = inv(3.755, 3.79, t);
   x2.fillStyle = rg;
   x2.shadowColor = sc.edge;
-  x2.shadowBlur = 22 * S;
+  x2.shadowBlur = 12 * S;
   x2.globalAlpha = 1 - 0.7 * rim;
   x2.fill();
   x2.globalAlpha = 1;
@@ -771,7 +771,7 @@ function sceneSparkle(ctx, t, f) {
     x2.restore();
   }
   x2.strokeStyle = rim > 0 ? `rgba(240,40,30,${rim})` : t > 3.68 ? `rgba(255,240,240,${inv(3.68, 3.71, t) * 0.8})` : `rgba(31,106,90,${inv(2.25, 2.45, t)})`;
-  x2.lineWidth = rim > 0 ? 10 : t > 3.68 ? 2.5 : 5;
+  x2.lineWidth = rim > 0 ? 10 : t > 3.68 ? 2.5 : 3;
   armStar(x2, P.cx, P.cy, P.angs, P.lens, P.k);
   if (rim > 0) {
     x2.shadowColor = 'rgba(255,40,30,0.9)';
@@ -787,7 +787,9 @@ function sceneSparkle(ctx, t, f) {
   ctx.translate(sx, sy);
   // floating icons, wobbling
   if (t < 3.27) {
-    const out = ease.inQuad(inv(3.2, 3.27, t));
+    // the icons break up into coarse pixel blocks before vanishing (frames 76-78)
+    const out = 0;
+    const mos = inv(3.09, 3.255, t);
     const ib = kf(t, [[2.064, 1.5], [2.2, 4], [2.3, 3], [2.45, 0]]);
     const [ic, ix] = off(0);
     FLOATERS.forEach(([n, w, r, ph]) => {
@@ -796,7 +798,8 @@ function sceneSparkle(ctx, t, f) {
       const dy = noise1(t * 1.3, ph + 5) * 6;
       drawSprite(ix, n, x + dx, y + dy, w * (1 - out), r + Math.sin(t * 5 + ph * 2) * 0.12);
     });
-    composite(ctx, ic, { blur: ib });
+    if (mos > 0) mosaic(ctx, ic, Math.round(lerp(3, 15, mos * mos)), { blur: 0.6 });
+    else composite(ctx, ic, { blur: ib });
     dot(ctx, 406, 322, 4);
     dot(ctx, 821, 382, 3);
     ctx.fillStyle = '#d8241c';
