@@ -1368,73 +1368,221 @@ function spikes(ctx, x, y, seed, n = 6, col = '#e8a020') {
   ctx.restore();
 }
 
-function sceneRing(ctx, t, f) {
-  // 6.30-6.38: grey gradient, then fire wipe rising from the bottom
-  if (t < 6.32) {
-    ctx.fillStyle = '#c9c8c8';
-    ctx.fillRect(0, 0, W, H);
-    const g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, 'rgba(255,255,255,0.7)');
-    g.addColorStop(0.6, 'rgba(120,118,118,0.2)');
-    g.addColorStop(1, 'rgba(30,28,28,0.9)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-    return;
-  }
-  if (t < 6.36) {
-    ctx.fillStyle = '#121112';
-    ctx.fillRect(0, 0, W, H);
-    const g = ctx.createLinearGradient(0, 600, 0, H);
-    g.addColorStop(0, 'rgba(18,17,18,0)');
-    g.addColorStop(0.375, '#8a0a0a');
-    g.addColorStop(0.625, '#ff6a10');
-    g.addColorStop(0.833, '#ffd070');
-    g.addColorStop(1, '#fff4e0');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 600, W, H - 600);
-    return;
-  }
-  const fr = Math.round(t * C.FPS);
-  if (t < 6.52) {
-    // 6.38-6.50: the ring arrives as chunky thermal pixels on dark, then goes grey
-    ctx.fillStyle = bgRamp(t, [[6.38, '#141414'], [6.42, '#2c2a2a'], [6.46, '#585656'], [6.5, '#9a9898']]);
-    ctx.fillRect(0, 0, W, H);
-    const [c, x] = off(0);
-    x.save();
-    camera(x, { z: kf(t, [[6.38, 2.2], [6.42, 1.15, 'outCubic'], [6.5, 1.0]]), cx: 760, cy: 760 });
-    drawRing2(x, t, true);
-    x.restore();
-    const block = t < 6.48 ? 14 : 10;
-    const sw = Math.round(W / block);
-    const sh = Math.round(H / block);
-    const sm = createCanvas(sw, sh);
-    const smx = sm.getContext('2d');
-    smx.drawImage(c, 0, 0, sw, sh);
-    const id = smx.getImageData(0, 0, sw, sh);
-    const d = id.data;
-    const grey = t >= 6.48;
-    for (let i = 0; i < d.length; i += 4) {
-      if (!d[i + 3]) continue;
-      const l = (0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]) / 255;
-      if (grey) {
-        const v = Math.round(40 + l * 120);
-        d[i] = d[i + 1] = d[i + 2] = v;
-      } else {
-        const v = Math.min(255, Math.round((0.35 + l * 0.75) * 255)) * 3;
-        d[i] = ironLut[v];
-        d[i + 1] = ironLut[v + 1];
-        d[i + 2] = ironLut[v + 2];
-      }
+// Depth-pass arrival (frames 154-156): the ring as smooth depth-shaded silhouettes at a coarse
+// mosaic, coloured thermal on dark (154-155), then a grey ramp on light grey (156).
+const ARRIVE_BOX = { 154: [260, 427, 1180, 980], 155: [214, 360, 1271, 980], 156: [146, 292, 1305, 900] };
+function depthRing(ctx, t, fr) {
+  const items = ring2(t);
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  items.forEach((it) => {
+    x0 = Math.min(x0, it.x - it.w / 2); x1 = Math.max(x1, it.x + it.w / 2);
+    y0 = Math.min(y0, it.y - it.w * 0.38); y1 = Math.max(y1, it.y + it.w * 0.38);
+  });
+  const [bx0, by0, bx1, by1] = ARRIVE_BOX[fr];
+  const sxk = (bx1 - bx0) / (x1 - x0);
+  const syk = (by1 - by0) / (y1 - y0);
+  const smin = Math.min(...items.map((it) => it.s));
+  const smax = Math.max(...items.map((it) => it.s));
+  const L = createCanvas(W, H);
+  const lx = L.getContext('2d');
+  const near = items.reduce((a, b) => (b.s > a.s ? b : a));
+  items
+    .slice()
+    .sort((a, b) => a.s - b.s)
+    .forEach((it) => {
+      const v = (it.s - smin) / (smax - smin || 1);
+      const px = bx0 + (it.x - x0) * sxk;
+      const py = by0 + (it.y - y0) * syk;
+      const w = it.w * (sxk + syk) * 0.5 * 1.3;
+      // grey = depth; a soft dome of extra light inside each shape
+      const g = Math.round(40 + v * 190);
+      const tmp = createCanvas(W, H);
+      const tx = tmp.getContext('2d');
+      drawSprite(tx, it.name, px, py, w, RING_ROT[it.name] || 0, 1, { silhouette: `rgb(${g},${g},${g})` });
+      tx.globalCompositeOperation = 'source-atop';
+      const rg = tx.createRadialGradient(px - w * 0.1, py - w * 0.15, 0, px, py, w * 0.6);
+      rg.addColorStop(0, 'rgba(255,255,255,0.16)');
+      rg.addColorStop(1, 'rgba(0,0,0,0.12)');
+      tx.fillStyle = rg;
+      tx.fillRect(0, 0, W, H);
+      lx.filter = 'blur(5px)';
+      lx.drawImage(tmp, 0, 0);
+      lx.filter = 'none';
+      if (it === near) near.px = [px, py, w];
+    });
+  // coarse mosaic, then colour by depth
+  const block = 12;
+  const sw = Math.round(W / block);
+  const sh = Math.round(H / block);
+  const sm = createCanvas(sw, sh);
+  const smx = sm.getContext('2d');
+  smx.drawImage(L, 0, 0, sw, sh);
+  const id = smx.getImageData(0, 0, sw, sh);
+  const d = id.data;
+  const thermalPass = fr < 156;
+  for (let i = 0; i < d.length; i += 4) {
+    const a = d[i + 3] / 255;
+    if (a < 0.45) { d[i + 3] = 0; continue; }
+    const v = clamp((d[i] - 40) / 190);
+    if (thermalPass) {
+      const k = Math.min(255, Math.round((0.03 + 0.95 * Math.pow(v, 1.9)) * 255)) * 3;
+      d[i] = ironLut[k]; d[i + 1] = ironLut[k + 1]; d[i + 2] = ironLut[k + 2];
+      d[i + 3] = Math.round(255 * (0.55 + 0.45 * v));
+    } else {
+      const gv = Math.round(lerp(0x8e, 0x4a, v));
+      d[i] = gv; d[i + 1] = gv - 4; d[i + 2] = gv - 2;
+      d[i + 3] = 255;
     }
-    smx.putImageData(id, 0, 0);
+  }
+  smx.putImageData(id, 0, 0);
+  // background
+  if (fr === 154) {
+    ctx.fillStyle = '#2b2a2a';
+    ctx.fillRect(0, 0, W, H);
+  } else if (fr === 155) {
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#4c4848');
+    bg.addColorStop(1, '#575557');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    ctx.fillStyle = '#9a9898';
+    ctx.fillRect(0, 0, W, H);
+  }
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.filter = `blur(${1.2 * S}px)`;
+  ctx.drawImage(sm, 0, 0, W, H);
+  ctx.restore();
+  if (fr === 156 && near.px) {
+    // the nearest item renders dark maroon, with a small yellow triangle low in its centre
+    const [px, py, w] = near.px;
+    const nc = createCanvas(W, H);
+    const nx = nc.getContext('2d');
+    drawSprite(nx, near.name, px, py, w, RING_ROT[near.name] || 0, 1, { silhouette: '#3a1a1c' });
+    const ns = createCanvas(sw, sh);
+    const nsx = ns.getContext('2d');
+    nsx.drawImage(nc, 0, 0, sw, sh);
     ctx.save();
     ctx.imageSmoothingEnabled = false;
-    ctx.filter = `blur(${(grey ? 2 : 3) * S}px)`;
-    ctx.globalAlpha = t < 6.4 ? 0.85 : 1;
-    ctx.drawImage(sm, 0, 0, W, H);
+    ctx.filter = `blur(${1.2 * S}px)`;
+    ctx.drawImage(ns, 0, 0, W, H);
+    ctx.filter = 'none';
+    ctx.fillStyle = '#857a26';
+    ctx.beginPath();
+    ctx.moveTo(px - w * 0.09, py + w * 0.1);
+    ctx.lineTo(px + w * 0.09, py + w * 0.1);
+    ctx.lineTo(px, py + w * 0.3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// frame 153: the first, heavily blurred depth blob low in the frame (bright capsule in front)
+function depthBlob(ctx) {
+  ctx.fillStyle = '#131313';
+  ctx.fillRect(0, 0, W, H);
+  const [c, x] = off(0);
+  x.fillStyle = 'rgba(70,20,20,0.85)';
+  x.beginPath();
+  x.arc(560, 920, 165, 0, 7);
+  x.fill();
+  x.fillStyle = 'rgba(58,18,18,0.85)';
+  x.fillRect(720, 720, 270, 300);
+  x.fillStyle = 'rgba(150,30,20,0.8)';
+  x.fillRect(880, 900, 40, 60);
+  x.fillRect(640, 1000, 50, 60);
+  // capsule: red rim, orange body, cream core
+  x.save();
+  x.translate(690, 925);
+  x.rotate(-0.42);
+  [[205, 62, '#c43414'], [190, 50, '#f0a040'], [160, 34, '#fbe8bc']].forEach(([hw, hh, col]) => {
+    x.fillStyle = col;
+    x.beginPath();
+    x.ellipse(0, 0, hw, hh, 0, 0, 7);
+    x.fill();
+  });
+  x.restore();
+  composite(ctx, c, { blur: 3 });
+}
+
+// frames 157-166: the ink ball inside the ring (comma crescent, comet, then a fuzzy donut)
+const BALL_EARLY = {
+  159: [717, 413, 40, 36], 160: [710, 413, 40, 40], 161: [710, 420, 34, 30], 162: [730, 413, 34, 30],
+  163: [717, 413, 42, 36], 164: [710, 420, 32, 32], 165: [716, 426, 26, 25], 166: [713, 425, 24, 24],
+};
+function inkDonut(x, cx, cy, rx, ry) {
+  x.save();
+  x.filter = `blur(${2.5 * S}px)`;
+  x.fillStyle = '#0d0b0b';
+  x.beginPath();
+  x.ellipse(cx, cy, rx, ry, 0, 0, 7);
+  x.fill();
+  x.filter = `blur(${3 * S}px)`;
+  x.fillStyle = 'rgba(70,64,64,0.55)';
+  x.beginPath();
+  x.ellipse(cx + rx * 0.05, cy - ry * 0.05, rx * 0.38, ry * 0.36, 0, 0, 7);
+  x.fill();
+  x.restore();
+}
+function inkBallEarly(x, fr) {
+  if (fr === 157) {
+    // thick comma: round head upper right, tail sweeping down-left
+    const pts = [];
+    for (let i = 0; i <= 24; i++) {
+      const u = i / 24;
+      pts.push([lerp(786, 668, u) + Math.sin(u * Math.PI) * 26, lerp(388, 506, u) + Math.sin(u * Math.PI) * 18]);
+    }
+    x.save();
+    x.filter = `blur(${2 * S}px)`;
+    x.fillStyle = '#0d0b0b';
+    x.beginPath();
+    pts.forEach(([a, b], i) => {
+      const r = lerp(30, 5, i / 24);
+      x.moveTo(a + r, b);
+      x.arc(a, b, r, 0, 7);
+    });
+    x.fill();
+    x.restore();
+  } else if (fr === 158) {
+    inkDonut(x, 730, 413, 52, 33);
+    x.save();
+    x.filter = `blur(${2 * S}px)`;
+    fx.strokePartial(x, [[770, 400], [800, 392], [826, 388]], 0, 1, 10, '#0d0b0b');
+    x.restore();
+  } else if (BALL_EARLY[fr]) inkDonut(x, ...BALL_EARLY[fr]);
+}
+
+function sceneRing(ctx, t, f) {
+  const fr = Math.round(t * C.FPS);
+  // frame 151: grey zoom, dark top left to light bottom right, a dark dome rising at the bottom
+  if (t < 6.32) {
+    const g = ctx.createLinearGradient(0, 0, 600, 1272);
+    [[0, '#141414'], [0.3375, '#555556'], [0.466, '#79797a'], [0.594, '#9c9c9b'], [0.723, '#b8b8b8'], [0.833, '#cccece'], [1, '#dfe1e3']].forEach(([o, col]) => g.addColorStop(o, col));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.filter = `blur(${6 * S}px)`;
+    ctx.fillStyle = '#5e6062';
+    ctx.beginPath();
+    ctx.ellipse(1098, 1080, 165, 112, 0, 0, 7);
+    ctx.fill();
     ctx.restore();
     return;
   }
+  // frame 152: fire band rising from the bottom (measured stops)
+  if (t < 6.36) {
+    ctx.fillStyle = '#141414';
+    ctx.fillRect(0, 0, W, H);
+    const g = ctx.createLinearGradient(0, 450, 0, 1065);
+    [[0, '#161615'], [0.163, '#1d1616'], [0.325, '#3a1115'], [0.488, '#550e16'], [0.65, '#8b0716'], [0.813, '#c83617'], [0.9, '#d98a3a'], [0.976, '#e0d59d'], [1, '#e6dcaa']].forEach(([o, col]) => g.addColorStop(o, col));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 450, W, H - 450);
+    return;
+  }
+  if (fr === 153) return depthBlob(ctx);
+  if (t < 6.52) return depthRing(ctx, t, fr);
 
   flat(ctx, '#e4e3e3', 'rgba(80,76,74,0.14)', W, H);
   // push in on the controller and coin at the end
@@ -1444,6 +1592,7 @@ function sceneRing(ctx, t, f) {
   x.save();
   camera(x, { x: sx, y: sy, z: zoom, cx: 1040, cy: 560 });
   drawRing2(x, t);
+  inkBallEarly(x, fr);
 
   // hits: orange glow, sparks and a splat of ink on the struck icon
   HITS2.forEach(([ht, n], k2) => {
@@ -3151,8 +3300,8 @@ const TIMELINE = [
   [0, 0.68, sceneOpen],
   [0.68, 1.96, sceneType],
   [1.96, 3.82, sceneSparkle],
-  [3.82, 6.3, sceneProfile],
-  [6.3, 8.3, sceneRing],
+  [3.82, 6.29, sceneProfile],
+  [6.29, 8.3, sceneRing],
   [8.3, 9.13, sceneAction],
   [9.13, 9.84, sceneStripA],
   [9.84, 10.51, sceneIntention],
