@@ -114,19 +114,27 @@ const TYPE_T = [0, 0, 0, 0, 0.8, 1.25, 1.52, 1.69, 1.86, 1.96];
 
 // Text drawn as chunky pixels (a low-res render, thresholded and scaled up with hard edges).
 function pixelText(ctx, str, x, base, size, block, color, opts = {}) {
+  // render 4x larger, then average the coverage of each block (cleaner letterforms than
+  // thresholding a tiny font)
+  const q = 4;
   const fs = size / block;
   const tmp = createCanvas(8, 8);
   const w = Math.ceil(fx.measure(tmp.getContext('2d'), str, fs, 900, opts.tracking ?? 0.02)) + 4;
   const h = Math.ceil(fs * 1.4);
-  const c = createCanvas(w, h);
+  const c = createCanvas(w * q, h * q);
   const cx = c.getContext('2d');
-  fx.text(cx, str, 2, Math.round(fs * 1.05), fs, '#000', { baseline: 'alphabetic', tracking: opts.tracking ?? 0.02 });
-  const d = cx.getImageData(0, 0, w, h).data;
+  fx.text(cx, str, 2 * q, Math.round(fs * 1.05 * q), fs * q, '#000', { baseline: 'alphabetic', tracking: opts.tracking ?? 0.02 });
+  const d = cx.getImageData(0, 0, w * q, h * q).data;
   ctx.save();
   ctx.fillStyle = color;
-  const y0 = base - fs * 1.05 * block;
+  const sy = opts.sy ?? 1; // vertical stretch of the pixel grid
+  const y0 = base - fs * 1.05 * block * sy;
   for (let j = 0; j < h; j++)
-    for (let i = 0; i < w; i++) if (d[(j * w + i) * 4 + 3] > (opts.thr ?? 120)) ctx.fillRect(x + (i - 2) * block, y0 + j * block, block + 0.5, block + 0.5);
+    for (let i = 0; i < w; i++) {
+      let sum = 0;
+      for (let v = 0; v < q; v++) for (let u = 0; u < q; u++) sum += d[((j * q + v) * w * q + i * q + u) * 4 + 3];
+      if (sum / (q * q) > (opts.thr ?? 120)) ctx.fillRect(x + (i - 2) * block, y0 + j * block * sy, block + 0.5, block * sy + 0.5);
+    }
   ctx.restore();
 }
 
@@ -158,10 +166,10 @@ function sceneOpen(ctx, t, f) {
     // frame 0: red card, a faint dark-red "how" behind a towering, squashed black "how"
     ctx.fillStyle = '#c40f18';
     ctx.fillRect(0, 0, W, H);
-    fx.text(ctx, 'how', 560, 660, 300, 'rgba(110,8,16,0.75)', { baseline: 'alphabetic' });
+    fx.text(ctx, 'how', 515, 615, 290, 'rgba(110,8,16,0.6)', { baseline: 'alphabetic' });
     ctx.save();
     ctx.translate(432, 1150);
-    ctx.scale(0.97, 5);
+    ctx.scale(1.02, 4.85);
     fx.text(ctx, 'how', 0, 0, 340, '#121010', { baseline: 'alphabetic' });
     ctx.restore();
     dashLine(ctx, 0, W, 1070, '#3a1a12', 3, [26, 20]);
@@ -188,7 +196,7 @@ function sceneOpen(ctx, t, f) {
   if (t >= 0.48) {
     // the line collapses: chunky pixel type, tiny blurred pixel type, then dashes
     if (t < 0.521) {
-      pixelText(ctx, 'do.you.communicate', 0, 582, 272, 21, '#141010', { thr: 100 });
+      pixelText(ctx, 'do.you.communicate', 0, 626, 300, 28, '#141010', { thr: 85, tracking: 0.03, sy: 1.12 });
     } else if (t < 0.563) {
       const [c, x] = off(0);
       pixelText(x, 'how.do.you.communicate', 220, 552, 52, 11, '#1e1a1a', { thr: 105 });
