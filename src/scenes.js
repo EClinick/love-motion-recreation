@@ -2854,9 +2854,18 @@ function sceneLove(ctx, t, f) {
     }
     const w = kf(t, [[15.91, 280], [16.08, 292], [16.14, 337, 'inQuad'], [16.19, 460, 'inQuad']]);
     const crush = inv(16.11, 16.17, t);
-    if (crush > 0) {
-      fx.vignette(ctx, crush * 0.97, '28,26,26', lerp(0.6, 0.12, crush), W / 2, H / 2, 0.6);
-      fx.grain(ctx, f + 1, 0.3 * crush);
+    const sh = inv(16.12, 16.18, t);
+    if (sh > 0) {
+      // the paper greys out while a dark shadow spreads out from the heart (measured frame 388)
+      ctx.fillStyle = `rgba(103,103,104,${sh})`;
+      ctx.fillRect(0, 0, W, H);
+      const g = ctx.createRadialGradient(730, 550, 0, 730, 550, 820);
+      g.addColorStop(0, `rgba(36,36,37,${sh})`);
+      g.addColorStop(0.5, `rgba(40,40,41,${0.92 * sh})`);
+      g.addColorStop(1, 'rgba(60,60,61,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      fx.grain(ctx, f + 1, 0.3 * sh);
     }
     ctx.save();
     ctx.filter = `blur(${20 * S}px)`;
@@ -2869,27 +2878,54 @@ function sceneLove(ctx, t, f) {
     letter(ctx, 'L', LX[0], LY, LSIZE, mixHex('#3b1d18', '#8a8888', crush));
     return;
   }
-  if (t < 16.52) {
+  if (t < 16.5) {
     fx.dark(ctx, '#141313');
-    const glow = inv(16.33, 16.44, t);
-    if (glow > 0) {
-      // big soft red halo behind the camera
-      const g = ctx.createRadialGradient(729, 545, 0, 729, 545, 360);
-      g.addColorStop(0, `rgba(236,16,22,${glow})`);
-      g.addColorStop(0.55, `rgba(214,10,18,${0.85 * glow})`);
+    // red halo grows behind the camera on frames 394-395 (measured radii)
+    const gr = kf(t, [[16.41, 0], [16.433, 170], [16.475, 330]]);
+    if (t > 16.41) {
+      const g = ctx.createRadialGradient(722, 540, 0, 722, 540, gr);
+      g.addColorStop(0, 'rgba(230,14,22,1)');
+      g.addColorStop(0.45, 'rgba(214,10,18,0.85)');
       g.addColorStop(1, 'rgba(160,0,0,0)');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
     }
-    drawSprite(ctx, 'camera', 729, 540, kf(t, [[16.2, 340], [16.5, 345]]), noise1(t, 3) * 0.04);
+    // the camera spins in edge-on and opens out (frames 389-392)
+    const cw = kf(t, [[16.2, 60], [16.225, 100], [16.266, 215], [16.308, 290], [16.35, 304], [16.5, 310]]);
+    const csx = kf(t, [[16.2, 0.2], [16.225, 0.35], [16.266, 0.85], [16.308, 0.98], [16.35, 1]]);
+    const crot = kf(t, [[16.2, 0.6], [16.225, 0.5], [16.266, 0.22], [16.308, 0.05], [16.35, 0]]);
+    if (t < 16.24) {
+      // red flare on the edge-on camera as it spins in
+      const g = ctx.createRadialGradient(700, 540, 0, 700, 540, 60);
+      g.addColorStop(0, 'rgba(220,20,30,0.9)');
+      g.addColorStop(1, 'rgba(220,20,30,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(600, 440, 200, 200);
+    }
+    drawSprite(ctx, 'camera', 722, 540, cw, crot + noise1(t, 3) * 0.02, 1, { sx: csx });
+    ctx.filter = 'none';
     letter(ctx, 'L', LX[0], LY, LSIZE, CREAM);
-    letter(ctx, 'O', LX[1], LY, LSIZE, t > 16.46 ? '#3fb7d9' : CREAM);
+    if (t > 16.245) letter(ctx, 'O', LX[1], LY, LSIZE, t > 16.46 ? '#3fb7d9' : CREAM);
+    return;
+  }
+  if (t < 16.54) {
+    // frame 396: the whole frame floods red and the camera is thrown at the lens
+    ctx.fillStyle = '#c00a17';
+    ctx.fillRect(0, 0, W, H);
+    const g = ctx.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, 900);
+    g.addColorStop(0, 'rgba(146,7,21,0)');
+    g.addColorStop(1, 'rgba(120,5,20,0.75)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    fx.grain(ctx, f + 2, 0.35);
+    drawSprite(ctx, 'camera', 702, 540, 486, 0.09, 1, { shadow: 'rgba(60,0,0,0.5)', shadowBlur: 20 });
+    letter(ctx, 'L', LX[0], LY, LSIZE, '#2fb2e6');
+    letter(ctx, 'O', LX[1], LY, LSIZE, '#9c9c9e');
     return;
   }
   if (t < 16.77) {
     ctx.fillStyle = '#d41b16';
     ctx.fillRect(0, 0, W, H);
-    fx.vignette(ctx, 0.2, '120,0,0', 0.4);
     fx.grain(ctx, f + 2, 0.35);
     const q = ease.outCubic(inv(16.56, 16.64, t));
     const blue = '#2fb2e6';
@@ -2897,7 +2933,7 @@ function sceneLove(ctx, t, f) {
     letter(ctx, 'O', LX[1], LY, LSIZE, blue);
     if (t > 16.6) letter(ctx, 'V', LX[2], LY, LSIZE, blue);
     drawSprite(ctx, 'book', 735, 546, lerp(120, 330, q), lerp(-0.4, 0.28, q), 1, { sy: 1.15, shadow: 'rgba(60,0,0,0.6)', shadowBlur: 40 });
-    const dk = inv(16.71, 16.77, t);
+    const dk = inv(16.735, 16.77, t);
     if (dk > 0) {
       // the red closes in to black around the book
       const g = ctx.createRadialGradient(735, 546, lerp(700, 180, dk), 735, 546, lerp(1100, 520, dk));
