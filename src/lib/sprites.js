@@ -96,16 +96,19 @@ const OUT = '#141218';
 
 const builders = {
   heart() {
-    const g = new Grid(26, 23);
-    const c = '#e1151c';
-    g.circle(7, 7.2, 6.4, c);
-    g.circle(19, 7.2, 6.4, c);
-    g.poly([[0.8, 8.5], [25.2, 8.5], [13, 21.5]], c);
-    g.rect(7, 3, 12, 8, c);
-    g.edgeShade(c, '#b50d16', [[1, 0], [0, 1], [1, 1]]);
-    // salmon highlight block on the upper-left lobe
-    g.tint((x, y) => x > 1.5 && x < 10 && y > 1.5 && y < 9 && x + y < 15, '#f06a3c');
-    g.tint((x, y) => x > 3 && x < 7 && y > 2.5 && y < 5.5, '#f68a4a');
+    // chunky classic pixel heart: dark-red border, flat red, one-tone orange highlight block
+    const g = new Grid(15, 13);
+    const c = '#d0121a';
+    const rows = [[2, 5, 9, 12], [1, 6, 8, 13], [0, 14], [0, 14], [0, 14], [0, 14], [1, 13], [2, 12], [3, 11], [4, 10], [5, 9], [6, 8], [7, 7]];
+    rows.forEach((r, y) => {
+      for (let k = 0; k < r.length; k += 2) g.rect(r[k], y, r[k + 1] - r[k] + 1, 1, c);
+    });
+    const edge = [];
+    for (let y = 0; y < 13; y++)
+      for (let x = 0; x < 15; x++) if (g.get(x, y) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => !g.get(x + dx, y + dy))) edge.push([x, y]);
+    edge.forEach(([x, y]) => g.px(x, y, '#a50d14'));
+    g.rect(6, 2, 3, 1, '#a50d14');
+    [[1, 1, 4], [0, 2, 5], [0, 3, 3], [0, 4, 2], [0, 5, 2]].forEach(([x, y, w]) => g.rect(x, y, w, 1, '#d9703a'));
     return g;
   },
   coin() {

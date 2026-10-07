@@ -2142,7 +2142,7 @@ function sceneScatter(ctx, t, f) {
   const ca = Math.cos(turn);
   const sa = Math.sin(turn);
   const orbit = (px, py) => [700 + z * ((px - 700) * ca - (py - 560) * sa), 560 + z * ((px - 700) * sa + (py - 560) * ca)];
-  const ring = ringLayout(phi - 0.21, { tilt: 0.4, R: 385, cx: 715, cy: 511, F: 4000 });
+  const ring = ringLayout(phi - 0.21, { tilt: 0.4, R: 385, cx: 715, cy: 511, F: 4000, xs: 0.9 });
   const RING_ROT = { skateboard: -0.5, cash: 0.4, cap: -0.15, book: 0.12 };
   ring
     .slice()
@@ -2191,10 +2191,19 @@ function sceneScatter(ctx, t, f) {
       drawSprite(x, it.name, px, py, w, r, 1, sil ? { silhouette: '#121010' } : {});
     });
   if (t < 12.45) {
-    const keys = [[11.85, [1300, 560]], [11.887, [664, 564]], [11.928, [330, 650]], [11.97, [240, 760]], [12.012, [460, 290]], [12.054, [700, 500]], [12.1, [740, 540]], [12.45, [750, 545]]];
-    const trail = [];
-    for (let i = 0; i <= 12; i++) trail.push(kf(Math.max(11.85, t - i * 0.006), keys));
-    inkBall(x, trail[0][0], trail[0][1], 50, trail, 15);
+    const keys = [[11.85, [1300, 560]], [11.887, [664, 564]], [11.928, [330, 650]], [11.97, [240, 760]], [12.012, [460, 290]], [12.054, [700, 500]], [12.095, [697, 480]], [12.25, [730, 520]], [12.45, [750, 545]]];
+    if (t < 12.075) {
+      const trail = [];
+      for (let i = 0; i <= 12; i++) trail.push(kf(Math.max(11.85, t - i * 0.006), keys));
+      inkBall(x, trail[0][0], trail[0][1], 50, trail, 15);
+    } else {
+      // once parked the ball is a crisp ink drop with a sprayed rim
+      const [bx, by] = kf(t, keys);
+      x.save();
+      if (t > 12.11) x.filter = `blur(${2 * S}px)`;
+      sprayBlob(x, bx, by, t < 12.11 ? 54 : 40, 3, 0.95);
+      x.restore();
+    }
   }
   if (t > 12.93) {
     // the blot drops from the top right onto the coin and swallows it
