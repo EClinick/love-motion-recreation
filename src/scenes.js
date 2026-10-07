@@ -544,12 +544,12 @@ const floatPos = (n, t) => [kf(t, FLOAT_KEYS[n].map(([a, x]) => [a, x, 'outCubic
 
 // darkness falling off from the star side (left), plus top/bottom, plus the closing spotlight
 function sparkleShade(ctx, t) {
-  const m = kf(t, [[2.064, 0.35], [2.25, 0.72], [2.5, 1], [3.0, 1], [3.5, 0.85]]);
+  const m = kf(t, [[2.064, 0.35], [2.25, 0.72], [2.5, 1], [3.0, 1], [3.5, 1]]);
   const g = ctx.createRadialGradient(-100, 540, 0, -100, 540, 1500);
-  [[0, 1], [400, 0.87], [600, 0.68], [800, 0.4], [1000, 0.24], [1200, 0.12], [1500, 0]].forEach(([d, a]) => g.addColorStop(d / 1500, `rgba(30,22,22,${a * m})`));
+  [[0, 1], [400, 0.95], [600, 0.66], [800, 0.36], [1000, 0.15], [1200, 0.05], [1500, 0]].forEach(([d, a]) => g.addColorStop(d / 1500, `rgba(40,26,24,${a * m})`));
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
-  const v = kf(t, [[2.064, 0.08], [2.25, 0.18], [2.5, 0.25], [3.0, 0.34], [3.5, 0.45], [3.62, 0.55]]);
+  const v = kf(t, [[2.064, 0.1], [2.25, 0.24], [2.5, 0.36], [3.0, 0.48], [3.5, 0.56], [3.62, 0.62]]);
   const tg = ctx.createLinearGradient(0, 0, 0, H);
   tg.addColorStop(0, `rgba(30,22,22,${v})`);
   tg.addColorStop(0.35, 'rgba(30,22,22,0)');
@@ -557,14 +557,14 @@ function sparkleShade(ctx, t) {
   tg.addColorStop(1, `rgba(30,22,22,${v})`);
   ctx.fillStyle = tg;
   ctx.fillRect(0, 0, W, H);
-  const rc = kf(t, [[3.0, 0], [3.5, 1], [3.62, 1.1]]);
+  const rc = kf(t, [[3.0, 0], [3.5, 1], [3.545, 1.1], [3.587, 1.3], [3.63, 1.7]]);
   if (rc > 0) {
     ctx.save();
-    ctx.translate(850, 500);
-    ctx.scale(1.2, 1);
+    ctx.translate(800, 500);
+    ctx.scale(1.15, 1);
     const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, 760);
     sg.addColorStop(0, 'rgba(30,22,22,0)');
-    sg.addColorStop(0.55, 'rgba(30,22,22,0)');
+    sg.addColorStop(lerp(0.55, 0.36, inv(3.5, 3.63, t)), 'rgba(30,22,22,0)');
     sg.addColorStop(0.85, `rgba(30,22,22,${Math.min(1, 0.45 * rc)})`);
     sg.addColorStop(1, `rgba(30,22,22,${Math.min(1, 0.72 * rc)})`);
     ctx.fillStyle = sg;
@@ -634,13 +634,12 @@ const DOODLES = [
 
 // the light warms and closes in: rose -> salmon -> orange -> a red glow on the left
 function warmLight(ctx, t) {
-  // [t, cx, cy, radius, centre colour] measured from the source
+  // [t, cx, cy, radius, centre colour, edge colour] measured from the source (frames 88-91)
   const wk = [
-    [3.6, 900, 470, 950, '#e0d8d4'],
-    [3.67, 850, 480, 850, '#dab1a1'],
-    [3.71, 720, 580, 620, '#c77b60'],
-    [3.75, 520, 560, 520, '#c75731'],
-    [3.79, 400, 560, 330, '#c42418'],
+    [3.67, 860, 470, 650, '#dcb6a4', '#3c2224', '#9a6a64'],
+    [3.712, 720, 470, 600, '#d0845f', '#40121a', '#a8302a'],
+    [3.754, 640, 480, 520, '#c45427', '#220c12', '#9a1a1c'],
+    [3.795, 380, 540, 360, '#b8201a', '#181414', '#b01c18'],
   ];
   let i = 0;
   while (i < wk.length - 2 && t > wk[i + 1][0]) i++;
@@ -651,20 +650,16 @@ function warmLight(ctx, t) {
   const cy = lerp(A[2], B[2], u);
   const r = lerp(A[3], B[3], u);
   const col = mixHex(A[4], B[4], u);
-  const dark = '#161212';
+  const dark = mixHex(A[5], B[5], u);
   ctx.fillStyle = dark;
   ctx.fillRect(0, 0, W, H);
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.scale(1.05, 1);
-  const lg = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+  const lg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
   lg.addColorStop(0, col);
-  lg.addColorStop(0.3, col);
-  lg.addColorStop(0.65, mixHex(col, dark, 0.45));
+  lg.addColorStop(0.25, col);
+  lg.addColorStop(0.6, mixHex(A[6], B[6], u));
   lg.addColorStop(1, dark);
   ctx.fillStyle = lg;
-  ctx.fillRect(-r * 1.1, -r * 1.1, r * 2.2, r * 2.2);
-  ctx.restore();
+  ctx.fillRect(0, 0, W, H);
 }
 
 function sceneSparkle(ctx, t, f) {
@@ -719,8 +714,8 @@ function sceneSparkle(ctx, t, f) {
   ctx.fillStyle = '#f2f2f4';
   ctx.fillRect(0, 0, W, H);
   // warm progression of the light 3.6 -> 3.78
-  if (t < 3.6 && t >= 2.064) sparkleShade(ctx, t);
-  if (t >= 3.6) warmLight(ctx, t);
+  if (t < 3.65 && t >= 2.064) sparkleShade(ctx, t);
+  if (t >= 3.65) warmLight(ctx, t);
 
   // the sentence (blurred while the frame settles), star in front of it
   const parts = SENT.map((w, i) => ({
