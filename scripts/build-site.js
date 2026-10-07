@@ -41,9 +41,9 @@ write('versions.json', versions);
 write('data.json', { iteration: versions[0].id, label: versions[0].label, final });
 const dist = path.join(root, 'dist');
 fs.mkdirSync(path.join(dist, 'site'), { recursive: true });
-for (const file of ['index.html', 'versions.json', 'data.json', 'scores.json']) {
+for (const file of ['index.html', 'how-we-made-this.html', 'how-we-made-this.css', 'how-we-made-this.js', 'theme.css', 'theme.js', 'versions.json', 'data.json', 'scores.json']) {
   fs.copyFileSync(path.join(root, 'site', file), path.join(dist, 'site', file));
 }
 fs.cpSync(media, path.join(dist, 'media'), { recursive: true });
 fs.writeFileSync(path.join(dist, 'index.html'), '<!doctype html><html lang="en"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=site/"><title>Love Motion Recreation</title><a href="site/">Open the showcase</a></html>\n');
-console.log('Built dist/site: ' + versions.length + ' versions, original, final, comparison sheets and overlays.');
+console.log('Built dist/site: showcase + walkthrough, ' + versions.length + ' versions, original, final, comparison sheets and overlays.');

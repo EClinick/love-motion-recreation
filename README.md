@@ -71,7 +71,9 @@ Put `reference.mp4` and `audio.mp3` in `ref/` (see `ref/README.md`), then:
 
 ```bash
 npm install && scripts/fetch-fonts.sh
-node scripts/trace-hand.js           # hand silhouettes from the source (needed from v14 on)
+node scripts/trace-hand.js hand      # source-derived hand silhouettes and tone maps
+node scripts/trace-hand.js head      # source-derived head masks (v15 onward)
+node scripts/trace-ink.js            # source-derived pen ink (v16 onward)
 npm run preview                      # 1440x1080 preview, ~30 s
 npm run compare                      # contact sheets in out/compare/latest
 npm run render                       # 2880x2160 with 4-sample motion blur
@@ -81,7 +83,7 @@ node src/render.js --stills 2.5,8.7  # single frames to out/stills
 ## Showcase at /site
 
 Run `npm run site`, then open http://127.0.0.1:8787/site/. The page includes
-the original video and soundtrack, all 14 renders and their side-by-side videos,
+the original video and soundtrack, all 16 archived renders and their side-by-side videos,
 the final 2880×2160 render, synchronized version comparison, scores, contact sheets,
 and shape overlays. It preserves the original showcase styling and interactions.
 
@@ -90,3 +92,21 @@ committed `media/` archive. Deploy that directory to static hosting; the showcas
 lives at `/site/`, and the homepage links to it. No reference downloads or
 rendering steps are needed. Generated manifests in `site/` also let the page
 work when the repository root is served directly.
+
+### How we made this
+
+The linked [`site/how-we-made-this.html`](site/how-we-made-this.html) walkthrough
+explains the real reference → render → critique → revision workflow, with sanitized
+user prompt excerpts, existing media, a reusable prompt, and commands to build the
+site or regenerate frames. It distinguishes the archived v14 final export from
+later iterations, source-derived tracing from procedural drawing, and historical
+judge scores from verified visual fidelity. Historical comparison images have
+frame-alignment limitations; the guide includes an explicit single-frame check.
+
+The article is a checkpoint, not a live session feed. No raw transcript or private
+session data is needed or included in the static build. Both pages share theme
+preferences; the article also works without JavaScript (copy buttons are optional).
+
+Run `npm run test:site` to build the site and check local links, assets, manifest
+media, shared theme behaviour, and HTTP serving under both root and nested paths.
+No dependency install is needed for these site tests.

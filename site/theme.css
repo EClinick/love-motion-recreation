@@ -1,0 +1,30 @@
+:root{
+  --bg:#f6f2ea; --surface:#fffdf8; --ink:#2a1a16; --muted:#7a6a62; --line:#e2d9cc;
+  --accent:#e0243a; --accent-text:#cb1b31; --on-accent:#fff; --cyan:#0aa5c2; --good:#1f8a5b;
+  --shadow:0 1px 2px rgba(60,30,20,.06),0 8px 24px rgba(60,30,20,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e0d12; --surface:#17161d; --ink:#f1ece4; --muted:#9a93a3; --line:#2a2833;
+    --accent:#ff4d62; --accent-text:#ff4d62; --on-accent:#19080b; --cyan:#35d4f0; --good:#4cd69b;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e0d12; --surface:#17161d; --ink:#f1ece4; --muted:#9a93a3; --line:#2a2833;
+  --accent:#ff4d62; --accent-text:#ff4d62; --on-accent:#19080b; --cyan:#35d4f0; --good:#4cd69b;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+#theme{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font:inherit;font-size:.85rem;white-space:nowrap}
+:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.skip-link{position:absolute;top:8px;left:16px;transform:translateY(-200%);z-index:20;background:var(--surface);color:var(--ink);padding:10px 16px;border:2px solid var(--accent);border-radius:8px}
+.skip-link:focus{transform:none}
+.site-nav{display:flex;gap:8px 20px;flex-wrap:wrap;align-items:center;margin:16px 0 24px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.site-nav a{color:var(--ink);font-size:.9rem;text-underline-offset:5px}
+.site-nav a[aria-current="page"]{font-weight:800;text-decoration-color:var(--accent);text-decoration-thickness:3px}
+.guide-link{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:18px 20px;margin-top:24px}
+.guide-link p{margin:0;max-width:58ch}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}

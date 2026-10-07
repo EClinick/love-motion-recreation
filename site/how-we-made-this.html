@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="description" content="How a reference video became a code-drawn motion recreation: the real prompts, render–judge loop, measurement mistakes, and commands to try it yourself.">
+<title>How we made this · Love Motion Recreation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="how-we-made-this.css">
+<script src="theme.js" defer></script>
+<script src="how-we-made-this.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to walkthrough</a>
+<div class="wrap">
+  <header class="topbar">
+    <a class="brand" href="index.html">Love <span>motion</span> recreation</a>
+    <button id="theme" type="button" aria-label="Toggle colour theme" hidden>Theme</button>
+  </header>
+  <nav class="site-nav" aria-label="Site"><a href="index.html">Showcase</a><a href="how-we-made-this.html" aria-current="page">How we made this</a></nav>
+
+  <main id="main" tabindex="-1">
+    <section class="hero" aria-labelledby="title">
+      <div>
+        <div class="eyebrow">A build log, not a magic prompt</div>
+        <h1 id="title">How we made <span>this.</span></h1>
+        <p class="lede">A reference video became a timeline of code-drawn frames. Then Claude rendered it, critics compared it, and the implementation changed. Again and again.</p>
+        <p>The useful part wasn’t one perfect generation. It was making the differences visible enough to fix.</p>
+        <div class="actions"><a class="btn" href="#workflow">Follow the build ↓</a><a class="btn alt" href="#try-it">Try it yourself</a></div>
+        <dl class="facts">
+          <div><dt>20.5 s</dt><dd>reference piece</dd></div>
+          <div><dt>14</dt><dd>timeline shots</dd></div>
+          <div><dt>16</dt><dd>archived versions</dd></div>
+        </dl>
+      </div>
+      <figure class="card">
+        <a href="../media/final/preview.jpg" aria-label="Open the full-size v14 comparison preview"><img src="../media/final/preview.jpg" width="1440" height="1620" alt="Three reference/recreation pairs: thermal head, camera with red star, and a raised thermal hand. The shapes and shading still differ."></a>
+        <figcaption><b>Reference left. Recreation right.</b> An archived v14 preview, not a claim of an identical match.</figcaption>
+      </figure>
+    </section>
+
+    <nav class="chapter-nav" aria-label="Walkthrough sections">
+      <a href="#prompts"><span>01</span> The ask</a><a href="#workflow"><span>02</span> The loop</a><a href="#lessons"><span>03</span> The lessons</a><a href="#try-it"><span>04</span> Build it</a><a href="#sources"><span>05</span> Sources &amp; limits</a>
+    </nav>
+
+    <section class="chapter" id="prompts" aria-labelledby="prompts-title">
+      <div class="eyebrow">01 / The ask</div>
+      <h2 id="prompts-title">The prompt started it.<br>The follow-ups shaped it.</h2>
+      <p class="section-intro">The original request supplied an MP4 and an MP3, asked for a faithful recreation, and requested iterative Sonnet critics. These are short, verbatim user excerpts; private locations and unrelated conversation are omitted.</p>
+      <div class="prompt-grid">
+        <article class="card prompt-card"><h3>Start with a reference</h3><blockquote>“replicate this video from scratch, make it identical.”</blockquote><p>The goal was fidelity to the supplied video, not a new visual direction.</p></article>
+        <article class="card prompt-card"><h3>Make every version inspectable</h3><blockquote>“The website should have each version + the video + the side by side comparison”</blockquote><p>The showcase became a record of the work, not just a final export.</p></article>
+        <article class="card prompt-card"><h3>Keep the critique loop going</h3><blockquote>“Okay nice run thru judge again, continue iterating as this website builds”</blockquote><p>Rendering, critique and publishing continued together.</p></article>
+      </div>
+    </section>
+
+    <section class="chapter" id="workflow" aria-labelledby="workflow-title">
+      <div class="eyebrow">02 / The loop</div>
+      <h2 id="workflow-title">Inspect → draw → render.<br>Compare → refine → archive.</h2>
+      <p class="section-intro">This sequence comes from the session’s tool calls and outputs, checked against the code and media in this repository. It is a condensed workflow, not a transcript.</p>
+      <ol class="steps">
+        <li class="card"><h3>Break down the source</h3><p><code>ffprobe</code> established dimensions, duration and frame rate. <code>ffmpeg</code> extracted contact sheets and selected stills. Denser samples around transitions exposed cuts, letter placement and icon movement that a single poster frame couldn’t explain.</p><p class="source">The source was 2880×2160 at 24000/1001 fps (about 23.976).</p></li>
+        <li class="card"><h3>Build a drawable timeline</h3><p>An initial browser-renderer test failed on a missing system library. Native Canvas worked. The implementation split into type and effects, pixel sprites, figures, and 14 shots selected by time. A frame can be drawn without playing everything before it.</p><p class="source">Code: <a href="https://github.com/EClinick/love-motion-recreation/blob/main/src/scenes.js">src/scenes.js</a> · <a href="https://github.com/EClinick/love-motion-recreation/tree/main/src/lib">src/lib/</a></p></li>
+        <li class="card"><h3>Render cheaply, then at full size</h3><p>Node workers draw frame chunks with <code>@napi-rs/canvas</code>. ffmpeg encodes the segments and muxes the MP3 soundtrack. Previews are 1440×1080; a 2× render with four time samples per frame adds motion blur at 2880×2160.</p><p class="source">Code: <a href="https://github.com/EClinick/love-motion-recreation/blob/main/src/render.js">src/render.js</a></p></li>
+        <li class="card"><h3>Give critics something concrete</h3><p>Three read-only Sonnet critics covered the opening, middle and finale. They saw reference/render sheets, scored their section and listed discrepancies. Those notes drove timing, scale, silhouette and colour changes, followed by another render.</p><p class="source">Artifacts: <a href="index.html#versions">version history</a> · <a href="../media/versions/v01/sheets/sheet_01.jpg">an early comparison sheet</a>. Historical sheets have alignment limitations; see below.</p></li>
+        <li class="card"><h3>Measure when eyeballing stalls</h3><p>Silhouette overlays measured shape overlap; region probes checked colour. The hand was eventually rotoscoped—its outline traced from source frames—then shaded in code. Later work also used source-derived head masks, pen ink and hand tone maps.</p><p class="source">Code: <a href="https://github.com/EClinick/love-motion-recreation/blob/main/scripts/shape-compare.js">shape-compare.js</a> · <a href="https://github.com/EClinick/love-motion-recreation/blob/main/scripts/region-color.js">region-color.js</a> · <a href="https://github.com/EClinick/love-motion-recreation/blob/main/scripts/trace-hand.js">trace-hand.js</a></p></li>
+        <li class="card"><h3>Keep the evidence with the version</h3><p>The site gained version history, side-by-side videos, scores and comparison sheets. Early overwritten previews were rebuilt from commits. Web encodes and metadata now live in <code>media/</code>; the static build packages that archive without re-rendering it.</p><p class="source">Code: <a href="https://github.com/EClinick/love-motion-recreation/blob/main/scripts/build-site.js">build-site.js</a> · <a href="https://github.com/EClinick/love-motion-recreation/blob/main/media/README.md">media index</a></p></li>
+      </ol>
+
+      <div class="evidence-grid">
+        <figure class="card">
+          <div class="media-heading"><h3>A visible result, not “perfect”</h3><p id="motion-note">Motion warning: fast cuts and flashing imagery. Playback is opt-in.</p></div>
+          <video controls playsinline preload="none" aria-label="Archived v14 reference versus recreation" aria-describedby="motion-note video-caption" src="../media/final/claude_v14_sidebyside.mp4"></video>
+          <figcaption id="video-caption"><b>v14, side by side.</b> Kinetic type, pixel icons, thermal figures and the L-O-V-E finale share the soundtrack. Shape, shading and motion differences remain. <a href="../media/versions/v01/sidebyside.mp4">Watch the first archived version</a> or <a href="index.html#cmp">compare versions in the showcase</a>.</figcaption>
+        </figure>
+        <figure class="card">
+          <a href="../media/versions/v14/extras/overlay_14.6.png" aria-label="Open full-size v14 hand silhouette overlay"><img class="overlay" loading="lazy" src="../media/versions/v14/extras/overlay_14.6.png" width="1440" height="1080" alt="Hand silhouette overlay at 14.6 seconds: cyan outlines the source and red outlines the recreation, with small edge differences."></a>
+          <figcaption><b>Measure one thing at a time.</b> Selected traced-hand frames reached about 0.95–0.96 intersection-over-union (IoU): the shared silhouette area divided by the combined area. This does not measure colour, motion or whole-video fidelity.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="chapter" id="lessons" aria-labelledby="lessons-title">
+      <div class="eyebrow">03 / The lessons</div>
+      <h2 id="lessons-title">The comparison can be wrong, too.</h2>
+      <div class="callout"><h3>Check the measuring tool before following the score.</h3><p>The session discovered that some reference/render images paired different frames. Time sampling and ffmpeg’s timestamp-based pairing created misleading timing critiques. A later correction selected and paired frames by index, then re-ran the judges.</p><p><b>Archive caveat:</b> the historical sheets and v15/v16 pairs shipped with this walkthrough predate that later correction. Treat them as build-history artifacts, not frame-accurate timing evidence. Use the explicit single-frame check below before changing animation timing.</p></div>
+      <div class="lessons">
+        <article><h3>Scores aren’t a common ruler</h3><p>Larger pairs and stricter judging changed the rubric. Earlier v14 scores were 6.8 / 7.9 / 8.4; a later re-judge gave 5.0 / 5.5 / 5.5. That isn’t a clean regression measurement, especially with alignment errors in the mix.</p></article>
+        <article><h3>“From scratch” has a boundary</h3><p>Code draws the frames, but the later figures and handwriting use traced source data. This is a reconstruction workflow with rotoscopy, not proof that a prompt independently recreated every shape.</p></article>
+        <article><h3>Verify the render before judging</h3><p>A memory-heavy render failed and left an older preview behind. Limiting mask loading to each worker’s frame range helped the next render complete. Check exit status, frame count and output freshness before building comparisons.</p></article>
+      </div>
+    </section>
+
+    <section class="chapter" id="try-it" aria-labelledby="try-title">
+      <div class="eyebrow">04 / Build it</div>
+      <h2 id="try-title">Use the process.<br>Don’t expect a one-shot match.</h2>
+      <p class="section-intro">The prompt and commands below are a reusable starting point, distilled from the work—not a replay of the session. Run commands from the repository root in your own checkout.</p>
+      <article class="card recipe">
+        <div class="eyebrow">Suggested prompt / newly written</div>
+        <h3>Give the builder a reference and a feedback contract</h3>
+        <div class="snippet">
+          <div class="snippet-header"><span>Adapt the filenames and scope to your project</span><button class="copy" type="button" data-copy="starter-prompt" aria-label="Copy prompt" hidden>Copy prompt</button></div>
+          <pre class="suggested" id="starter-prompt">Study reference.mp4 and use audio.mp3 as the soundtrack. First measure the frame rate, duration, shot boundaries, type, colours and icon placement. Recreate the motion as a deterministic, time-based Canvas timeline.
+
+Start with a preview. Compare reference and render at the same frame indices, and verify the pairing. Ask read-only critics to review separate timeline sections and return timestamped discrepancies, regressions and a short prioritized fix list. Check their claims against the source before editing.
+
+Iterate on the largest verified differences. Keep each version’s render, side-by-side video, comparison images and notes in a browsable site. Explicitly label any traced source material, changing evaluation criteria and remaining mismatches. Do not call it identical without evidence.</pre>
+          <span class="copy-feedback" role="status"></span>
+        </div>
+      </article>
+
+      <article class="card recipe">
+        <div class="eyebrow">Route A / just the website</div>
+        <h3>Explore the archive without rendering</h3>
+        <p>With a current Node.js LTS release and npm installed, the committed media is enough. No model account, ffmpeg, font download or npm dependency install is required for this route.</p>
+        <div class="snippet"><div class="snippet-header"><span>Repository root · shell</span><button class="copy" type="button" data-copy="site-commands" aria-label="Copy website commands" hidden>Copy</button></div><pre><code id="site-commands">npm run site:build
+node scripts/serve-site.js 8787 dist</code></pre><span class="copy-feedback" role="status"></span></div>
+        <p>Open <code>http://127.0.0.1:8787/site/</code>, then choose <b>How we made this</b>. Deploy the whole <code>dist/</code> directory, including <code>dist/media/</code>, to static hosting. Both pages use relative links, so a hosting subdirectory works too.</p>
+      </article>
+
+      <article class="card recipe">
+        <div class="eyebrow">Route B / rebuild the frames</div>
+        <h3>Prepare the inputs before the preview</h3>
+        <p>You also need Bash, curl, ffmpeg and ffprobe (including H.264/AAC encoding and the drawtext filter for comparison scripts). Font fetching needs network access. Allow several GB of free disk space and RAM; start with two workers and reduce to one if memory is tight.</p>
+        <p>Use source media you have permission to process. For a demonstration, these commands copy the committed web reference and soundtrack into the ignored <code>ref/</code> directory. <b>The web reference is re-encoded:</b> it is not the original full-resolution input, so tracing and measurements may differ. Run in a fresh checkout; the copy commands replace those local inputs.</p>
+        <div class="snippet"><div class="snippet-header"><span>Install, prepare source, generate derived masks</span><button class="copy" type="button" data-copy="prepare-commands" aria-label="Copy input preparation commands" hidden>Copy</button></div><pre><code id="prepare-commands">npm ci &&
+bash scripts/fetch-fonts.sh &&
+cp media/original/original.mp4 ref/reference.mp4 &&
+cp media/original/original.mp3 ref/audio.mp3 &&
+node scripts/trace-hand.js hand &&
+node scripts/trace-hand.js head &&
+node scripts/trace-ink.js</code></pre><span class="copy-feedback" role="status"></span></div>
+        <p>The fonts and generated <code>ref/derived/</code> masks are not bundled. Without them, fallback fonts or drawn shapes can change the result. These tracing scripts are tuned to this particular reference, not arbitrary videos.</p>
+        <div class="snippet"><div class="snippet-header"><span>Render sequentially · do not run two renders at once</span><button class="copy" type="button" data-copy="render-commands" aria-label="Copy preview render commands" hidden>Copy</button></div><pre><code id="render-commands">node src/render.js --workers 2 --out out/preview.mp4 &&
+ffprobe -v error -select_streams v:0 -count_frames \
+  -show_entries stream=width,height,nb_read_frames \
+  -of default=noprint_wrappers=1 out/preview.mp4 &&
+bash scripts/sidebyside.sh out/preview.mp4 out/sidebyside.mp4</code></pre><span class="copy-feedback" role="status"></span></div>
+        <p>Confirm the render succeeded and produced a fresh, full-length video before running the next command. Renders share <code>out/segments/</code>, and preview filenames are reused; copy an accepted version to a separate archive before the next pass.</p>
+        <details><summary>Optional: higher-resolution export and historical comparison tools</summary><p>The full export costs more time and memory. Contact sheets are useful for browsing, but the historical comparison scripts in this checkout have the alignment caveat above.</p><pre><code>node src/render.js --scale 2 --samples 4 --workers 2 --out out/final.mp4
+bash scripts/compare.sh out/preview.mp4 out/compare/local
+bash scripts/judge-pairs.sh out/preview.mp4 out/judge/local</code></pre></details>
+      </article>
+
+      <article class="card recipe">
+        <div class="eyebrow">Before accepting a timing critique</div>
+        <h3>Check one exact frame yourself</h3>
+        <p>At this project’s frame rate, zero-based frame 120 is at <code>120 × 1001 / 24000 = 5.005 s</code>. Render that frame and extract that numbered source frame separately. This avoids pairing two running streams by their timestamps.</p>
+        <div class="snippet"><div class="snippet-header"><span>Reference left · recreation right · frame 120</span><button class="copy" type="button" data-copy="frame-commands" aria-label="Copy exact-frame comparison commands" hidden>Copy</button></div><pre><code id="frame-commands">node src/render.js --stills 5.005 &&
+ffmpeg -v error -y -i ref/reference.mp4 \
+  -vf "select='eq(n,120)',scale=1440:1080" \
+  -frames:v 1 out/reference-120.png &&
+ffmpeg -v error -y -i out/reference-120.png \
+  -i out/stills/r_5.005.png -filter_complex hstack \
+  -frames:v 1 out/pair-120.png</code></pre><span class="copy-feedback" role="status"></span></div>
+        <p>Open <code>out/pair-120.png</code>. Repeat at cuts and disputed frames. This assumes both timelines start at the same source frame; verify that when adapting the process to another video. A still checks shape and placement—not the whole motion.</p>
+      </article>
+    </section>
+
+    <section class="chapter" id="sources" aria-labelledby="sources-title">
+      <div class="eyebrow">05 / Sources &amp; limits</div>
+      <h2 id="sources-title">A checkpoint, not the end of the story.</h2>
+      <p>This walkthrough was checked against a read-only snapshot of the project’s Claude Code session on <time datetime="2026-10-07">7 October 2026</time>, through 15:36 UTC, and the committed v1–v16 archive. The session was still active and v17 work had begun; no completed v17 result is claimed here.</p>
+      <p>The archive’s named “final” export is <b>v14</b>; <b>v16</b> is the latest archived iteration used by this page. Later alignment fixes and re-judging seen in the session are discussed as lessons, not silently substituted into the archived files or scores.</p>
+      <p class="note">Only relevant user excerpts are reproduced. Private paths, session identifiers, raw transcripts, unrelated conversation and internal reasoning are not published. The commands are a practical guide to the current code, not a guarantee of bit-for-bit reproduction or a perfect visual match.</p>
+      <ul class="link-list">
+        <li><a href="index.html#versions">Explore every archived version</a></li>
+        <li><a href="index.html#scores">Inspect the historical scores</a></li>
+        <li><a href="https://github.com/EClinick/love-motion-recreation/blob/main/media/README.md">Media index and version notes</a></li>
+        <li><a href="https://github.com/EClinick/love-motion-recreation/blob/main/src/render.js">Renderer and output options</a></li>
+        <li><a href="https://github.com/EClinick/love-motion-recreation/blob/main/scripts/trace-ink.js">Source-derived ink tracing</a></li>
+        <li><a href="https://github.com/EClinick/love-motion-recreation">Source repository</a></li>
+      </ul>
+    </section>
+  </main>
+  <footer><a href="index.html">← Back to the showcase</a><span>No trackers, no analytics. Built from the project’s own media.</span></footer>
+</div>
+</body>
+</html>
