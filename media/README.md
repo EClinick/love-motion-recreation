@@ -22,6 +22,7 @@ All videos are H.264 (High profile, yuv420p) with AAC 192 kb/s audio and `+fasts
 | v13 | [`c437219`](https://github.com/EClinick/love-motion-recreation/commit/c437219) | not judged | [`render.mp4`](versions/v13/render.mp4) (9.9 MB) | [`sidebyside.mp4`](versions/v13/sidebyside.mp4) (16.1 MB) | `sheets/` (9) | shape overlays |
 | v14 | [`ce0afd5`](https://github.com/EClinick/love-motion-recreation/commit/ce0afd5) | 6.8 / 7.9 / 8.4 | [`render.mp4`](versions/v14/render.mp4) (10.0 MB) | [`sidebyside.mp4`](versions/v14/sidebyside.mp4) (16.1 MB) | `sheets/` (9) | shape overlays |
 | v15 | [`ae94953`](https://github.com/EClinick/love-motion-recreation/commit/ae94953) | 6.5 / 6.0 / 5.0 (exact-frame judging) | [`render.mp4`](versions/v15/render.mp4) (12.3 MB) | [`sidebyside.mp4`](versions/v15/sidebyside.mp4) (27.9 MB) | `sheets/` (9), `pairs/` (45) | |
+| v16 | [`4b382d2`](https://github.com/EClinick/love-motion-recreation/commit/4b382d2) | not judged yet | [`render.mp4`](versions/v16/render.mp4) (11.3 MB) | [`sidebyside.mp4`](versions/v16/sidebyside.mp4) (26.8 MB) | `sheets/` (9), `pairs/` (45) | |
 
 ## Other files
 

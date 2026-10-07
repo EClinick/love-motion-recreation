@@ -1,0 +1,34 @@
+{
+  "id": "iter16",
+  "label": "v16",
+  "hash": "4b382d2",
+  "subject": "Iteration 16: head shading, traced pen ink and hand tone, red camera flash, frame-accurate cuts",
+  "commit_date": "2026-10-06T23:15:27-07:00",
+  "dirty": false,
+  "changelog": [
+    "Head: asymmetric thermal rim, measured red settle, soft focus to 4.85 s, crisper traced curls",
+    "Opening: source handwriting traced (trace-ink.js), re-measured sparkle lighting, depth-map ring arrival",
+    "Middle: rangefinder camera and chunky heart sprites, curiosity/book/action shots re-timed per frame",
+    "Hand and finale: traced tone map for hand colour, full-frame red camera flash, per-frame letter spin, dots and pen loops",
+    "Missing one-frame shots at 8.30 s and 13.76 s; render workers decode only the masks they need"
+  ],
+  "note": "Rendered after the v15 judge round; not judged yet.",
+  "duration": 20.458,
+  "resolution": "1440x1080",
+  "size": 11809089,
+  "sbs_resolution": "2880x1080",
+  "sbs_size": 28109306,
+  "sheets": [
+    "media/versions/v16/sheets/sheet_01.jpg",
+    "media/versions/v16/sheets/sheet_02.jpg",
+    "media/versions/v16/sheets/sheet_03.jpg",
+    "media/versions/v16/sheets/sheet_04.jpg",
+    "media/versions/v16/sheets/sheet_05.jpg",
+    "media/versions/v16/sheets/sheet_06.jpg",
+    "media/versions/v16/sheets/sheet_07.jpg",
+    "media/versions/v16/sheets/sheet_08.jpg",
+    "media/versions/v16/sheets/sheet_09.jpg"
+  ],
+  "scores": null,
+  "extras": []
+}
