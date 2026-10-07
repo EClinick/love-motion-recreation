@@ -1318,19 +1318,23 @@ const ringSpin = (t) =>
     [7.17, 2.95, 'linear'],
     [7.76, 3.2, 'linear'],
     [8.13, 3.67, 'inQuad'],
-    [8.3, 3.8, 'linear'],
+    [8.175, 4.03, 'linear'],
+    [8.217, 4.4, 'linear'],
+    [8.258, 4.82, 'linear'],
+    [8.3, 5.22, 'linear'],
   ]);
 function ring2(t) {
   const base = ringSpin(t);
   const cx = kf(t, [[6.548, 700], [6.965, 709]]);
-  const cy = kf(t, [[6.548, 470], [6.756, 425], [6.965, 402], [7.76, 402], [8.13, 400]]);
+  const cy = kf(t, [[6.548, 470], [6.756, 425], [6.965, 402], [7.76, 402], [8.13, 400], [8.217, 440], [8.3, 465]]);
   const R = kf(t, [[6.548, 470], [6.965, 433], [7.76, 433], [8.13, 480]]);
-  const Ry = kf(t, [[6.965, 190], [7.76, 195], [8.13, 140]]);
+  const Ry = kf(t, [[6.965, 190], [7.76, 195], [8.13, 140], [8.217, 72], [8.3, 50]]);
+  const grow = kf(t, [[8.13, 1], [8.258, 1.12]]);
   const k = 0.495;
   return RING.map((name, i) => {
     const a = base + (i * Math.PI) / 6;
     const s = 1 / (1 - k * Math.sin(a));
-    return { name, i, x: cx + R * Math.cos(a) * s, y: cy + Ry * Math.sin(a) * s, s, w: 1.25 * RING_BASE[name] * Math.pow(s, 0.8) };
+    return { name, i, x: cx + R * Math.cos(a) * s, y: cy + Ry * Math.sin(a) * s, s, w: 1.25 * grow * RING_BASE[name] * Math.pow(s, 0.8) };
   });
 }
 const ring2Pos = (t, name) => {
@@ -1636,7 +1640,8 @@ function sceneRing(ctx, t, f) {
 
   flat(ctx, '#e4e3e3', 'rgba(80,76,74,0.14)', W, H);
   // push in on the controller and coin at the end
-  const zoom = kf(t, [[8.13, 1.0], [8.17, 1.45, 'inQuad'], [8.21, 2.1, 'linear'], [8.3, 3.2, 'linear']]);
+  // the end is a whip of the ring itself (front icons swell with perspective), not a camera push
+  const zoom = 1;
   const [sx, sy] = shake(t, 3, 0.8, 33);
   const [c, x] = off(0);
   x.save();
@@ -1745,7 +1750,7 @@ function sceneRing(ctx, t, f) {
   }
   if (fr >= 196) inkBlob(x, 900, 450, 70, 70, 0, 6);
   x.restore();
-  composite(ctx, c, { blur: t > 8.15 ? (t - 8.15) * 40 : 0 });
+  composite(ctx, c);
 }
 
 // =====================================================================
