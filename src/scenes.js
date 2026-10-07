@@ -1738,46 +1738,26 @@ function sceneStripA(ctx, t, f) {
 function sceneIntention(ctx, t, f) {
   fx.dark(ctx, '#141313');
   const [c, x] = off(1);
-  // ribbon: thin tail from bottom-left into the book; small wedge first, then a wide beam to the top
-  const spine = (u) => {
-    const p0 = [-60, 1000];
-    const p1 = [300, 640];
-    const p2 = [1250, -200];
-    const a = (1 - u) * (1 - u);
-    const b = 2 * (1 - u) * u;
-    const cc = u * u;
-    return [a * p0[0] + b * p1[0] + cc * p2[0], a * p0[1] + b * p1[1] + cc * p2[1]];
+  // red shapes riding with the book (measured on frames 237-250): a thin tail from the book's
+  // lower left to the bottom-left edge, a short flag behind its top (242-246), then a wide band
+  // from the book to the top-right corner (247 on)
+  const bp = kf(t, [[9.84, [720, 560]], [9.885, [500, 560]], [9.926, [440, 548], 'outCubic'], [10.18, [422, 532]], [10.51, [410, 528]]]);
+  const shape = (pts) => {
+    x.beginPath();
+    pts.forEach(([a, b], i) => (i ? x.lineTo(bp[0] + a, bp[1] + b) : x.moveTo(bp[0] + a, bp[1] + b)));
+    x.closePath();
+    x.fill();
   };
-  const u1 = kf(t, [[9.84, 0.3], [10.0, 0.62, 'outCubic'], [10.18, 0.66], [10.28, 1.0, 'inOutCubic']]);
-  const u0 = lerp(0, 0.2, ease.inCubic(inv(10.1, 10.51, t)));
-  const wmax = kf(t, [[9.84, 60], [10.0, 200], [10.18, 220], [10.28, 900, 'inOutCubic']]);
   x.save();
-  // the ribbon rides in attached to the book
   x.translate(kf(t, [[9.84, 270], [9.926, 0, 'outCubic']]), kf(t, [[9.84, -40], [9.926, 0]]));
   x.fillStyle = '#e2211b';
-  x.beginPath();
-  const N = 50;
-  const wAt = (k) => lerp(36, wmax, Math.pow(k, 1.6));
-  for (let i = 0; i <= N; i++) {
-    const k = i / N;
-    const [px, py] = spine(lerp(u0, u1, k));
-    const w = wAt(k);
-    if (i === 0) x.moveTo(px - w * 0.55, py - w * 0.35);
-    else x.lineTo(px - w * 0.55, py - w * 0.35);
-  }
-  for (let i = N; i >= 0; i--) {
-    const k = i / N;
-    const [px, py] = spine(lerp(u0, u1, k));
-    const w = wAt(k);
-    x.lineTo(px + w * 0.25, py + w * 0.15);
-  }
-  x.closePath();
   x.shadowColor = 'rgba(255,40,30,0.45)';
   x.shadowBlur = 25 * S;
-  x.fill();
+  shape([[-110, 94], [-340, 200], [-460, 320], [-460, 380], [-310, 240], [-80, 140]]);
+  if (t > 10.073 && t < 10.28) shape([[-40, -130], [104, -280], [270, -110], [180, -74]]);
+  if (t >= 10.28) shape([[-30, -200], [460, -560], [1100, -560], [1100, -470], [190, -110]]);
   x.shadowBlur = 0;
   x.restore();
-  const bp = kf(t, [[9.84, [720, 560]], [9.885, [500, 580]], [9.926, [445, 575], 'outCubic'], [10.51, [425, 570]]]);
   const bw = kf(t, [[9.84, 470], [10.1, 500], [10.51, 520]]);
   if (t < 9.87) x.filter = 'brightness(0.85)';
   drawSprite(x, 'book', bp[0], bp[1], bw, kf(t, [[9.84, -0.25], [10.0, -0.06]]) + noise1(t * 2, 4) * 0.04, 1, { shadow: 'rgba(255,40,30,0.25)', shadowBlur: 30 });
