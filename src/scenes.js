@@ -856,7 +856,7 @@ function sceneProfile(ctx, t, f) {
     ctx.fillRect(0, 0, W, H);
     ctx.globalAlpha = 1;
   }
-  if (t > 5.4 && t < 5.66) {
+  if (t > 5.4 && t < 5.66 && !headMask(t)) {
     const g = ctx.createRadialGradient(0, 1080, 0, 0, 1080, 700);
     g.addColorStop(0, `rgba(160,20,20,${0.5 * Math.sin(Math.PI * inv(5.4, 5.66, t))})`);
     g.addColorStop(1, 'rgba(120,0,0,0)');
@@ -892,7 +892,7 @@ function sceneProfile(ctx, t, f) {
   x.save();
   x.translate(hx, hy);
   x.scale(hz, hz);
-  const heat = traced ? thermalImage(`head${traced.f}`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, hotMask: traced.hot, front: kf(t, [[5.5, 0.3], [5.85, 0.08]]), rimBack: 0.35, mottle: 0.1, floor: 0.37, hotBlur: 40, hotGain: 0.5, hot: [[0.62, 0.18, 190, 0.12]] }) : thermal('head', 'heat');
+  const heat = traced ? thermalImage(`head${traced.f}`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, hotMask: traced.hot, front: kf(t, [[5.5, 0.3], [5.85, 0.08]]), rimBack: 0.35, mottle: 0.04, floor: 0.37, hotBlur: 16, hotGain: 0.85, hot: [[0.62, 0.18, 220, 0.11]] }) : thermal('head', 'heat');
   // traced images are screen-space: undo the head transform while drawing them
   const drawHead = (img, ox = 0) => {
     if (!traced) return x.drawImage(img, 0, 0);
@@ -922,7 +922,8 @@ function sceneProfile(ctx, t, f) {
       x.save();
       x.setTransform(S, 0, 0, S, 0, 0);
       x.globalAlpha = 0.8 * ghost;
-      x.drawImage(silhouette(traced.mask, '#c47a74'), -18 * ghost, 4, W, H);
+      x.globalAlpha = 0.6 * ghost;
+      x.drawImage(silhouette(traced.mask, '#c47a74'), -10 * ghost, -4, W, H);
       x.globalAlpha = ghost;
       x.drawImage(silhouette(traced.mask, '#1b1414'), 0, 0, W, H);
       x.restore();
