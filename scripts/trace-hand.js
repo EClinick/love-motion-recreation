@@ -74,7 +74,7 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       const mx = Math.max(r, g, b);
       const mn = Math.min(r, g, b);
       // the head has a dim red glow in front of the face: only count properly lit pixels
-      const warm = NAME === 'head' ? mx > 140 && mx - mn > 60 : mx > 70 && mx - mn > 45;
+      const warm = NAME === 'head' && t >= 4.19 ? mx > 140 && mx - mn > 60 : mx > 70 && mx - mn > 45; // the purple intro frames are dim
       const cream = mx > 170 && r >= b && mx - mn > 18; // pale lit skin (text is greyer)
       const white = NAME === 'head' && (r + g + b) / 3 > 150; // blown-out shirt / shoulder
       // hand: the white-lit thumb (14.1-14.35 s); skip the typing-cursor block to its right
@@ -142,8 +142,8 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
         bx0 = Math.min(bx0, xx); bx1 = Math.max(bx1, xx); by0 = Math.min(by0, yy); by1 = Math.max(by1, yy);
       }
     }
-    if (NAME === 'head' && (bx1 - bx0 > 760 || by1 - by0 < 500 || by0 > 400)) {
-      process.stdout.write(` [skip f${f} implausible head bbox]`);
+    if (NAME === 'head' && (bx1 - bx0 > 830 || by1 - by0 < 500 || by0 > 400)) {
+      process.stdout.write(` [skip f${f} implausible head bbox ${bx0},${by0}-${bx1},${by1}]`);
       continue;
     }
     if (area < (NAME === 'hand' && t > 15.5 ? 6000 : 20000)) {
@@ -184,9 +184,13 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       }
       const use = lastHot && n < 0.6 * nLast ? lastHot : cur;
       if (use === cur && n > 5000) lastHot = cur;
+      // on the dark wall the heat is graded: in the iron palette green rises steadily with heat,
+      // so the yellow fringe around the white-hot shirt comes through as partial heat
+      const graded = !darkOnLight && t < 5.92;
       for (let i = 0; i < W * H; i++) {
         hi.data[i * 4] = hi.data[i * 4 + 1] = hi.data[i * 4 + 2] = 255;
-        hi.data[i * 4 + 3] = use[i] ? 255 : 0;
+        const gr = graded && m[i] ? Math.max(0, Math.min(1, (d[i * 4 + 1] - 130) / 110)) : 0;
+        hi.data[i * 4 + 3] = Math.round(255 * Math.max(gr, use[i] && (!graded || t >= 5.6) ? 1 : 0));
       }
       mx2.putImageData(hi, 0, 0);
       sx.clearRect(0, 0, W, H);

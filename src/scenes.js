@@ -123,7 +123,7 @@ function pixelText(ctx, str, x, base, size, block, color, opts = {}) {
   const h = Math.ceil(fs * 1.4);
   const c = createCanvas(w * q, h * q);
   const cx = c.getContext('2d');
-  fx.text(cx, str, 2 * q, Math.round(fs * 1.05 * q), fs * q, '#000', { baseline: 'alphabetic', tracking: opts.tracking ?? 0.02 });
+  fx.text(cx, str, 2 * q, Math.round(fs * 1.05 * q), fs * q, '#000', { baseline: 'alphabetic', tracking: opts.tracking ?? 0.02, weight: opts.weight ?? 900 });
   const d = cx.getImageData(0, 0, w * q, h * q).data;
   ctx.save();
   ctx.fillStyle = color;
@@ -196,13 +196,15 @@ function sceneOpen(ctx, t, f) {
   if (t >= 0.48) {
     // the line collapses: chunky pixel type, tiny blurred pixel type, then dashes
     if (t < 0.521) {
-      pixelText(ctx, 'do.you.communicate', 0, 626, 300, 28, '#141010', { thr: 85, tracking: 0.03, sy: 1.12 });
+      // the dashed baseline is still there under the pixel type
+      dashLine(ctx, -40, 1500, 616, '#6a2a14', 3, [26, 20]);
+      pixelText(ctx, 'do.you.communicate', 0, 610, 300, 18, '#141010', { thr: 120, tracking: 0.04, sy: 1.05, weight: 900 });
     } else if (t < 0.563) {
       const [c, x] = off(0);
       pixelText(x, 'how.do.you.communicate', 220, 552, 52, 11, '#1e1a1a', { thr: 105 });
       x.fillStyle = '#141010';
       x.fillRect(640, 536, 160, 12);
-      composite(ctx, c, { blur: 4 });
+      composite(ctx, c, { blur: 9 });
     } else {
       const k = t < 0.605 ? 0 : t < 0.646 ? 1 : 2;
       const [c, x] = off(0);
@@ -590,10 +592,10 @@ const floatPos = (n, t) => [kf(t, FLOAT_KEYS[n].map(([a, x]) => [a, x, 'outCubic
 function sparkleShade(ctx, t) {
   const m = kf(t, [[2.064, 0.35], [2.25, 0.72], [2.5, 1], [3.0, 1], [3.5, 1]]);
   const g = ctx.createRadialGradient(-100, 540, 0, -100, 540, 1500);
-  [[0, 1], [400, 0.95], [600, 0.66], [800, 0.36], [1000, 0.15], [1200, 0.05], [1500, 0]].forEach(([d, a]) => g.addColorStop(d / 1500, `rgba(40,26,24,${a * m})`));
+  [[0, 1], [400, 0.88], [600, 0.6], [800, 0.34], [1000, 0.15], [1200, 0.05], [1500, 0]].forEach(([d, a]) => g.addColorStop(d / 1500, `rgba(40,26,24,${a * m})`));
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
-  const v = 0.55 * kf(t, [[2.064, 0.1], [2.25, 0.24], [2.5, 0.36], [3.0, 0.48], [3.5, 0.56], [3.62, 0.62]]);
+  const v = 0.68 * kf(t, [[2.064, 0.1], [2.25, 0.24], [2.5, 0.36], [3.0, 0.48], [3.5, 0.56], [3.62, 0.62]]);
   const tg = ctx.createLinearGradient(0, 0, 0, H);
   tg.addColorStop(0, `rgba(30,22,22,${v})`);
   tg.addColorStop(0.35, 'rgba(30,22,22,0)');
@@ -602,10 +604,10 @@ function sparkleShade(ctx, t) {
   ctx.fillStyle = tg;
   ctx.fillRect(0, 0, W, H);
   // warm, deep shade in the left corners (measured #2d2121 at 3.0 s)
-  const lc = kf(t, [[2.25, 0], [2.5, 0.6], [3.0, 0.8], [3.5, 0.85]]);
+  const lc = kf(t, [[2.25, 0], [2.5, 0.85], [3.0, 0.92], [3.5, 0.92]]);
   [[0, 0], [0, H]].forEach(([qx, qy]) => {
     const cg = ctx.createRadialGradient(qx, qy, 0, qx, qy, 760);
-    cg.addColorStop(0, `rgba(34,18,18,${lc})`);
+    cg.addColorStop(0, `rgba(18,12,12,${lc})`);
     cg.addColorStop(0.45, `rgba(34,18,18,${0.75 * lc})`);
     cg.addColorStop(1, 'rgba(34,18,18,0)');
     ctx.fillStyle = cg;
@@ -763,12 +765,15 @@ function sceneSparkle(ctx, t, f) {
     ctx.fillStyle = '#e6b01c';
     ctx.fillRect(0, 0, W, H);
     const [c, x] = off(0);
-    fx.words(x, sentenceParts(1.9, '#3a2410', '#3a2410').slice(0, 8), 20, 540, BODY);
     x.fillStyle = '#e6f532';
-    // centre and arm tips re-measured on a grid (core ~95 px lower than before)
-    armStar(x, 555, 495, [-1.37, 0.275, 1.82, 3.27], [459, 478, 600, 500], 0.0);
+    // tips measured on frame 48: all four arms ~510 px from (518, 540), fat near the core
+    armStar(x, 518, 540, [-1.31, 0.267, 1.795, 3.39], [513, 512, 508, 511], 0.14);
     x.fill();
-    [[180, 202, 1080, 315], [500, 120, 1000, 260], [430, 860, 1250, 640], [650, 1000, 1300, 760]].forEach(([a, b, c2, d]) => fx.strokePartial(x, [[a, b], [c2, d]], 0, 1, 12, 'rgba(250,244,230,0.85)', false));
+    [[180, 202, 1080, 315], [230, 230, 900, 420], [832, 56, 1035, 180], [700, 150, 880, 200], [427, 866, 1215, 810], [450, 855, 967, 720], [1057, 979, 1260, 832]].forEach(([a, b, c2, d]) => fx.strokePartial(x, [[a, b], [c2, d]], 0, 1, 12, 'rgba(250,244,230,0.85)', false));
+    // the sentence sits in front of the star
+    fx.words(x, sentenceParts(1.9, '#3a2410', '#3a2410').slice(0, 8), 20, 540, BODY);
+    x.fillStyle = 'rgba(42,26,16,0.8)';
+    x.fillRect(1246, 191, 6, 664);
     [['book', 945, 416, 70, -0.3], ['clapper', 1113, 427, 70, 0.3], ['coin', 1068, 607, 60, 0], ['camera', 1158, 720, 70, 0.4]].forEach(([n, a, b, w, r]) => drawSprite(x, n, a, b, w, r));
     // the word 'change?' still stood on end from frame 47, defocused
     x.save();
@@ -796,7 +801,7 @@ function sceneSparkle(ctx, t, f) {
   }));
   const [tc, tx] = off(2);
   fx.words(tx, parts, 40, 533, BODY);
-  const tBlur = kf(t, [[2.022, 7], [2.064, 4], [2.106, 3.5], [2.148, 5.5], [2.19, 4.5], [2.27, 3.2], [2.34, 2.4], [2.42, 0.9], [2.6, 0]]);
+  const tBlur = kf(t, [[2.022, 7], [2.064, 4], [2.106, 3.5], [2.148, 5.5], [2.19, 4.5], [2.27, 3.2], [2.34, 2.4], [2.42, 0.9], [2.5442, 0], [2.5859, 2], [2.6276, 3.6], [2.711, 3.6], [2.7944, 3], [2.8779, 2.4], [2.9196, 1.2], [2.9613, 0]]); // second focus pull on frames 62-70
 
   if (t < 2.064) {
     // frame 49: everything defocused on bare paper, dark streaks
@@ -872,7 +877,7 @@ function sceneSparkle(ctx, t, f) {
     // the icons break up into coarse pixel blocks before vanishing (frames 76-78)
     const out = 0;
     const mos = inv(3.09, 3.255, t);
-    const ib = kf(t, [[2.064, 1.5], [2.2, 4], [2.3, 3], [2.45, 0]]);
+    const ib = kf(t, [[2.064, 1.5], [2.2, 4], [2.3, 3], [2.45, 0], [2.5442, 0], [2.5859, 2], [2.6276, 3.6], [2.711, 3.6], [2.7944, 3], [2.8779, 2.4], [2.9196, 1.2], [2.9613, 0]]);
     const [ic, ix] = off(0);
     FLOATERS.forEach(([n, w, r, ph]) => {
       const [x, y] = floatPos(n, t);
@@ -916,7 +921,7 @@ function sceneSparkle(ctx, t, f) {
 function sceneProfile(ctx, t, f) {
   const bg = bgRamp(t, [
     [3.82, '#151314'],
-    [5.45, '#151314'],
+    [5.52, '#151515'],
     [5.6, '#2c1d20'],
     [5.75, '#3a2c30'],
     [5.85, '#54464b'],
@@ -969,7 +974,7 @@ function sceneProfile(ctx, t, f) {
   x.save();
   x.translate(hx, hy);
   x.scale(hz, hz);
-  const heat = traced ? thermalImage(`head${traced.f}`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, hotMask: traced.hot, front: kf(t, [[5.5, 0.3], [5.85, 0.08]]), rimBack: 0.35, mottle: 0.04, floor: 0.37, hotBlur: 16, hotGain: 0.85, hot: [[0.62, 0.18, 220, 0.11]] }) : thermal('head', 'heat');
+  const heat = traced ? thermalImage(`head${traced.f}`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, hotMask: traced.hot, front: kf(t, [[5.5, 0.3], [5.85, 0.08]]), rimBack: 0.35, mottle: 0.04, floor: kf(t, [[5.6, 0.37], [5.92, 0.56]]), hotBlur: 10, hotGain: 0.27 * (1 - inv(5.6, 5.8, t)), hot: [[0.31, 0.6, 170, -0.14]], glow: [55, 0.12 * (1 - inv(5.6, 5.8, t))] }) : thermal('head', 'heat');
   // traced images are screen-space: undo the head transform while drawing them
   const drawHead = (img, ox = 0) => {
     if (!traced) return x.drawImage(img, 0, 0);
@@ -983,10 +988,10 @@ function sceneProfile(ctx, t, f) {
     if (settle < 1) x.filter = `hue-rotate(${-125 * Math.pow(1 - settle, 3.5) - (traced ? 6 : 16) * settle}deg) saturate(${lerp(0.9, 1.25, settle)}) brightness(${lerp(0.3, 0.92, settle * settle)})`;
     else if (t < 4.9 && !traced) x.filter = `hue-rotate(${-16 * (1 - inv(4.35, 4.9, t))}deg) saturate(${1 + 0.15 * (1 - inv(4.35, 4.9, t))}) brightness(${lerp(0.94, 1, inv(4.35, 4.9, t))})`;
     else if (traced) {
-      const bri = kf(t, [[4.35, 0.8], [4.5, 0.8], [4.8, 0.87], [5.5, 0.87], [5.85, 0.55], [6.0, 0.45], [6.05, 0.4], [6.13, 0.33]]);
+      const bri = kf(t, [[4.35, 0.8], [4.5, 0.8], [4.8, 0.87], [5.5, 0.87], [5.85, 0.66], [6.0, 0.5], [6.05, 0.42], [6.13, 0.33]]);
       const sep = kf(t, [[5.5, 0], [5.85, 0.35], [6.0, 0.55], [6.13, 0.7]]);
-      const sat = kf(t, [[4.35, 1.15], [5.5, 1.15], [5.85, 1.35], [6.0, 1.3], [6.13, 0.9]]);
-      const hue = kf(t, [[4.35, -6], [4.9, 0]]);
+      const sat = kf(t, [[4.35, 1.15], [5.5, 1.15], [5.85, 1.35], [6.0, 1.15], [6.13, 0.9]]);
+      const hue = kf(t, [[4.35, -6], [4.9, 0], [5.6, 0], [5.85, 12], [6.0, 12]]);
       x.filter = `hue-rotate(${hue}deg) sepia(${sep}) saturate(${sat}) brightness(${bri})`;
     } else if (toTan > 0 && traced) x.filter = `sepia(${lerp(0.3, 0.55, toTan)}) saturate(${lerp(1.2, 1.45, toTan)}) brightness(${lerp(0.92, 0.9, toTan)})`;
     else if (toTan > 0) x.filter = `sepia(${lerp(0.45, 0.85, toTan)}) saturate(${lerp(1.25, 0.9, toTan)}) brightness(${lerp(0.82, 0.55, toTan)})`;
@@ -1006,7 +1011,15 @@ function sceneProfile(ctx, t, f) {
       x.restore();
       x.filter = f0;
     }
-    drawHead(heat, 30 * ghost);
+    if (traced && t >= 5.99 && t < 6.15) {
+      // frames 143-146: the heat is posterized (salmon cool band, black contour, flat olive fill)
+      const hex = (c) => [1, 3, 5].map((k) => parseInt(c.slice(k, k + 2), 16));
+      const post = thermalImage(`head${traced.f}p`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, hotMask: traced.hot, front: 0.46, rimBack: 0.35, floor: 0.37, hotBlur: 10, hotGain: 0.27,
+        poster: { t1: 0.45, w: 0.06, jag: 0.24, hi: null, lo: hex(mixHex('#8a4a30', '#764434', inv(5.95, 6.0, t))), line: hex('#1c1611') } });
+      drawHead(heat);
+      x.filter = 'none';
+      drawHead(post);
+    } else drawHead(heat, 30 * ghost);
     x.filter = 'none';
     const wash = traced ? 0.5 * (1 - inv(4.5, 4.8, t)) * clamp((t - 3.9) / 0.15) : 0;
     if (wash > 0) {
@@ -1021,6 +1034,13 @@ function sceneProfile(ctx, t, f) {
         // keep the shirt white-hot under the wash
         x.save();
         x.setTransform(S, 0, 0, S, 0, 0);
+        // yellow halo above the shirt survives the wash too
+        x.globalCompositeOperation = 'source-atop';
+        x.globalAlpha = Math.min(1, wash / 0.15);
+        x.filter = `blur(${40 * S}px)`;
+        x.drawImage(silhouette(traced.hot, '#e2aa2c'), 0, 0, W, H);
+        x.drawImage(silhouette(traced.hot, '#e2aa2c'), 0, 0, W, H);
+        x.globalCompositeOperation = 'source-over';
         x.globalAlpha = Math.min(1, wash / 0.15) * 0.9;
         x.filter = `blur(${6 * S}px)`;
         x.drawImage(silhouette(traced.hot, '#e9ebef'), 0, 0, W, H);
@@ -1045,7 +1065,7 @@ function sceneProfile(ctx, t, f) {
       x.fillRect(-100, -100, 1000, 1100);
       x.restore();
     }
-    if (settle > 0.25 && settle < 0.9) {
+    if (settle > 0.25 && settle < 0.9 && !traced) {
       // 4.0: soft orange contour bands inside a crimson rim
       const k = Math.sin(Math.PI * inv(0.25, 0.9, settle));
       x.save();
@@ -1110,8 +1130,35 @@ function sceneProfile(ctx, t, f) {
     x.globalAlpha = t < 5.85 ? shc : 1;
     if (t >= 6.15) {
       // drawn after the silhouette below
-    } else drawHead(silhouette(traced.hot, t < 5.85 ? mixHex('#d8d4ca', '#7f7770', shc) : col));
+    } else {
+      // soft edge: the source blends ochre into the grey shirt over ~20 px
+      x.filter = `blur(${10 * S}px)`;
+      drawHead(silhouette(traced.hot, t < 5.85 ? mixHex('#d8d4ca', '#7f7770', shc) : col));
+      x.filter = 'none';
+    }
     x.globalAlpha = 1;
+  }
+  if (traced && t >= 4.03 && t < 4.12) {
+    // frames 97-98: the heat reads as posterized iso-bands with dark red contour lines
+    const hex = (c) => [1, 3, 5].map((k) => parseInt(c.slice(k, k + 2), 16));
+    const f98 = t >= 4.07;
+    const bands = f98 ? [[0, hex('#921e19')], [0.52, hex('#990e16')], [0.68, hex('#ac4320')]] : [[0, hex('#a50618')], [0.52, hex('#960d16')], [0.65, hex('#9b1017')]];
+    const post = thermalImage(`head${traced.f}b${f98 ? 1 : 0}`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, front: 0.12, rimBack: 0.35, floor: 0.37, hot: [[0.42, 0.22, 210, 0.16], [0.55, 0.78, 260, -0.2], [0.85, 0.45, 160, -0.12]], poster: { bands, w: 0.035, jag: 0.06, line: hex(f98 ? '#970d18' : '#7a0c14') } });
+    x.save();
+    x.globalAlpha = 1;
+    x.globalCompositeOperation = 'source-over';
+    x.filter = 'none';
+    drawHead(post);
+    // the shirt glows pale pink at the bottom right under the bands
+    x.setTransform(S, 0, 0, S, 0, 0);
+    x.globalCompositeOperation = 'source-atop';
+    const sg = x.createRadialGradient(1190, 1090, 0, 1190, 1090, 260);
+    sg.addColorStop(0, f98 ? 'rgba(232,160,140,0.95)' : 'rgba(176,60,60,0.7)');
+    sg.addColorStop(0.55, f98 ? 'rgba(220,130,112,0.6)' : 'rgba(160,40,44,0.35)');
+    sg.addColorStop(1, 'rgba(200,80,70,0)');
+    x.fillStyle = sg;
+    x.fillRect(0, 0, W, H);
+    x.restore();
   }
   const thr = traced ? kf(t, [[6.01, -0.3], [6.048, 0.26], [6.089, 0.7], [6.131, 1.0], [6.15, 1.2]]) : 0;
   if (traced && thr > -0.15 && t < 6.15) {
@@ -1223,19 +1270,20 @@ function sceneProfile(ctx, t, f) {
   }
   if (fr === 96) {
     ctx.save();
-    ctx.filter = `blur(${12 * S}px)`;
-    ctx.fillStyle = 'rgba(208,16,16,0.95)';
+    ctx.filter = `blur(${22 * S}px)`;
+    ctx.fillStyle = 'rgba(200,16,22,0.9)';
     ctx.beginPath();
-    ctx.ellipse(985, 472, 135, 85, 0, 0, 7);
+    ctx.ellipse(985, 472, 140, 92, 0, 0, 7);
     ctx.fill();
     ctx.restore();
-    glowStroke([[830, 290], [870, 170], [960, 108], [1060, 118], [1130, 225]], 40, 'rgba(200,24,24,0.9)', 10);
-    glowStroke([[742, 553], [900, 575], [1080, 600]], 26, AMBER, 8);
+    glowStroke([[830, 290], [870, 170], [960, 108], [1060, 118], [1130, 225]], 58, 'rgba(132,24,32,0.9)', 18);
+    glowStroke([[742, 553], [900, 575], [1080, 600]], 36, AMBER, 13);
     softDot(1080, 600, 34, 'rgba(255,192,64,0.95)', 8);
     softDot(1280, 560, 46, 'rgba(130,112,40,0.55)', 14);
   }
   if (fr === 97) {
-    glowStroke([[450, 180], [650, 270], [855, 360]], 14, AMBER, 4);
+    glowStroke([[450, 180], [650, 270], [855, 360]], 32, 'rgba(200,150,50,0.75)', 15);
+    softDot(500, 200, 52, 'rgba(210,150,50,0.75)', 16);
     softDot(607, 810, 30, 'rgba(200,24,24,0.8)', 8);
     softDot(1080, 585, 12, '#ffd84a', 2);
   }
@@ -1398,8 +1446,8 @@ function inkBall(ctx, x, y, r, trail = [], soft = 2.5) {
 
 // Perspective ring fitted to the source (frame 167): centre, radii, depth k; icons scale with depth.
 // sizes re-fitted to the v17 sprites from source widths at 8.008 s and 6.673 s (front items)
-const RING_BASE = { clapper: 168, skateboard: 181, vinyl: 157, book: 165, camera: 184, cat: 176, coin: 161, controller: 176, cap: 198, heart: 199, cash: 204, plant: 155 };
-const RING_ROT = { skateboard: -0.45, cash: 0 };
+const RING_BASE = { clapper: 168, skateboard: 181, vinyl: 157, book: 165, camera: 184, cat: 176, coin: 161, controller: 176, cap: 152, heart: 180, cash: 204, plant: 155 };
+const RING_ROT = { skateboard: -0.2, cash: 0 };
 const ringSpin = (t) =>
   kf(t, [
     [6.38, -0.6],
@@ -1420,14 +1468,14 @@ const RING_LATE = [0.08, 26, -25]; // spin (rad), cy (px), R (px), eased in over
 function ring2(t) {
   // measured at 8.008 s against the v17 sprites: the ring is ~0.1 rad further round and ~20 px lower
   const late = ease.inOutQuad(inv(7.6, 8.0, t));
-  const base = ringSpin(t) + RING_LATE[0] * late;
-  const cx = kf(t, [[6.548, 700], [6.965, 709]]);
+  const base = ringSpin(t) + RING_LATE[0] * late + kf(t, [[8.13, 0], [8.258, -0.2]]);
+  const cx = kf(t, [[6.548, 700], [6.965, 709], [8.13, 709], [8.258, 750]]);
   const cy = kf(t, [[6.548, 470], [6.756, 425], [6.965, 402], [7.76, 402], [8.13, 400], [8.217, 440], [8.3, 465]]) + RING_LATE[1] * late;
-  const R = kf(t, [[6.548, 400], [6.673, 440], [6.965, 433], [8.05, 433], [8.13, 455]]) + (RING_LATE[2] || 0) * late;
+  const R = kf(t, [[6.548, 400], [6.673, 440], [6.965, 433], [8.05, 433], [8.13, 455], [8.258, 470]]) + (RING_LATE[2] || 0) * late;
   // the ring keeps its height until ~8.05 s, then flattens quickly (measured frames 184-195)
   const Ry = kf(t, [[6.965, 190], [7.5, 205], [7.76, 212], [8.05, 212], [8.13, 140], [8.217, 72], [8.3, 50]]);
   // icons arrive large and settle (front skateboard ~675 px wide at 6.59 s in the source)
-  const grow = kf(t, [[8.13, 1], [8.258, 1.12]]) * kf(t, [[6.548, 1.1], [6.59, 1.25], [6.673, 1.05], [6.756, 1]]);
+  const grow = kf(t, [[8.13, 1], [8.258, 1.3]]) * kf(t, [[6.548, 1.1], [6.59, 1.25], [6.673, 1.05], [6.756, 1]]);
   const k = 0.495;
   return RING.map((name, i) => {
     const a = base + (i * Math.PI) / 6;
@@ -1450,17 +1498,32 @@ function drawRing2(x, t, tint = null) {
   const hitAmt = (name) => {
     let a = 0;
     HITS2.forEach(([ht, n]) => {
-      if (n === name && t > ht - 0.02) a = Math.max(a, 1 - (t - ht) / 0.28);
+      if (n === name && t > ht - 0.02) a = Math.max(a, 1 - (t - ht) / (name === 'heart' ? 0.28 : 0.18));
     });
     return clamp(a);
   };
   ring2(t)
     .sort((a, b) => a.s - b.s)
     .forEach((it) => {
-      const rot = noise1(t * 2 + it.i, it.i) * 0.04 + (RING_ROT[it.name] || 0);
+      // the source's skateboard lies flatter while it sweeps past the front (-24 deg at 6.59 s, -31 at 7.0)
+      const rot = noise1(t * 2 + it.i, it.i) * 0.04 + (RING_ROT[it.name] || 0) + (it.name === 'skateboard' ? kf(t, [[6.59, 0.18], [6.85, 0]]) : 0);
       drawSprite(x, it.name, it.x, it.y, it.w, rot);
       const hit = tint ? 0 : hitAmt(it.name);
-      if (hit > 0) drawSprite(x, it.name, it.x, it.y, it.w, rot, hit * 0.75, { silhouette: '#f0a030' });
+      if (hit > 0 && it.name === 'heart') {
+        // the heart stays red; the hit glows orange from its middle
+        const [hc, hx] = off(6);
+        drawSprite(hx, 'heart', it.x, it.y, it.w, rot);
+        hx.globalCompositeOperation = 'source-atop';
+        const hg = hx.createRadialGradient(it.x, it.y, 0, it.x, it.y, it.w * 0.45);
+        hg.addColorStop(0, `rgba(250,120,40,${0.8 * hit})`);
+        hg.addColorStop(1, 'rgba(250,120,40,0)');
+        hx.fillStyle = hg;
+        hx.fillRect(it.x - it.w, it.y - it.w, it.w * 2, it.w * 2);
+        x.save();
+        x.setTransform(1, 0, 0, 1, 0, 0);
+        x.drawImage(hc, 0, 0);
+        x.restore();
+      } else if (hit > 0) drawSprite(x, it.name, it.x, it.y, it.w, rot, hit * 0.5, { silhouette: '#f0a030' });
     });
 }
 
@@ -1802,11 +1865,11 @@ function sceneRing(ctx, t, f) {
   const hitPos = (n) => ring2Pos(HITS2.find((h) => h[1] === n)[0], n);
 
   // the ink ball, frame by frame as in the source
-  if (fr === 167) inkCrescent(x, [[732, 412], [724, 450], [690, 476], [660, 484]], 18, 16, 4);
-  if (fr === 168) inkCrescent(x, [[642, 420], [668, 480], [712, 500], [752, 474], [778, 436]], 6, 22, 5);
+  if (fr === 167) inkCrescent(x, [[732, 412], [724, 450], [690, 476], [660, 484]], 22, 22, 6, 3.5);
+  if (fr === 168) inkCrescent(x, [[642, 420], [668, 480], [712, 500], [752, 474], [778, 436]], 9, 34, 7, 4.5);
   if (fr === 169) {
     inkTrail(x, [[770, 100], [860, 40], [960, 0]], 30, 0.35, 12);
-    inkCrescent(x, [[772, 96], [722, 200], [712, 330], [740, 450], [800, 505], [886, 512]], 7, 24, 8, 2.5);
+    inkCrescent(x, [[772, 96], [722, 200], [712, 330], [740, 450], [800, 505], [886, 512]], 9, 34, 10, 4);
   }
   if (fr === 170) {
     inkTrail(x, [[630, 202], [700, 140], [855, 112], [980, 220], [1060, 430]], 26, 0.5, 8);
@@ -1848,7 +1911,19 @@ function sceneRing(ctx, t, f) {
   }
   if (fr === 178) inkBlob(x, 367, 107, 76, 40, 0.1, 4);
   if (fr === 179) inkBlob(x, 425, 94, 62, 44, 0.2, 4);
-  if (fr === 180) inkTrail(x, [[800, 120], [620, 110], [470, 170], [400, 300], [410, 450], [440, 570]], 30, 0.55, 8);
+  if (fr === 180) {
+    // dark brush sweeping right then down, its grey trail curling back to a small hollow ring
+    inkTrail(x, [[439, 83], [560, 92], [660, 118], [725, 190], [735, 280], [700, 370]], 48, 0.85, 6);
+    inkTrail(x, [[700, 370], [620, 470], [520, 540], [432, 572]], 34, 0.35, 10);
+    x.save();
+    x.filter = `blur(${3 * S}px)`;
+    x.strokeStyle = 'rgba(60,56,56,0.45)';
+    x.lineWidth = 9;
+    x.beginPath();
+    x.arc(416, 574, 22, 0, 7);
+    x.stroke();
+    x.restore();
+  }
   if (fr === 181) {
     const [px, py] = hitPos('cash');
     inkBlob(x, px - 20, py - 20, 34, 26, 0.3, 3);
@@ -2912,7 +2987,7 @@ function headMask(t) {
 
 // Thermal-camera colouring of a traced silhouette: a heat field (distance inside the outline,
 // plus hot spots) mapped through an iron colormap. Computed at 1440x1080, cached per frame.
-const IRON = [[0, [70, 6, 10]], [0.22, [176, 24, 14]], [0.42, [214, 52, 22]], [0.6, [240, 118, 32]], [0.76, [246, 160, 54]], [0.88, [252, 214, 140]], [1, [250, 252, 255]]];
+const IRON = [[0, [70, 6, 10]], [0.22, [176, 24, 14]], [0.42, [214, 52, 22]], [0.6, [240, 118, 32]], [0.76, [246, 160, 40]], [0.88, [252, 220, 100]], [1, [250, 252, 255]]];
 const ironLut = (() => {
   const lut = new Uint8Array(256 * 3);
   for (let i = 0; i < 256; i++) {
@@ -2927,7 +3002,7 @@ const ironLut = (() => {
   return lut;
 })();
 const thermalCache = new Map();
-function thermalImage(key, mask, { depth = 28, base = 0.24, gain = 0.5, hot = [], warm = null, hotMask = null, hotGain = 0.6, front = 0, rimBack = 1, mottle = 0, floor = 0, hotBlur = 10 } = {}) {
+function thermalImage(key, mask, { depth = 28, base = 0.24, gain = 0.5, hot = [], warm = null, hotMask = null, hotGain = 0.6, front = 0, rimBack = 1, mottle = 0, floor = 0, hotBlur = 10, glow = null, poster = null } = {}) {
   if (thermalCache.has(key)) return thermalCache.get(key);
   const m = createCanvas(W, H);
   const mx = m.getContext('2d');
@@ -2954,6 +3029,15 @@ function thermalImage(key, mask, { depth = 28, base = 0.24, gain = 0.5, hot = []
     hx.drawImage(hotMask, 0, 0, W, H);
     hd = hx.getImageData(0, 0, W, H).data;
   }
+  // glow = [blur, gain]: a wide soft halo of the hot region (the shirt warms the neck yellow)
+  let gd = null;
+  if (hotMask && glow) {
+    const gc = createCanvas(W, H);
+    const gx = gc.getContext('2d');
+    gx.filter = `blur(${glow[0]}px)`;
+    gx.drawImage(hotMask, 0, 0, W, H);
+    gd = gx.getImageData(0, 0, W, H).data;
+  }
   for (let y = 0; y < H; y++) {
     const wy = warm ? clamp((y - warm[0]) / (warm[1] - warm[0])) : 0;
     const wy2 = wy * wy * (3 - 2 * wy);
@@ -2967,12 +3051,40 @@ function thermalImage(key, mask, { depth = 28, base = 0.24, gain = 0.5, hot = []
       const ee = Math.pow(e, 0.7);
       let h = base + gain * (ee + (1 - ee) * (1 - rimBack) * back) + (warm ? warm[2] * wy2 : 0);
       if (hd) h += hotGain * (hd[i + 3] / 255);
+      if (gd) h += glow[1] * (gd[i + 3] / 255);
       if (mottle) h += mottle * (nz[i] / 255 - 0.5);
       if (floor) h = Math.max(h, floor);
       if (front) h -= front * clamp(1 - (x - x0) / (0.35 * bw));
       for (const [hx, hy, hr, ha] of spots) {
         const q = ((x - hx) ** 2 + (y - hy) ** 2) / (hr * hr);
         if (q < 4) h += ha * Math.exp(-q);
+      }
+      if (poster) {
+        // posterized heat: cool band, a jagged black contour, then a flat hot fill
+        const hj = h + poster.jag * (noiseField()[i] / 255 - 0.5);
+        if (poster.bands) {
+          // multi-level iso-heat bands with a contour line at each threshold
+          let c = poster.bands[0][1];
+          let line = false;
+          for (const [th, col] of poster.bands.slice(1)) {
+            if (Math.abs(hj - th) < poster.w / 2) line = true;
+            if (hj >= th) c = col;
+          }
+          if (line) c = poster.line;
+          d[i] = c[0];
+          d[i + 1] = c[1];
+          d[i + 2] = c[2];
+          continue;
+        }
+        const c = hj < poster.t1 ? poster.lo : hj < poster.t1 + poster.w ? poster.line : poster.hi2 && h > poster.t2 ? poster.hi2 : poster.hi;
+        if (!c) {
+          d[i + 3] = 0; // hot fill left to the regular heat layer underneath
+          continue;
+        }
+        d[i] = c[0];
+        d[i + 1] = c[1];
+        d[i + 2] = c[2];
+        continue;
       }
       const v = Math.max(0, Math.min(255, Math.round(h * 255))) * 3;
       d[i] = ironLut[v];
