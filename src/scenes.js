@@ -2672,7 +2672,7 @@ function tracedHand(ctx, mask, filter, tint = 0, hot = null, pale = 0, tone = nu
     px.drawImage(mask, -5, -4, W, H);
     px.filter = 'none';
     px.globalCompositeOperation = 'source-in';
-    px.fillStyle = '#d3cdc7';
+    px.fillStyle = '#d8c6be';
     px.fillRect(0, 0, W, H);
     x.save();
     x.globalCompositeOperation = 'source-atop';
@@ -2768,6 +2768,14 @@ function sceneHand(ctx, t, f) {
   // background warms to red-brown then mauve-grey as the hand closes (measured per frame)
   const bg = bgRamp(t, [[13.76, '#141313'], [15.47, '#151414'], [15.557, '#221417'], [15.599, '#251619'], [15.641, '#2a191b'], [15.682, '#2e1c1e'], [15.724, '#362426'], [15.766, '#3f2c2f'], [15.808, '#463437'], [15.849, '#4d3d41'], [15.89, '#524347']]);
   fx.dark(ctx, bg);
+  const flatWall = inv(15.5, 15.7, t);
+  if (flatWall > 0) {
+    // the wall goes flat (no dark vignette) as it warms up
+    ctx.globalAlpha = flatWall;
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+  }
   const fallP = inv(15.6, 15.89, t);
   const settle = ease.inOutCubic(inv(13.76, 14.32, t));
   const fall = ease.inOutCubic(fallP);
@@ -2780,8 +2788,8 @@ function sceneHand(ctx, t, f) {
   if (traced) {
     let filt = '';
     if (settle < 1) filt = `brightness(${lerp(0.92, 1, settle)}) blur(${(1 - settle) * 10 * S}px)`;
-    else if (t > 15.64) filt = `saturate(${kf(t, [[15.64, 1], [15.77, 0.85]])}) brightness(${kf(t, [[15.64, 1], [15.77, 0.92], [15.81, 0.97]])})`;
-    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0, handHotMask(t), kf(t, [[15.77, 0], [15.8, 1]]), t < 15.6 ? handToneMap(t) : null);
+    else if (t > 15.64) filt = `saturate(${kf(t, [[15.64, 1], [15.77, 0.85]])}) brightness(${kf(t, [[15.64, 1], [15.766, 0.8], [15.81, 0.62]])})`;
+    tracedHand(ctx, traced, filt, settle < 1 ? 1 - settle : 0, handHotMask(t), kf(t, [[15.77, 0], [15.8, 1]]), t < 15.785 ? handToneMap(t) : null);
   }
   const hand = traced ? null : thermalHand(pose);
   const [c, x] = traced ? [null, null] : off(0);
@@ -2909,7 +2917,7 @@ function sceneHand(ctx, t, f) {
   else if (t >= 14.285 && t < 14.327) ctx.fillRect(1110, 514, 30, 46);
   else if (t >= 14.327 && t < 14.41) ctx.fillRect(1130, 514, 7, 46);
   if (t >= 14.243) {
-    const word = t < 14.49 ? 'own' : t < 15.665 ? 'own ability' : 'own ability to';
+    const word = t < 14.49 ? 'own' : t < 15.72 ? 'own ability' : 'own ability to';
     fx.text(ctx, word, 944 + dx, 539, HB, col, { blur: fallP * 3 + 0.6 + (t > 14.44 && t < 14.49 ? 4 : 0), ...glow });
   }
 }
