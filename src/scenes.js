@@ -1139,12 +1139,15 @@ function sceneProfile(ctx, t, f) {
     x.globalCompositeOperation = 'source-over';
     x.filter = 'none';
     drawHead(post);
-    if (traced.hot) {
-      // the shirt still glows pale pink under the bands
-      x.filter = `blur(${18 * S}px)`;
-      x.globalCompositeOperation = 'source-atop';
-      drawHead(silhouette(traced.hot, '#e6aaa2'));
-    }
+    // the shirt glows pale pink at the bottom right under the bands
+    x.setTransform(S, 0, 0, S, 0, 0);
+    x.globalCompositeOperation = 'source-atop';
+    const sg = x.createRadialGradient(1190, 1090, 0, 1190, 1090, 260);
+    sg.addColorStop(0, f98 ? 'rgba(232,160,140,0.95)' : 'rgba(176,60,60,0.7)');
+    sg.addColorStop(0.55, f98 ? 'rgba(220,130,112,0.6)' : 'rgba(160,40,44,0.35)');
+    sg.addColorStop(1, 'rgba(200,80,70,0)');
+    x.fillStyle = sg;
+    x.fillRect(0, 0, W, H);
     x.restore();
   }
   const thr = traced ? kf(t, [[6.01, -0.3], [6.048, 0.26], [6.089, 0.7], [6.131, 1.0], [6.15, 1.2]]) : 0;
