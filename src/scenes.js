@@ -3767,6 +3767,32 @@ const PEN_FRAMES = {
   482: [['V', 60, 40, 25], ['O', -85, 115, 25, 0, 30], ['L', 175, 100, 30], ['E', -10, 70, 30]],
   483: [['V', -115, 280, 140], ['O', -95, 160, 35, 0, 40], ['L', -90, 170, 15], ['E', 190, 170, 30]],
 };
+// Rotoscoped red pen for the finale (scripts/trace-pen.js -> ref/derived/pen/p_####.bin, gzip 8-bit
+// alpha at 1440x1080). Shapes come from the user's own frames; the colour is the measured pen red.
+const PEN_DIR = pathMod.join(__dirname, '..', 'ref', 'derived', 'pen');
+const penCache = new Map();
+function penMatte(fr) {
+  if (penCache.has(fr)) return penCache.get(fr);
+  const file = pathMod.join(PEN_DIR, `p_${String(fr).padStart(4, '0')}.bin`);
+  let c = null;
+  if (fsMod.existsSync(file)) {
+    const a = require('zlib').gunzipSync(fsMod.readFileSync(file));
+    c = createCanvas(W, H);
+    const x = c.getContext('2d');
+    const id = x.createImageData(W, H);
+    for (let i = 0; i < W * H; i++) {
+      // measured pen core (214, 72, 56); the matte's soft edges read light, so lift them a little
+      id.data[i * 4] = 214;
+      id.data[i * 4 + 1] = 72;
+      id.data[i * 4 + 2] = 56;
+      id.data[i * 4 + 3] = Math.min(255, a[i] * 1.25);
+    }
+    x.putImageData(id, 0, 0);
+  }
+  if (penCache.size > 4) penCache.delete(penCache.keys().next().value);
+  penCache.set(fr, c);
+  return c;
+}
 function finalePetals(ctx, t, pos) {
   const set = PETALS.find(([until]) => t < until);
   if (!set) return;
@@ -3781,8 +3807,8 @@ function finalePetals(ctx, t, pos) {
   });
 }
 // Last frame: the letters slam together into a black block with thick ink hooks and big loops.
-function finaleCollapse(ctx) {
-  [[-125, 400, 130], [-95, 420, 70], [-15, 440, 120], [40, 400, 110], [95, 260, 80], [-150, 260, 60]].forEach(([ang, len, wid], k) => {
+function finaleCollapse(ctx, traced = false) {
+  if (!traced) [[-125, 400, 130], [-95, 420, 70], [-15, 440, 120], [40, 400, 110], [95, 260, 80], [-150, 260, 60]].forEach(([ang, len, wid], k) => {
     fx.strokePartial(ctx, petal(700, 500, ang * D, len, wid, 90 + k), 0, 1, 2, '#e0402e');
   });
   ctx.fillStyle = '#141010';
@@ -3790,7 +3816,7 @@ function finaleCollapse(ctx) {
   [['L', 655, 565, -0.05], ['V', 680, 485, 0.08], ['E', 760, 560, -0.06], ['O', 722, 515, 0]].forEach(([ch, x, y, r]) => letter(ctx, ch, x, y, 150, '#141010', r));
   fx.strokePartial(ctx, spline([[675, 315], [600, 300], [535, 340], [510, 430], [485, 520], [462, 535]], 10), 0, 1, 22, '#141010');
   fx.strokePartial(ctx, spline([[832, 664], [824, 520], [821, 380], [850, 325], [911, 315], [945, 360]], 10), 0, 1, 22, '#141010');
-  [[690, 470, 60, 30, 20], [760, 580, 70, 40, -30]].forEach(([x, y, rx, ry, a], k) => {
+  if (!traced) [[690, 470, 60, 30, 20], [760, 580, 70, 40, -30]].forEach(([x, y, rx, ry, a], k) => {
     fx.strokePartial(ctx, petal(x, y, a * D, rx * 2, ry, 120 + k), 0, 1, 2, '#e0402e');
   });
 }
@@ -3835,8 +3861,11 @@ function sceneFinale(ctx, t, f) {
   if (t < 17.372) brushCut(ctx, t);
   const grow = ease.inOutCubic(inv(19.75, 20.05, t));
   const size = t < 20.15 ? kf(t, [[19.52, 56], [19.853, 62], [20.02, 68], [20.145, 74]]) : kf(t, [[20.15, 74], [20.187, 83], [20.229, 111], [20.27, 128], [20.3, 190]]);
+  const fr = Math.round(t * C.FPS);
+  const pen = penMatte(fr);
   if (t >= 20.29) {
-    finaleCollapse(ctx);
+    finaleCollapse(ctx, !!pen);
+    if (pen) ctx.drawImage(pen, 0, 0, W, H);
     return;
   }
   const pos = {};
@@ -3871,8 +3900,7 @@ function sceneFinale(ctx, t, f) {
     const r = kf(t, DOT_R[r0]);
     inkDot(ctx, x, y, r * lerp(1, 1.1, grow), r0 + Math.floor(t * 24) * 0.37, r0 === 7 && t > 17.99 && t < 18.06 ? 1 : 0);
   });
-  const fr = Math.round(t * C.FPS);
-  if ([434, 435, 436, 437, 438, 440, 442, 444, 447, 448, 450, 452, 453, 454, 455, 456, 457, 458].includes(fr)) {
+  if (!pen && [434, 435, 436, 437, 438, 440, 442, 444, 447, 448, 450, 452, 453, 454, 455, 456, 457, 458].includes(fr)) {
     const r = rng(fr * 13);
     ['V', 'L'].forEach((ch) => {
       if (r() < 0.25) return;
@@ -3880,18 +3908,18 @@ function sceneFinale(ctx, t, f) {
       fx.strokePartial(ctx, petal(ax + (r() - 0.5) * 16, ay + (r() - 0.5) * 16, r() * Math.PI * 2, 18 + r() * 24, 10 + r() * 16, fr), 0, 1, 1.6, '#e0402e');
     });
   }
-  const pf = PEN_FRAMES[fr];
+  const pf = pen ? null : PEN_FRAMES[fr];
   if (pf) pf.forEach(([ch, ang, len, wid, dx = 0, dy = 0], k) => {
     const [ax, ay] = pos[ch];
     fx.strokePartial(ctx, petal(ax + dx, ay + dy, ang * D, len, wid, k + Math.round(t * C.FPS) * 7), 0, 1, 1.8, '#e0402e');
   });
-  FIN_PEN.forEach(([ch, t0, t1, ang, len, wid, lastF = 1e9], k) => {
+  if (!pen) FIN_PEN.forEach(([ch, t0, t1, ang, len, wid, lastF = 1e9], k) => {
     if (t < t0 || t > t1 + 0.05 || Math.round(t * C.FPS) > lastF) return;
     const [ax, ay] = pos[ch];
     const d = len < 90 ? 0.04 : 0.07;
     fx.strokePartial(ctx, petal(ax, ay, ang * D, len, wid, k + 40), inv(t1, t1 + 0.05, t), inv(t0, t0 + d, t), 1.7, '#e0402e');
   });
-  if (t > 20.165) finalePetals(ctx, t, pos);
+  if (t > 20.165 && !pen) finalePetals(ctx, t, pos);
   // black hook strokes
   if (t > 17.63 && t < 17.77) {
     const pts = [];
@@ -3910,6 +3938,8 @@ function sceneFinale(ctx, t, f) {
     bx.drawImage(ctx.canvas, 0, 0);
     composite(ctx, bc, { blur: soft });
   }
+  // traced pen goes on last: in the whip frames the source pen is already motion-blurred
+  if (pen) ctx.drawImage(pen, 0, 0, W, H);
 }
 
 // ---------------------------------------------------------------------
