@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="description" content="How I made Love Motion Recreation: the prompt I used and follow-up instructions I gave, followed by what Claude built, the visible results, and the limits of the process.">
+<title>How I made this · Love Motion Recreation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="how-we-made-this.css">
+<script src="theme.js" defer></script>
+<script src="how-we-made-this.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to the prompts</a>
+<div class="wrap">
+  <header class="topbar">
+    <a class="brand" href="index.html">Love <span>motion</span> recreation</a>
+    <button id="theme" type="button" aria-label="Toggle colour theme" hidden>Theme</button>
+  </header>
+  <nav class="site-nav" aria-label="Site"><a href="index.html">Showcase</a><a href="how-we-made-this.html" aria-current="page">How I made this</a></nav>
+
+  <main id="main" tabindex="-1">
+    <header class="intro reading">
+      <div class="eyebrow">The conversation behind the recreation</div>
+      <h1>How I made <span>this.</span></h1>
+      <p class="lede">The prompt I used. The instructions I gave next. Then, what Claude did with them.</p>
+    </header>
+
+    <section class="reading" id="prompts" aria-labelledby="prompts-title">
+      <h2 id="prompts-title">It started with this.</h2>
+      <div class="card initial-prompt snippet">
+        <div class="prompt-meta"><span>Human · initial prompt</span><time datetime="2026-10-06T20:14:12Z">6 Oct 2026 · 20:14 UTC</time></div>
+        <blockquote id="initial-prompt"><span class="redaction">[local media folder redacted]</span> analyze the mp4 here and use the mp3 as the video. But replicate this video from scratch, make it identical. Got all out on motion effects, transitions, icons, to mimic this video exactly. have a judge of sonnet 5.5 critics at the end analzye so you can iteratively loop until it looks the same.</blockquote>
+        <div class="prompt-tools"><button class="copy" type="button" data-copy="initial-prompt" aria-label="Copy initial prompt" hidden>Copy initial prompt</button><span class="copy-feedback" role="status"></span></div>
+      </div>
+      <p class="note transcription-note">Original wording, including typos, is preserved. Only the local folder is redacted above. The request says “use the mp3 as the video”; the implementation used it as the soundtrack.</p>
+      <nav class="jump-links" aria-label="On this page"><a href="#follow-ups">Read the follow-ups ↓</a><a href="#workflow">What Claude actually did</a><a href="index.html#cmp">See the results ↗</a></nav>
+    </section>
+
+    <section class="reading follow-ups" id="follow-ups" aria-labelledby="follow-ups-title">
+      <h2 id="follow-ups-title">And then I kept directing it.</h2>
+      <p class="section-intro">These are the later human instructions, in order—not a rewritten prompt template. Selected project messages are shown; status checks, local cleanup and other operational messages are omitted. All times are UTC. Notes outside the quotes are editorial.</p>
+      <ol class="prompt-thread" role="list">
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T20:14:56Z">6 Oct · 20:14</time></div>
+          <blockquote>remember to do all work in wsl and create a project and init it to github as well</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T21:07:57Z">6 Oct · 21:07</time></div>
+          <blockquote>spin up another sonnet general purpose to create a website that hosts via tailscale accessibile the current version with a description etc and the video</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T21:15:37Z">6 Oct · 21:15</time></div>
+          <blockquote>continually upddate the website with the new versions and also append the old versions in each version change ensure to spin up a sub agent sonnet for that</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T21:23:40Z">6 Oct · 21:23</time></div>
+          <blockquote>Great when that's done, then create another video showing the two with a side by side comparison. We should do this for every new version too. The website should have each version + the video + the side by side comparison</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T21:28:26Z">6 Oct · 21:28</time></div>
+          <blockquote>is v1 the og video? Rememebr I want side by side with original and the claude made one</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T21:29:07Z">6 Oct · 21:29</time></div>
+          <blockquote>Okay nice run thru judge again, continue iterating as this website builds</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T21:34:18Z">6 Oct · 21:34</time></div>
+          <blockquote>Few things I noticed, the hand is off and the head shape is off, and the grainyness is off.</blockquote>
+        </li>
+        <li id="prompt-measure">
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T21:45:19Z">6 Oct · 21:45</time></div>
+          <blockquote>Hmm programmatically compare the face and hand shape it's still not there.</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T21:55:28Z">6 Oct · 21:55</time></div>
+          <blockquote>ya the hand is really the main thing that's still wrong, it just doesn't look like a hand. Like the ref.</blockquote>
+          <p class="note attachment-note">Image attachment omitted.</p>
+        </li>
+        <li id="prompt-trace">
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T22:05:22Z">6 Oct · 22:05</time></div>
+          <blockquote>No it still looks like a balloon, we should try to trace the shape of the hand in every frame and replicate that.</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human · answer to Claude’s hand-source question</span><time datetime="2026-10-06T22:06:24Z">6 Oct · 22:06</time></div>
+          <blockquote>no just trace the actual frames. This is my video</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T22:16:47Z">6 Oct · 22:16</time></div>
+          <blockquote>This is good! No need to do anymore versions</blockquote>
+        </li>
+        <li id="prompt-archive">
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T22:18:15Z">6 Oct · 22:18</time></div>
+          <blockquote>convert all mp4s into web sendable mp4s and lets commit each version with the frames, comparisons, videos, and the original video and mp3 to gh</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-06T22:19:18Z">6 Oct · 22:19</time></div>
+          <blockquote>For the final say Claude instead of recreation for the side by side. Have sonnet do that for us while we do this</blockquote>
+        </li>
+        <li class="next-day">
+          <div class="prompt-meta"><span>Human · the next day</span><time datetime="2026-10-07T03:56:43Z">7 Oct · 03:56</time></div>
+          <blockquote>Okay continue iterating on judges and versions until it gets perfect</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-07T13:26:38Z">7 Oct · 13:26</time></div>
+          <blockquote>render v16 then commit that and push</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-07T15:07:24Z">7 Oct · 15:07</time></div>
+          <blockquote>run sonnet to update tailscale site and run it</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-07T15:10:32Z">7 Oct · 15:10</time></div>
+          <blockquote>okay run v17</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-07T15:34:58Z">7 Oct · 15:34</time></div>
+          <blockquote>are u having subagents work on v17 now? I thought u would do all the work?</blockquote>
+        </li>
+        <li>
+          <div class="prompt-meta"><span>Human</span><time datetime="2026-10-07T15:36:29Z">7 Oct · 15:36</time></div>
+          <blockquote>okay if it's opus still for implementation, I okay with that</blockquote>
+        </li>
+      </ol>
+      <p class="note cutoff">The prompt snapshot ends here, while v17 was still in progress. Its archive checkpoint was v1–v16, not a finished v17. The v18 comparison shown below was archived later.</p>
+    </section>
+
+    <section class="response" id="workflow" aria-labelledby="workflow-title">
+      <div class="reading">
+        <div class="eyebrow">What the AI actually did</div>
+        <h2 id="workflow-title">The work behind those messages.</h2>
+        <p class="section-intro">The following is an editorial summary of recorded tool calls, outputs and checked-in artifacts—not a quotation or the model’s internal reasoning.</p>
+        <dl class="ai-actions">
+          <div><dt>It built a renderer, not a one-shot generated video.</dt><dd>Claude used <code>ffprobe</code> to inspect the 2880×2160, 24000/1001 fps source and <code>ffmpeg</code> to extract contact sheets and stills. After a browser-renderer test failed on a missing library, it used <code>@napi-rs/canvas</code> to draw <a href="https://github.com/EClinick/love-motion-recreation/blob/main/src/scenes.js">14 time-based shots</a>. <a href="https://github.com/EClinick/love-motion-recreation/blob/main/src/render.js">Node workers and ffmpeg</a> rendered frames, encoded video and added the MP3 soundtrack.</dd></div>
+          <div><dt>It rendered, asked critics, and revised.</dt><dd>Three read-only Sonnet critics reviewed the opening, middle and finale against comparison images. Their discrepancy lists drove changes to type, timing, icons, silhouettes and colour, followed by new renders. The <a href="index.html#versions">version archive</a> keeps those iterations visible; critic scores are not proof of an identical match.</dd></div>
+          <div><dt>The human hand feedback changed the method.</dt><dd>After the request to <a href="#prompt-measure">compare shapes programmatically</a>, Claude wrote <a href="https://github.com/EClinick/love-motion-recreation/blob/main/scripts/shape-compare.js">silhouette measurements and overlays</a>. When the hand still looked wrong and the user <a href="#prompt-trace">asked it to trace the frames</a>, it added <a href="https://github.com/EClinick/love-motion-recreation/blob/main/scripts/trace-hand.js">source-derived hand masks</a> and shaded them in code. Later iterations also used traced head masks, pen ink and hand tone maps. “From scratch” did not remain “every shape drawn independently of the source.”</dd></div>
+          <div><dt>It turned the iterations into this archive.</dt><dd>The website work added version history, side-by-side videos, scores and comparison sheets. Early overwritten previews were rebuilt from commits. Following the <a href="#prompt-archive">packaging instruction</a>, web encodes and metadata were committed under <a href="https://github.com/EClinick/love-motion-recreation/blob/main/media/README.md"><code>media/</code></a>. The named “final” export is v14. The session checkpoint covered v1–v16; the comparison below shows the later v18 result.</dd></div>
+        </dl>
+      </div>
+      <div class="evidence-grid">
+        <figure class="card">
+          <div class="media-heading"><h3>What that produced</h3><p id="motion-note">Motion warning: fast cuts and flashing imagery. Playback is opt-in.</p></div>
+          <video controls playsinline preload="none" aria-label="Archived v18 original reference versus Claude recreation" aria-describedby="motion-note video-caption" src="../media/versions/v18/sidebyside.mp4"></video>
+          <figcaption id="video-caption"><b>v18 · original reference left, Claude recreation right.</b> This later iteration replaces the older v14 comparison on this page, not the original source. Shape, shading and motion differences remain. <a href="../media/original/original.mp4">Watch the original reference</a> or <a href="index.html#cmp">compare versions in the showcase</a>.</figcaption>
+        </figure>
+        <figure class="card">
+          <a href="../media/versions/v18/pairs/pair_030.jpg" aria-label="Open full-size v18 hand comparison"><img loading="lazy" src="../media/versions/v18/pairs/pair_030.jpg" width="1600" height="600" alt="v18 hand comparison: original reference on the left and Claude recreation on the right, both labelled 14.514500 seconds, with visible colour and texture differences."></a>
+          <figcaption><b>v18 · the hand, side by side.</b> An unchanged still from the later, index-aligned v18 archive. This is a visual comparison, not the older v14 silhouette overlay or a whole-video fidelity score. <a href="https://github.com/EClinick/love-motion-recreation/blob/d2546690bbaf3dcdf1c8fe79079ac10dac31de70/media/versions/v18/meta.json">Check the v18 provenance.</a></figcaption>
+        </figure>
+      </div>
+
+      <div class="reading">
+        <aside class="callout" id="lessons" aria-labelledby="lessons-title">
+          <h3 id="lessons-title">“Make it identical” was the request, not the result.</h3>
+          <p>The session also found mistakes in its own comparison tools: some reference/render images paired different frames, creating misleading timing critiques. Later corrections selected and paired frames by index and re-ran the judges.</p>
+          <p><b>Archive caveat:</b> early comparison sheets had alignment errors. The current archive includes the corrected v15/v16 sheets and pairs, alongside v17/v18; the v18 hand still above comes from the later index-aligned set. Historical scores still span changing judging criteria, so they are not a consistent benchmark. A failed render once left an older preview behind, too. Check frame alignment and output freshness before trusting a critique.</p>
+        </aside>
+
+        <details id="try-it" class="reproduce">
+          <summary>Run this repository yourself</summary>
+          <p class="note">These are instructions for the checked-in code, not prompts, a historical command transcript or a guarantee of reproducing the later v18 render. Run them from the repository root in your own checkout.</p>
+          <h3>Just browse the website</h3>
+          <p>A current Node.js LTS release and npm are enough. The committed media needs no model account, ffmpeg, font download or npm dependency install for this route.</p>
+          <div class="snippet"><div class="snippet-header"><span>Repository root · shell</span><button class="copy" type="button" data-copy="site-commands" aria-label="Copy website commands" hidden>Copy</button></div><pre><code id="site-commands">npm run site:build
+node scripts/serve-site.js 8787 dist</code></pre><span class="copy-feedback" role="status"></span></div>
+          <p>Open <code>http://127.0.0.1:8787/site/</code>. To deploy, copy the whole <code>dist/</code> directory, including <code>dist/media/</code>, to static hosting. Relative links support a hosting subdirectory.</p>
+
+          <h3>Rebuild the frames</h3>
+          <p>You also need Bash, curl, ffmpeg and ffprobe (with H.264/AAC encoding and the drawtext filter for comparison scripts). Font fetching needs network access. Allow several GB of free disk space and RAM; start with two workers, or one if memory is tight.</p>
+          <p>Use source media you have permission to process. This demonstration copies the committed web reference and soundtrack into <code>ref/</code>. <b>The reference is re-encoded</b>, not the original full-resolution input, so tracing and measurements may differ. Run in a fresh checkout; these commands replace those local inputs.</p>
+          <div class="snippet"><div class="snippet-header"><span>Prepare inputs and derived masks</span><button class="copy" type="button" data-copy="prepare-commands" aria-label="Copy input preparation commands" hidden>Copy</button></div><pre><code id="prepare-commands">npm ci &amp;&amp;
+bash scripts/fetch-fonts.sh &amp;&amp;
+cp media/original/original.mp4 ref/reference.mp4 &amp;&amp;
+cp media/original/original.mp3 ref/audio.mp3 &amp;&amp;
+node scripts/trace-hand.js hand &amp;&amp;
+node scripts/trace-hand.js head &amp;&amp;
+node scripts/trace-ink.js &amp;&amp;
+node scripts/trace-pen.js 413 431 pen soft &amp;&amp;
+node scripts/trace-pen.js 432 487 &amp;&amp;
+node scripts/trace-pen.js 413 431 dark &amp;&amp;
+node scripts/trace-pen.js 487 487 dark</code></pre><span class="copy-feedback" role="status"></span></div>
+          <p>The fonts and generated <code>ref/derived/</code> masks are not bundled. The <code>trace-pen.js</code> commands prepare the later finale’s red pen and dark brush masks. Without these inputs, fallback fonts or drawn shapes can change the result. These tracing scripts are tuned to this reference, not arbitrary videos.</p>
+          <div class="snippet"><div class="snippet-header"><span>Render and verify a preview</span><button class="copy" type="button" data-copy="render-commands" aria-label="Copy preview render commands" hidden>Copy</button></div><pre><code id="render-commands">node src/render.js --workers 2 --out out/preview.mp4 &amp;&amp;
+ffprobe -v error -select_streams v:0 -count_frames \
+  -show_entries stream=width,height,nb_read_frames \
+  -of default=noprint_wrappers=1 out/preview.mp4 &amp;&amp;
+bash scripts/sidebyside.sh out/preview.mp4 out/sidebyside.mp4</code></pre><span class="copy-feedback" role="status"></span></div>
+          <p>Verify success and a fresh, full-length output. Renders share <code>out/segments/</code> and reuse filenames: do not run two at once, and archive an accepted version before the next pass.</p>
+          <p>For an optional full-resolution export with motion blur:</p>
+          <pre><code>node src/render.js --scale 2 --samples 4 --workers 2 --out out/final.mp4</code></pre>
+
+          <h3>Check one exact frame before changing timing</h3>
+          <p>At this frame rate, zero-based frame 120 is at <code>120 × 1001 / 24000 = 5.005 s</code>. Extract that source frame and render that time separately, avoiding timestamp-based pairing of two running streams.</p>
+          <div class="snippet"><div class="snippet-header"><span>Reference left · recreation right · frame 120</span><button class="copy" type="button" data-copy="frame-commands" aria-label="Copy exact-frame comparison commands" hidden>Copy</button></div><pre><code id="frame-commands">node src/render.js --stills 5.005 &amp;&amp;
+ffmpeg -v error -y -i ref/reference.mp4 \
+  -vf "select='eq(n,120)',scale=1440:1080" \
+  -frames:v 1 out/reference-120.png &amp;&amp;
+ffmpeg -v error -y -i out/reference-120.png \
+  -i out/stills/r_5.005.png -filter_complex hstack \
+  -frames:v 1 out/pair-120.png</code></pre><span class="copy-feedback" role="status"></span></div>
+          <p>Open <code>out/pair-120.png</code>. Repeat at cuts and disputed frames. This assumes both timelines start at the same source frame; verify that when adapting the process. A still checks shape and placement, not the whole motion.</p>
+        </details>
+
+        <section class="provenance" id="sources" aria-labelledby="sources-title">
+          <h3 id="sources-title">About this record</h3>
+          <p>Checked against a read-only snapshot of the project’s Claude Code session through <time datetime="2026-10-07T15:36:40Z">7 October 2026, 15:36 UTC</time>, and the committed v1–v16 archive. Queued human instructions and the answer to Claude’s hand-source question are included; automated notifications and AI-generated conversation summaries are not treated as human prompts.</p>
+          <p>The displayed video and hand still were added from the later v18 archive, whose metadata identifies render commit <a href="https://github.com/EClinick/love-motion-recreation/commit/fda013a">fda013a</a>. They match <a href="https://github.com/EClinick/love-motion-recreation/tree/d2546690bbaf3dcdf1c8fe79079ac10dac31de70/media/versions/v18">this pinned archive revision</a> byte for byte and are served directly from the project’s v18 media. Integrating the later main-branch archive also brings v17/v18 into the showcase. These artifacts do not extend the prompt snapshot or imply that it contains the v18 instructions.</p>
+          <p>Private paths, session identifiers, raw transcripts, unrelated conversation and internal reasoning are not published. The code and commands are available to try, but neither bit-for-bit reproduction nor a perfect visual match is promised.</p>
+          <p><a href="https://github.com/EClinick/love-motion-recreation">Source repository</a> · <a href="https://github.com/EClinick/love-motion-recreation/blob/main/media/README.md">Media and version notes</a> · <a href="index.html#versions">Explore every archived version</a></p>
+        </section>
+      </div>
+    </section>
+  </main>
+  <footer><a href="index.html">← Back to the showcase</a><span>No trackers, no analytics. Built from the project’s own media.</span></footer>
+</div>
+</body>
+</html>

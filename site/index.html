@@ -8,27 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="theme.js" defer></script>
 <style>
-:root{
-  --bg:#f6f2ea; --surface:#fffdf8; --ink:#2a1a16; --muted:#7a6a62; --line:#e2d9cc;
-  --accent:#e0243a; --cyan:#0aa5c2; --good:#1f8a5b;
-  --shadow:0 1px 2px rgba(60,30,20,.06),0 8px 24px rgba(60,30,20,.08);
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0e0d12; --surface:#17161d; --ink:#f1ece4; --muted:#9a93a3; --line:#2a2833;
-    --accent:#ff4d62; --cyan:#35d4f0; --good:#4cd69b;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4);
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0e0d12; --surface:#17161d; --ink:#f1ece4; --muted:#9a93a3; --line:#2a2833;
-  --accent:#ff4d62; --cyan:#35d4f0; --good:#4cd69b;
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4);
-}
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
 .wrap{max-width:980px;margin:0 auto;padding:0 16px 64px}
 header{padding:40px 0 8px;display:flex;gap:16px;justify-content:space-between;align-items:flex-start}
 h1{font-weight:900;font-size:clamp(2rem,7vw,3.4rem);line-height:1.05;margin:0 0 12px;letter-spacing:-.02em}
@@ -36,7 +18,6 @@ h1 span{color:var(--accent)}
 h2{font-weight:800;font-size:1.35rem;margin:48px 0 12px;letter-spacing:-.01em}
 p{margin:0 0 12px} .lede{font-size:1.1rem;color:var(--muted);max-width:62ch}
 .mono,code{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.85em}
-#theme{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font:inherit;font-size:.85rem;white-space:nowrap}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
 .player{padding:0;overflow:hidden;margin-top:24px}
 video{display:block;width:100%;height:auto;aspect-ratio:4/3;background:#000}
@@ -126,16 +107,20 @@ a{color:var(--cyan)}
 </style>
 </head>
 <body>
-<div class="wrap">
+<a class="skip-link" href="#showcase">Skip to showcase</a>
+<div class="wrap" id="showcase" tabindex="-1">
 <header>
   <div>
     <h1>Love <span>motion</span><br>recreation</h1>
-    <p class="lede">A 20.5-second kinetic-typography and pixel-icon motion piece, rebuilt from scratch in code and refined by a loop of AI judges.</p>
+    <p class="lede">A 20.5-second kinetic-typography and pixel-icon motion piece, rebuilt in code and refined by a loop of AI judges.</p>
   </div>
-  <button id="theme" type="button" aria-label="Toggle colour theme">Theme</button>
+  <button id="theme" type="button" aria-label="Toggle colour theme" hidden>Theme</button>
 </header>
 
+<nav class="site-nav" aria-label="Site"><a href="index.html" aria-current="page">Showcase</a><a href="how-we-made-this.html">How I made this</a></nav>
 <nav aria-label="Page sections"><a href="#originalsec">Original</a> · <a href="#finalsec">Final render</a> · <a href="#versions">All versions</a> · <a href="#scores">Scores</a></nav>
+
+<aside class="card guide-link" aria-label="How I made this"><p><b>The conversation behind the recreation.</b><br>The original prompt, the follow-up instructions, and what Claude did with them.</p><a href="how-we-made-this.html">Read how I made this →</a></aside>
 
 <div class="feat-title"><div><span class="latest-tag" id="feat-tag">latest</span></div></div>
 <section class="card player" style="margin-top:8px" id="featplayer"></section>
@@ -189,13 +174,13 @@ a{color:var(--cyan)}
 <div class="versions" id="versions"></div>
 
 <h2>What it is</h2>
-<p>The piece is a stack of 14 shots, each a pure function of time, so any frame can be rendered in any order. Everything on screen is drawn procedurally: the pixel-art icons, the thermal-camera head and hand, the handwriting scribbles and the type. The final hand silhouette is rotoscoped from the reference and shaded in code. The shots, in order:</p>
+<p>The piece is a stack of 14 shots, each a pure function of time, so any frame can be rendered in any order. Frames combine procedural type, pixel-art icons and effects with source-derived tracing: the later hand and head silhouettes, pen/brush ink, tone maps and sampled sprite grids come from the reference and are rendered in code. The main sequences, in order:</p>
 <ol class="shots">
   <li class="card"><b>how do you</b> kinetic type opener</li>
   <li class="card"><b>Typing line</b> with handwritten scribbles</li>
   <li class="card"><b>Giant cyan sparkle</b> with floating pixel icons</li>
   <li class="card"><b>Thermal head profile</b> &ldquo;you dont.&rdquo; / &ldquo;you just show it.&rdquo;</li>
-  <li class="card"><b>3D ring</b> of 12 original pixel-art icons and a bouncing ink ball</li>
+  <li class="card"><b>3D ring</b> of 12 pixel-art icons and a bouncing ink ball</li>
   <li class="card"><b>Word cards</b> &ldquo;action.&rdquo; &ldquo;intention.&rdquo; &ldquo;curiosity.&rdquo;</li>
   <li class="card"><b>Ink scatter</b></li>
   <li class="card"><b>Thermal hand</b> &ldquo;through ones own ability to&rdquo;</li>
@@ -203,11 +188,13 @@ a{color:var(--cyan)}
 </ol>
 
 <h2>How it is made</h2>
+<p><a href="how-we-made-this.html">Read the actual prompts and what Claude built in response →</a></p>
 <p><b>Renderer.</b> Node with <code>@napi-rs/canvas</code> (Skia) draws each frame across worker threads. Segments are encoded with ffmpeg and muxed with the audio. Previews render at 1440&times;1080; the final render is 2880&times;2160 with 4-sample motion blur.</p>
 <p><b>Judge loop.</b> After each render, a script builds contact sheets of the reference next to the render at 4 fps. Several Sonnet &ldquo;judge&rdquo; agents compare them, score sections out of 10 and list the biggest differences. Those notes become the next iteration&rsquo;s fixes, and the cycle repeats.</p>
 
 <h2>Score progress</h2>
 <p>Judge scores out of 10, per section of the timeline.</p>
+<p class="note">These are historical scores, not a consistent benchmark: judging became stricter, and some archived comparisons paired different frames. <a href="how-we-made-this.html#lessons">Read the evaluation and alignment caveats.</a></p>
 <section class="card table-wrap"><table id="scores"></table></section>
 
 <footer><a href="https://github.com/EClinick/love-motion-recreation">Source and media archive</a>. No trackers, no analytics. <span id="gen"></span></footer>
@@ -225,14 +212,6 @@ a{color:var(--cyan)}
 (function(){
   var $ = function(id){return document.getElementById(id)};
   var GH = 'https://github.com/EClinick/love-motion-recreation/commit/';
-  // theme toggle (per-viewer convenience only)
-  var root = document.documentElement;
-  try{ var t = localStorage.getItem('theme'); if(t) root.setAttribute('data-theme', t); }catch(e){}
-  $('theme').onclick = function(){
-    var dark = root.getAttribute('data-theme') ? root.getAttribute('data-theme')==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-    var n = dark ? 'light' : 'dark'; root.setAttribute('data-theme', n);
-    try{ localStorage.setItem('theme', n); }catch(e){}
-  };
   function fmt(d){ if(!d) return '—'; var x = new Date(d); return isNaN(x) ? d : x.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}); }
   function esc(s){ var e=document.createElement('span'); e.textContent=s==null?'':String(s); return e.innerHTML; }
   function mean(a){ return a.reduce(function(x,y){return x+y},0)/a.length; }
