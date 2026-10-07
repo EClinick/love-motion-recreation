@@ -1458,14 +1458,14 @@ const RING_LATE = [0.08, 26, -25]; // spin (rad), cy (px), R (px), eased in over
 function ring2(t) {
   // measured at 8.008 s against the v17 sprites: the ring is ~0.1 rad further round and ~20 px lower
   const late = ease.inOutQuad(inv(7.6, 8.0, t));
-  const base = ringSpin(t) + RING_LATE[0] * late;
-  const cx = kf(t, [[6.548, 700], [6.965, 709]]);
+  const base = ringSpin(t) + RING_LATE[0] * late + kf(t, [[8.13, 0], [8.258, -0.2]]);
+  const cx = kf(t, [[6.548, 700], [6.965, 709], [8.13, 709], [8.258, 750]]);
   const cy = kf(t, [[6.548, 470], [6.756, 425], [6.965, 402], [7.76, 402], [8.13, 400], [8.217, 440], [8.3, 465]]) + RING_LATE[1] * late;
-  const R = kf(t, [[6.548, 400], [6.673, 440], [6.965, 433], [8.05, 433], [8.13, 455]]) + (RING_LATE[2] || 0) * late;
+  const R = kf(t, [[6.548, 400], [6.673, 440], [6.965, 433], [8.05, 433], [8.13, 455], [8.258, 470]]) + (RING_LATE[2] || 0) * late;
   // the ring keeps its height until ~8.05 s, then flattens quickly (measured frames 184-195)
   const Ry = kf(t, [[6.965, 190], [7.5, 205], [7.76, 212], [8.05, 212], [8.13, 140], [8.217, 72], [8.3, 50]]);
   // icons arrive large and settle (front skateboard ~675 px wide at 6.59 s in the source)
-  const grow = kf(t, [[8.13, 1], [8.258, 1.12]]) * kf(t, [[6.548, 1.1], [6.59, 1.25], [6.673, 1.05], [6.756, 1]]);
+  const grow = kf(t, [[8.13, 1], [8.258, 1.3]]) * kf(t, [[6.548, 1.1], [6.59, 1.25], [6.673, 1.05], [6.756, 1]]);
   const k = 0.495;
   return RING.map((name, i) => {
     const a = base + (i * Math.PI) / 6;
