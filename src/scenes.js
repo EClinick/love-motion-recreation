@@ -1414,6 +1414,12 @@ function spikes(ctx, x, y, seed, n = 6, col = '#e8a020') {
   ctx.restore();
 }
 
+// [name, x, y, width, depth 0..1, rot, squash]
+const F156 = [
+  ['cat', 1252, 465, 170, 0.3, 0, 1], ['clapper', 1020, 385, 300, 0.15, 0.1, 1], ['skateboard', 757, 400, 300, 0.1, -0.3, 1],
+  ['coin', 555, 470, 180, 0.25, 0, 1], ['book', 352, 545, 210, 0.4, 0.1, 1], ['cash', 240, 735, 210, 0.5, -0.4, 1],
+  ['camera', 465, 760, 410, 0.95, 0, 1], ['vinyl', 1068, 610, 370, 0.9, 0, 1], ['heart', 812, 755, 490, 1, 0, 0.55],
+];
 // Depth-pass arrival (frames 154-156): the ring as smooth depth-shaded silhouettes at a coarse
 // mosaic, coloured thermal on dark (154-155), then a grey ramp on light grey (156).
 const ARRIVE_BOX = { 154: [260, 427, 1180, 980], 155: [214, 360, 1271, 980], 156: [146, 292, 1305, 900] };
@@ -1431,20 +1437,26 @@ function depthRing(ctx, t, fr) {
   const smax = Math.max(...items.map((it) => it.s));
   const L = createCanvas(W, H);
   const lx = L.getContext('2d');
-  const near = items.reduce((a, b) => (b.s > a.s ? b : a));
-  items
-    .slice()
-    .sort((a, b) => a.s - b.s)
-    .forEach((it) => {
-      const v = (it.s - smin) / (smax - smin || 1);
-      const px = bx0 + (it.x - x0) * sxk;
-      const py = by0 + (it.y - y0) * syk;
-      const w = it.w * (sxk + syk) * 0.5 * 1.3;
+  let near = items.reduce((a, b) => (b.s > a.s ? b : a));
+  // frame 156 is placed by hand from the source (its spin phase differs): a squashed heart in front,
+  // the record mid-right, a dark camera block at the left and a light chain of icons behind
+  const list = fr === 156
+    ? F156.map(([name, px, py, w, v, rot, sy]) => ({ name, px, py, w, v, rot, sy }))
+    : items.slice().sort((a, b) => a.s - b.s).map((it) => ({ it, name: it.name, v: (it.s - smin) / (smax - smin || 1), px: bx0 + (it.x - x0) * sxk, py: by0 + (it.y - y0) * syk, w: it.w * (sxk + syk) * 0.5 * 1.3 }));
+  if (fr === 156) near = { name: 'heart' };
+  list
+    .forEach((it0) => {
+      const { v, px, py, w } = it0;
+      const it = it0.it || { name: it0.name };
       // grey = depth; a soft dome of extra light inside each shape
       const g = Math.round(40 + v * 190);
       const tmp = createCanvas(W, H);
       const tx = tmp.getContext('2d');
-      drawSprite(tx, it.name, px, py, w, RING_ROT[it.name] || 0, 1, { silhouette: `rgb(${g},${g},${g})` });
+      if (fr === 156 && it.name === 'heart') {
+        near.px = [px, py, w];
+        return;
+      }
+      drawSprite(tx, it.name, px, py, w, it0.rot ?? (RING_ROT[it.name] || 0), 1, { silhouette: `rgb(${g},${g},${g})`, sy: it0.sy || 1 });
       tx.globalCompositeOperation = 'source-atop';
       const rg = tx.createRadialGradient(px - w * 0.1, py - w * 0.15, 0, px, py, w * 0.6);
       rg.addColorStop(0, 'rgba(255,255,255,0.16)');
@@ -1455,6 +1467,7 @@ function depthRing(ctx, t, fr) {
       lx.drawImage(tmp, 0, 0);
       lx.filter = 'none';
       if (it === near) near.px = [px, py, w];
+      if (fr === 156 && it.name === 'heart') near.px = [px, py, w];
     });
   // coarse mosaic, then colour by depth
   const block = 12;
@@ -1475,8 +1488,9 @@ function depthRing(ctx, t, fr) {
       d[i] = ironLut[k]; d[i + 1] = ironLut[k + 1]; d[i + 2] = ironLut[k + 2];
       d[i + 3] = Math.round(255 * (0.55 + 0.45 * v));
     } else {
-      const gv = Math.round(lerp(0x8e, 0x4a, v));
-      d[i] = gv; d[i + 1] = gv - 4; d[i + 2] = gv - 2;
+      // measured: light items #8b8588, near items mauve #4a3a42
+      const gv = Math.round(lerp(0x8b, 0x4a, v));
+      d[i] = gv; d[i + 1] = Math.round(gv - lerp(6, 16, v)); d[i + 2] = Math.round(gv - lerp(3, 8, v));
       d[i + 3] = 255;
     }
   }
@@ -1500,12 +1514,38 @@ function depthRing(ctx, t, fr) {
   ctx.filter = `blur(${1.2 * S}px)`;
   ctx.drawImage(sm, 0, 0, W, H);
   ctx.restore();
-  if (fr === 156 && near.px) {
+  if (fr === 156) {
+    // the front item is a dark rounded wedge (flat top, pointed bottom) with a maroon core and a
+    // muted yellow trapezoid low in its centre (measured from the source frame), at the same mosaic
+    const wc = createCanvas(W, H);
+    const wx = wc.getContext('2d');
+    const wg = wx.createRadialGradient(830, 770, 20, 820, 740, 250);
+    wg.addColorStop(0, '#4e1418');
+    wg.addColorStop(0.55, '#2e1214');
+    wg.addColorStop(1, '#151012');
+    wx.fillStyle = wg;
+    wx.beginPath();
+    [[556, 668], [610, 628], [700, 612], [905, 618], [1000, 648], [1030, 690], [1010, 740], [905, 850], [842, 904], [780, 860], [600, 752], [552, 712]].forEach(([px, py], i) => (i ? wx.lineTo(px, py) : wx.moveTo(px, py)));
+    wx.closePath();
+    wx.fill();
+    wx.fillStyle = '#6e6630';
+    wx.beginPath();
+    [[788, 772], [892, 772], [858, 888], [826, 888]].forEach(([px, py], i) => (i ? wx.lineTo(px, py) : wx.moveTo(px, py)));
+    wx.closePath();
+    wx.fill();
+    const wsm = createCanvas(sw, sh);
+    wsm.getContext('2d').drawImage(wc, 0, 0, sw, sh);
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.filter = `blur(${1.2 * S}px)`;
+    ctx.drawImage(wsm, 0, 0, W, H);
+    ctx.restore();
+  } else if (near.px && fr === 156) {
     // the nearest item renders dark maroon, with a small yellow triangle low in its centre
     const [px, py, w] = near.px;
     const nc = createCanvas(W, H);
     const nx = nc.getContext('2d');
-    drawSprite(nx, near.name, px, py, w, RING_ROT[near.name] || 0, 1, { silhouette: '#3a1a1c' });
+    drawSprite(nx, near.name, px, py, w, fr === 156 ? 0 : RING_ROT[near.name] || 0, 1, { silhouette: '#3a1a1c', sy: fr === 156 ? 0.55 : 1 });
     const ns = createCanvas(sw, sh);
     const nsx = ns.getContext('2d');
     nsx.drawImage(nc, 0, 0, sw, sh);
