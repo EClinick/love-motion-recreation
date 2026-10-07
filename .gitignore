@@ -6,3 +6,5 @@ fonts/*.woff2
 site/media/
 ref/derived/
 dist/
+node_modules
+ref/derived
