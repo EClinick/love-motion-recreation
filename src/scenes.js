@@ -3587,9 +3587,10 @@ function sceneLove(ctx, t, f) {
       ctx.fillRect(0, 0, W, H);
       fx.grain(ctx, f + 3, 0.08);
       letter(ctx, 'L', LX[0], LY, LSIZE, '#c9d6d6');
+      drawSprite(ctx, 'book', 724, 540, 490, 0.28, 1, { sy: 1.15 });
+      // the source keeps O and V on top of the book on this frame
       letter(ctx, 'O', LX[1], LY, LSIZE, blue);
       letter(ctx, 'V', LX[2], LY, LSIZE, blue);
-      drawSprite(ctx, 'book', 724, 540, 490, 0.28, 1, { sy: 1.15 });
       return;
     }
     if (fr === 401) {
