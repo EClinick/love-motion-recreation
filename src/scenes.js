@@ -112,13 +112,49 @@ const BIG = 340;
 const SENT = ['how', 'do', 'you', 'communicate', 'that', 'you’re', 'going', 'through', 'a', 'change?'];
 const TYPE_T = [0, 0, 0, 0, 0.8, 1.25, 1.5, 1.75, 1.875, 1.96];
 
+// Text drawn as chunky pixels (a low-res render, thresholded and scaled up with hard edges).
+function pixelText(ctx, str, x, base, size, block, color, opts = {}) {
+  const fs = size / block;
+  const tmp = createCanvas(8, 8);
+  const w = Math.ceil(fx.measure(tmp.getContext('2d'), str, fs, 900, opts.tracking ?? 0.02)) + 4;
+  const h = Math.ceil(fs * 1.4);
+  const c = createCanvas(w, h);
+  const cx = c.getContext('2d');
+  fx.text(cx, str, 2, Math.round(fs * 1.05), fs, '#000', { baseline: 'alphabetic', tracking: opts.tracking ?? 0.02 });
+  const d = cx.getImageData(0, 0, w, h).data;
+  ctx.save();
+  ctx.fillStyle = color;
+  const y0 = base - fs * 1.05 * block;
+  for (let j = 0; j < h; j++)
+    for (let i = 0; i < w; i++) if (d[(j * w + i) * 4 + 3] > (opts.thr ?? 120)) ctx.fillRect(x + (i - 2) * block, y0 + j * block, block + 0.5, block + 0.5);
+  ctx.restore();
+}
+
+// one rough hand-drawn pen line (polyline smoothed, slight taper)
+function penPath(ctx, pts, lw, color) {
+  fx.strokePartial(ctx, pts, 0, 1, lw, color);
+}
+
 function sceneOpen(ctx, t, f) {
-  if (t < 0.083) {
-    ctx.fillStyle = '#d9a623';
+  if (t < 0.02) {
+    // frame 0: red card, a faint dark-red "how" behind a towering, squashed black "how"
+    ctx.fillStyle = '#c40f18';
     ctx.fillRect(0, 0, W, H);
-    dashLine(ctx, 0, W, 98, '#5a3a14', 4, [30, 22]);
-    dashLine(ctx, 0, W, 952, '#5a3a14', 4, [30, 22]);
-    fx.text(ctx, 'how', W / 2 - 5, 520, 300, '#3a2914', { align: 'center' });
+    fx.text(ctx, 'how', 560, 660, 300, 'rgba(110,8,16,0.75)', { baseline: 'alphabetic' });
+    ctx.save();
+    ctx.translate(432, 1150);
+    ctx.scale(0.97, 5);
+    fx.text(ctx, 'how', 0, 0, 340, '#121010', { baseline: 'alphabetic' });
+    ctx.restore();
+    dashLine(ctx, 0, W, 1070, '#3a1a12', 3, [26, 20]);
+    return;
+  }
+  if (t < 0.083) {
+    ctx.fillStyle = '#ddb019';
+    ctx.fillRect(0, 0, W, H);
+    dashLine(ctx, 0, W, 104, '#2a1a08', 6, [34, 22]);
+    dashLine(ctx, 0, W, 955, '#2a1a08', 6, [34, 22]);
+    fx.text(ctx, 'how', 745, 520, 340, '#3a2914', { align: 'center' });
     return;
   }
   // grey gradient paper, darker toward the right
@@ -131,75 +167,95 @@ function sceneOpen(ctx, t, f) {
   ctx.fillStyle = gg;
   ctx.fillRect(0, 0, W, H);
 
-  const hx = kf(t, [
-    [0.083, 440],
-    [0.2, 395, 'linear'],
-    [0.33, -200, 'inOutQuad'],
-    [0.38, -720, 'linear'],
-    [0.44, -1000, 'outQuad'],
-  ]);
-  // whip-zoom down to body size
-  const zp = ease.inOutCubic(inv(0.44, 0.68, t));
-  const z = Math.exp(lerp(0, Math.log(BODY / BIG), zp));
+  if (t >= 0.48) {
+    // the line collapses: chunky pixel type, tiny blurred pixel type, then dashes
+    if (t < 0.521) {
+      pixelText(ctx, 'do.you.communicate', 0, 622, 272, 15, '#141010', { thr: 90 });
+    } else if (t < 0.563) {
+      const [c, x] = off(0);
+      pixelText(x, 'how.do.you.communicate', 220, 556, 64, 8, '#1e1a1a', { thr: 60 });
+      x.fillStyle = '#141010';
+      x.fillRect(640, 536, 160, 12);
+      composite(ctx, c, { blur: 6 });
+    } else {
+      const k = t < 0.605 ? 0 : t < 0.646 ? 1 : 2;
+      const [c, x] = off(0);
+      const r = rng(23 + k);
+      x.fillStyle = 'rgba(30,24,22,0.92)';
+      const xs = [[140, 780, 536, 12], [180, 742, 531, 7], [112, 720, 540, 6]][k];
+      let px = xs[0];
+      while (px < xs[1]) {
+        const w = 10 + Math.floor(r() * 4) * 12;
+        if (r() > 0.3) x.fillRect(px, xs[2] - xs[3] / 2, w, xs[3]);
+        px += w + 12;
+      }
+      const hx = [1104, 900, 801][k];
+      for (let yy = 444; yy <= 620; yy += 44) x.fillRect(hx - (k ? 3 : 7), yy, k ? 6 : 14, k ? 22 : 14);
+      composite(ctx, c, { blur: [1, 1.5, 3][k] });
+    }
+    return;
+  }
 
+  // pan along "how do you" (measured from the source, frame by frame)
+  const hx = kf(t, [
+    [0.083, 427],
+    [0.167, 415, 'linear'],
+    [0.209, 382, 'linear'],
+    [0.25, -140, 'outCubic'],
+    [0.334, -200, 'linear'],
+    [0.375, -518, 'inQuad'],
+    [0.417, -720, 'outQuad'],
+    [0.47, -735, 'linear'],
+  ]);
+  const BASE = 616;
   const [c, x] = off(0);
   x.save();
-  x.translate(lerp(hx, 140, zp), lerp(630, 556, zp));
-  x.scale(z, z);
-  const lw = 3 / Math.max(z, 0.35);
-  const dashA = 1 - inv(0.44, 0.52, t);
-  if (dashA > 0) {
-    x.globalAlpha = dashA;
-    dashLine(x, -4000, 12000, -174, '#6a2a14', lw, [26, 20]);
-    dashLine(x, -4000, 12000, 0, '#6a2a14', lw, [26, 20]);
-    x.globalAlpha = 1;
-  }
+  x.translate(hx, BASE);
+  dashLine(x, -4000, 12000, -174, '#6a2a14', 3, [26, 20]);
+  dashLine(x, -4000, 12000, 0, '#6a2a14', 3, [26, 20]);
   let cx = 0;
   const sp = fx.measure(x, ' ', BIG);
-  SENT.slice(0, 4).forEach((w, i) => {
-    const a = i === 1 ? inv(0.11, 0.16, t) : i >= 2 ? inv(0.2, 0.26, t) : 1;
-    const col = i === 1 ? mixHex('#4a4744', '#141210', inv(0.2, 0.3, t)) : zp > 0.5 ? INK : '#141210';
-    if (a > 0) fx.text(x, w, cx, 0, BIG, col, { baseline: 'alphabetic', alpha: a });
+  const wx = [];
+  SENT.slice(0, 3).forEach((w, i) => {
+    wx.push(cx);
+    const a = i === 1 ? (t >= 0.15 ? 1 : 0) : i === 2 ? (t >= 0.32 ? 1 : 0) : 1;
+    const col = i === 1 ? mixHex('#4a4744', '#141210', inv(0.19, 0.23, t)) : i === 2 ? mixHex('#4a4744', '#141210', inv(0.34, 0.37, t)) : '#141210';
+    if (a > 0) fx.text(x, w, cx, 0, BIG, col, { baseline: 'alphabetic' });
     cx += fx.measure(x, w, BIG) + sp;
   });
   x.restore();
-
+  const PENC = '#2a170c';
   // thick tapered pen swoosh under "how"
-  if (t > 0.13 && t < 0.3) {
-    const p = ease.outCubic(inv(0.13, 0.2, t));
-    x.fillStyle = '#2a170c';
+  if (t >= 0.19 && t < 0.23) {
+    x.fillStyle = PENC;
     x.beginPath();
-    x.moveTo(0, 665);
-    x.lineTo(lerp(0, 680, p), 642);
-    x.lineTo(0, 688);
+    x.moveTo(0, 662);
+    x.lineTo(675, 640);
+    x.lineTo(0, 684);
     x.closePath();
     x.fill();
   }
-  // black box over "you" + quick scribble
-  if (t > 0.24 && t < 0.36) {
-    const p = ease.outExpo(inv(0.24, 0.28, t));
+  // hand-drawn box round "do", then a black block over the next word
+  if (t >= 0.23 && t < 0.27) {
+    penPath(x, [[630, 380], [800, 368], [1040, 356], [1046, 450], [1052, 596], [1060, 604], [900, 618], [600, 640], [270, 662]], 7, PENC);
+  }
+  if (t >= 0.27 && t < 0.313) {
+    penPath(x, [[470, 372], [452, 520], [460, 735], [700, 712], [1000, 696], [1440, 690]], 4, PENC);
     x.fillStyle = '#0d0c0c';
-    x.fillRect(lerp(1440, 880, p), 384, 480, 246);
-    const pts = fx.scribblePoints(41, 520, 60, 3, 90).map(([a, b]) => [a + 745, b + 655]);
-    fx.strokePartial(x, pts, 0, inv(0.26, 0.34, t), 3, '#2a1a10');
+    x.fillRect(472, 373, 968, 248);
   }
-  // selection handles
-  if (t > 0.48) {
+  if (t >= 0.313 && t < 0.355) {
+    penPath(x, [[690, 680], [900, 664], [1150, 652], [1440, 640]], 4, PENC);
+    penPath(x, [[1352, 205], [1345, 240], [1336, 300], [1328, 380], [1326, 430], [1340, 436]], 3, PENC);
+    x.fillStyle = '#0d0c0c';
+    x.fillRect(880, 370, 476, 260);
+  }
+  // typing cursor after "you"
+  if (t >= 0.355 && t < 0.396) {
     x.fillStyle = '#2a2624';
-    [444, 504, 564, 624].forEach((yy) => x.fillRect(1100, yy, 10, 10));
+    x.fillRect(1244, 380, 5, 250);
   }
-  if (t > 0.47 && t < 0.6) {
-    // mid-whip the line reads as chunky dark dashes plus the handle column
-    const r = rng(23);
-    ctx.fillStyle = 'rgba(30,24,22,0.9)';
-    let px = 140;
-    while (px < 780) {
-      const w = 12 + Math.floor(r() * 4) * 12;
-      if (r() > 0.25) ctx.fillRect(px, 528, w, 12);
-      px += w + 12;
-    }
-    [444, 504, 564, 624].forEach((yy) => ctx.fillRect(1104, yy, 18, 18));
-  } else composite(ctx, c, { blur: t >= 0.6 ? lerp(10, 2, inv(0.6, 0.68, t)) : t > 0.25 && t < 0.4 ? 2.5 : 0 });
+  composite(ctx, c, { blur: t > 0.25 && t < 0.4 ? 1.2 : 0 });
 }
 
 // =====================================================================
