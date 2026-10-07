@@ -86,6 +86,13 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
       m[i] = darkOnLight ? ((r + g + b) / 3 < 120 && i % W > 560 ? 1 : 0) : pale ? (warm || ((r + g + b) / 3 > 105 && !(px > 880 && py > 505 && py < 590 && mx - mn < 40)) ? 1 : 0) : warm || cream || white || whiteHand || violet ? 1 : 0;
     }
     largestComponent(m);
+    if (NAME === 'head') {
+      // the body runs off the bottom edge: close it there so a grey shirt (not lit enough to pass
+      // the colour test) becomes an interior hole and gets filled, instead of joining the background
+      let bl = W, br = -1;
+      for (let yy = H - 24; yy < H; yy++) for (let xx = 0; xx < W; xx++) if (m[yy * W + xx]) { bl = Math.min(bl, xx); br = Math.max(br, xx); }
+      for (let yy = H - 3; yy < H; yy++) for (let xx = bl; xx <= br; xx++) m[yy * W + xx] = 1;
+    }
     // fill interior holes: anything the outside background can't reach is inside the hand
     const out = new Uint8Array(W * H);
     const st = [];
@@ -122,7 +129,7 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
           if (!out[j] && !m[j] && !holeLab[j]) { holeLab[j] = hl; hs.push(j); }
         }
       }
-      if (pix.length < 2500) pix.forEach((k) => (m[k] = 1));
+      if (pix.length < 2500 || NAME === 'head') pix.forEach((k) => (m[k] = 1)); // the head has no real interior gaps
       hl++;
     }
     let area = 0;
@@ -168,7 +175,10 @@ let lastHot = null; // the shirt fades to grey late in the head shot: carry its 
         const r = d[i * 4];
         const g = d[i * 4 + 1];
         const b = d[i * 4 + 2];
-        cur[i] = !darkOnLight && m[i] && (r + g + b) / 3 > 200 && Math.max(r, g, b) - Math.min(r, g, b) < 80 ? 1 : 0;
+        // white-hot shirt on a dark wall, or the greyer shirt once the wall turns mauve
+        const av = (r + g + b) / 3;
+        const sat = Math.max(r, g, b) - Math.min(r, g, b);
+        cur[i] = !darkOnLight && m[i] && ((av > 200 && sat < 80) || (av > 100 && sat < 45)) ? 1 : 0;
         n += cur[i];
         if (lastHot) nLast += lastHot[i];
       }
