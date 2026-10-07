@@ -2146,7 +2146,7 @@ const arcPts = (cx, cy, rx, ry, a0, a1, rot = 0) =>
   });
 
 function sceneScatter(ctx, t, f) {
-  ctx.fillStyle = '#e2e2e2';
+  ctx.fillStyle = '#ededed';
   ctx.fillRect(0, 0, W, H);
   const spin = inv(11.85, 12.03, t);
   const phi = kf(t, [[11.85, -1.9], [11.887, -1.55], [11.928, -0.85], [11.97, -0.35], [12.012, -0.1], [12.054, 0], [12.25, 0.26, 'linear'], [12.388, 0.36, 'linear'], [12.43, 0.75, 'inQuad'], [12.47, 1.9, 'inQuad']]);
@@ -2344,15 +2344,16 @@ function sceneScatter(ctx, t, f) {
   x.restore();
   // motion-blur flashes on the ink hits, then the whip into the hand shot
   const flashBlur = kf(t, [[12.5, 0], [12.535, 6], [12.575, 0], [12.73, 0], [12.76, 4], [12.79, 0], [12.97, 0], [13.01, 8], [13.05, 0], [13.7, 0], [13.722, 1.5], [13.76, 4]]);
-  composite(ctx, c, { blur: spin < 1 ? (1 - spin) * 14 : flashBlur });
+  const cutBlur = kf(t, [[11.85, 2], [11.887, 2], [11.928, 5], [11.97, 2], [12.012, 0]]);
+  composite(ctx, c, { blur: spin < 1 ? cutBlur : flashBlur });
   if (t > 13.69) {
     // thin black speed arcs sweeping with the turn
     const k = inv(13.69, 13.76, t);
     [[560, 620, 330, 240, 3.0, 4.3], [620, 660, 430, 330, 1.75, 2.85], [780, 600, 380, 230, -0.35, 0.6], [470, 440, 120, 160, 3.5, 4.6]].forEach(([cx, cy, rx, ry, a0, a1]) =>
       ribbon(ctx, arcPts(cx, cy, rx, ry, a0 + k * 0.4, a1 + k * 0.4), 0, Math.min(1, k * 3), 8, 'rgba(20,18,18,0.9)', 1.2));
   }
-  // symmetric vignette that deepens through the shot (corners #a3 -> #83 -> #58)
-  const va = kf(t, [[11.85, 0.26], [12.6, 0.28], [13.47, 0.42], [13.68, 0.61], [13.722, 0.78], [13.76, 0.85]]);
+  // symmetric vignette: none while the ring settles, then deepening (measured corners #e3 -> #c5 -> #a9 -> #97 -> #85 -> #58)
+  const va = kf(t, [[11.85, 0], [12.035, 0], [12.137, 0.16], [12.262, 0.22], [12.387, 0.265], [12.512, 0.28], [12.763, 0.33], [13.013, 0.37], [13.263, 0.4], [13.513, 0.45], [13.68, 0.61], [13.722, 0.78], [13.76, 0.85]]);
   const vg = ctx.createRadialGradient(W / 2, H / 2, 260, W / 2, H / 2, 900);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
   vg.addColorStop(0.5, `rgba(0,0,0,${va * 0.32})`);
