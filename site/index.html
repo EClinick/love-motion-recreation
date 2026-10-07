@@ -38,11 +38,6 @@ video{display:block;width:100%;height:auto;aspect-ratio:4/3;background:#000}
 .meta dt{font-size:var(--t-0);color:var(--graphite)}
 .meta dd{margin:2px 0 0;font-size:var(--t-1);font-weight:700;line-height:1.45;word-break:break-word}
 dl{margin:0}
-.strip{display:flex;gap:6px;overflow-x:auto;padding:4px 2px 12px;margin:16px 0 0;list-style:none}
-.strip a{flex:0 0 auto;display:grid;place-items:center;min-width:52px;height:52px;border-radius:8px;background:var(--paper-raised);border:1px solid var(--rule);font-weight:900;text-decoration:none;font-variant-numeric:tabular-nums}
-.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.strip a:hover{border-color:var(--ink)}
-.strip a[aria-current="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:inset 0 -4px 0 var(--signal)}
 .how{display:grid;gap:14px;align-items:center;background:var(--frame);color:#E7E4DD;border-radius:10px;padding:20px 22px;margin:36px 0 0}
 @media (min-width:800px){.how{grid-template-columns:minmax(0,1fr) auto}}
 .how p{margin:0;font:600 .95rem/1.6 var(--font-mono)}
@@ -151,10 +146,6 @@ audio{width:100%;max-width:520px;margin-top:8px}
   <p><span class="caret" aria-hidden="true">&gt;</span> analyze the mp4 here and use the mp3 as the video. But replicate this video from scratch, make it identical.</p>
   <a href="how-we-made-this.html">Read how I made this</a>
 </aside>
-
-<h2 id="pick">Every version</h2>
-<p class="note">Pick one to open its render, side-by-side, changes and judge scores below.</p>
-<nav aria-labelledby="pick"><ol class="strip" id="strip"></ol></nav>
 
 <section id="originalsec">
   <h2>Original video</h2>
@@ -336,14 +327,9 @@ audio{width:100%;max-width:520px;margin-top:8px}
     });
 
     // ---- version history
-    var box = $('versions'), strip = $('strip');
-    vers.slice().reverse().forEach(function(v){
-      var li = el('li'), a = el('a', null, '<span class="vh">Version </span>' + esc(v.label.replace(/^v/, '')) + (v === vers[0] ? '<span class="vh">, latest</span>' : ''));
-      a.href = '#ver-' + v.label;
-      if(v === vers[0]) a.setAttribute('aria-current', 'true');
-      li.appendChild(a); strip.appendChild(li);
-    });
-    function openFromHash(){ var d = location.hash && document.getElementById(location.hash.slice(1)); if(d && d.tagName === 'DETAILS'){ d.open = true; d.scrollIntoView(); } }
+    var box = $('versions');
+    // Keep direct version fragments working without forcing a second page scroll.
+    function openFromHash(){ var d = location.hash && document.getElementById(location.hash.slice(1)); if(d && d.tagName === 'DETAILS'){ d.open = true; } }
     window.addEventListener('hashchange', openFromHash);
     vers.forEach(function(v, i){
       var d = el('details', 'card ver' + (i===0 ? ' latest' : ''));

@@ -109,6 +109,34 @@ test('every manifest version and final media file exists', () => {
   for (const file of files) assert.ok(fs.statSync(path.resolve(dir, file)).size > 0, file);
 });
 
+test('showcase keeps the version archive without the numbered navigator or forced scrolling', () => {
+  const html = site('index.html');
+  assert.doesNotMatch(html, /Every version<\/h2>|id="(?:pick|strip)"|\.strip\b|\.vh\b|\$\('strip'\)|scrollIntoView|scrollTo\(/);
+  assert.match(html, /<h2>Version history<\/h2>/);
+  assert.match(html, /<div class="versions" id="versions"><\/div>/);
+  assert.match(html, /vers\.forEach\(function\(v, i\)/);
+  assert.match(html, /d\.id = 'ver-' \+ v\.label/);
+  assert.match(html, /d\.addEventListener\('toggle'/);
+  assert.match(html, /playerTabs\(ph, v\)/);
+  assert.match(html, /window\.addEventListener\('hashchange', openFromHash\)/);
+
+  // Direct version fragments still expand their target; unrelated fragments do not.
+  const handler = html.match(/function openFromHash\(\)\{[^\n]+\}/)[0];
+  const version = { tagName: 'DETAILS', open: false };
+  const section = { tagName: 'SECTION' };
+  const context = {
+    location: { hash: '#ver-v18' },
+    document: { getElementById: id => ({ 'ver-v18': version, originalsec: section })[id] }
+  };
+  vm.runInNewContext(handler + '; openFromHash();', context);
+  assert.equal(version.open, true);
+  for (const hash of ['#originalsec', '#missing', '']) {
+    context.location.hash = hash;
+    vm.runInNewContext('openFromHash();', context);
+    assert.equal(section.open, undefined);
+  }
+});
+
 test('published session data and pages carry no private data or hidden reasoning', () => {
   const { BANNED, check } = require('./session-extract.js');
   check(JSON.stringify(session));
