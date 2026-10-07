@@ -781,7 +781,7 @@ function sceneSparkle(ctx, t, f) {
   x2.shadowBlur = 0;
   composite(ctx, c2, { blur: t < 2.15 ? 1.5 : 0 });
   composite(ctx, tc, { blur: tBlur });
-  fx.grain(ctx, f + 3, 0.12);
+  // (the global grain pass in renderFrame is enough here; a second pass doubled it)
 
   ctx.save();
   ctx.translate(sx, sy);
