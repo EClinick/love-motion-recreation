@@ -1078,7 +1078,7 @@ function sceneProfile(ctx, t, f) {
     ctx.fillRect(hx - 100, hy, 900, 900);
     ctx.restore();
   }
-  if (t < 3.97) {
+  if (t < 3.86) {
     ctx.save();
     ctx.filter = `blur(${8 * S}px)`;
     ctx.fillStyle = 'rgba(245,242,238,0.9)';
@@ -1127,8 +1127,8 @@ function sceneProfile(ctx, t, f) {
     fx.strokePartial(ctx, pts, 0, 1, lw, col);
   };
   const AMBER = 'rgba(240,150,50,0.9)';
-  if (fr === 92) glowStroke([[450, 540], [600, 536], [742, 532]], 14, AMBER, 4);
-  if (fr === 93) glowStroke([[607, 530], [900, 527], [1215, 520]], 12, AMBER, 3);
+  if (fr === 92) glowStroke([[450, 540], [600, 536], [742, 532]], 30, AMBER, 14);
+  if (fr === 93) glowStroke([[607, 530], [900, 527], [1215, 520]], 16, AMBER, 7);
   if (fr === 94) {
     glowStroke([[990, 566], [1110, 560], [1237, 552]], 8, AMBER, 2);
     softDot(1350, 675, 22, 'rgba(236,160,40,0.9)', 6);
@@ -1142,10 +1142,10 @@ function sceneProfile(ctx, t, f) {
     softDot(630, 337, 30, 'rgba(236,160,40,0.85)', 8);
   }
   if (fr === 96) {
-    glowStroke([[810, 360], [860, 200], [980, 130], [1125, 112]], 22, 'rgba(200,24,24,0.9)', 4);
-    glowStroke([[742, 540], [900, 560], [1080, 585]], 10, AMBER, 2);
-    softDot(1080, 585, 14, '#ffd84a', 2);
-    glowStroke([[1215, 180], [1320, 260], [1350, 405]], 12, AMBER, 5);
+    glowStroke([[800, 380], [850, 210], [975, 135], [1125, 112]], 34, 'rgba(200,24,24,0.9)', 10);
+    glowStroke([[742, 540], [900, 560], [1080, 585]], 14, AMBER, 5);
+    softDot(1080, 585, 18, '#ffd84a', 4);
+    softDot(1280, 560, 46, 'rgba(130,112,40,0.55)', 14);
   }
   if (fr === 97) {
     glowStroke([[450, 180], [650, 270], [855, 360]], 14, AMBER, 4);
@@ -1154,8 +1154,8 @@ function sceneProfile(ctx, t, f) {
   }
   if (fr >= 98 && fr <= 103) {
     const k = (fr - 98) / 5;
-    softDot(lerp(405, 270, k), 180, lerp(30, 22, k), `rgba(236,150,40,${lerp(0.9, 0.35, k)})`, 8);
-    softDot(585, lerp(877, 922, k), 16, `rgba(170,20,20,${lerp(0.8, 0.3, k)})`, 6);
+    softDot(lerp(405, 270, k), 180, lerp(40, 30, k), `rgba(236,150,40,${lerp(0.9, 0.35, k)})`, 14);
+    softDot(585, lerp(877, 922, k), 22, `rgba(170,20,20,${lerp(0.8, 0.3, k)})`, 10);
     if (fr <= 102) softDot(1102, 585, lerp(12, 5, k), '#ffd84a', 1.5);
   }
   if (fr === 105) orbit(900, 472, 400, 130, -0.45, 2.3, 3.3, 4, '#f6f2ec');
@@ -1168,7 +1168,7 @@ function sceneProfile(ctx, t, f) {
     fx.strokePartial(ctx, [[870, 690], [886, 684]], 0, 1, 5, '#fff');
   }
   if (fr >= 108 && fr <= 111) dot(ctx, 877, 697, 4, '#fff');
-  if (fr === 114) orbit(700, 175, 80, 30, 0.5, 3.2, 5.6, 4, '#f6f2ec');
+  if (fr === 114) orbit(712, 182, 105, 42, 0.55, 3.0, 5.8, 6, '#f6f2ec');
   if (fr === 115) {
     orbit(945, 461, 360, 60, 0.78, 0, Math.PI * 2, 4, '#f6f2ec');
     orbit(1080, 450, 90, 60, 0.3, 0.2, 2.2, 3, '#f6f2ec');
@@ -1195,7 +1195,9 @@ function sceneProfile(ctx, t, f) {
     const tc = mixHex('#4e4a48', '#3d2620', inv(6.0, 6.15, t));
     parts = [{ t: 'you', c: tc }, { t: 'just', c: tc }, { t: 'show', c: tc }, { t: 'it.', c: tc }];
   }
-  fx.words(ctx, parts, 200, 538, BODY, { blur: (1 - intro) * 9 });
+  // focus per frame, measured from the source's text sharpness (soft, sharp, soft again, then settling)
+  const tb = kf(t, [[3.82, 9], [3.837, 7], [3.879, 5], [3.921, 2.2], [3.962, 4.5], [4.004, 4.5], [4.046, 4], [4.088, 3], [4.129, 2.5], [4.171, 2], [4.213, 1.5], [4.254, 1.0], [4.296, 0.8], [4.338, 0.6], [4.5, 0.4]]);
+  fx.words(ctx, parts, 200, 538, BODY, { blur: tb });
   if (t < 4.36) fx.cursor(ctx, 640, 540, 44, 'rgba(160,156,150,0.8)', 3);
 }
 
