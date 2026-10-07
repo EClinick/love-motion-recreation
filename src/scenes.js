@@ -2958,12 +2958,25 @@ function sceneLove(ctx, t, f) {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
     }
-    drawSprite(ctx, 'vinyl', 729, 540, lerp(270, 290, q), 0, 1, { sx: lerp(0.18, 1, q) });
-    const lo = CREAM;
-    letter(ctx, 'L', LX[0], LY, LSIZE, lo);
+    // measured per frame (403-410): disc height and width/height as it turns to face camera
+    const dh = kf(t, [[16.809, 140], [16.85, 221], [16.892, 240], [16.934, 250], [16.975, 255], [17.017, 257], [17.059, 258], [17.1, 262]]);
+    const dsx = kf(t, [[16.809, 0.35], [16.85, 0.48], [16.892, 0.75], [16.934, 0.86], [16.975, 0.91], [17.017, 0.92], [17.059, 0.96], [17.1, 1]]);
+    void q;
+    drawSprite(ctx, 'vinyl', 724, 537, dh / 0.748, 0, 1, { sx: dsx });
+    if (t > 16.9) {
+      // white sparkle on the label
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.95)';
+      fx.starPath(ctx, 724, 537, 11, 0, 0.12);
+      ctx.fill();
+      ctx.restore();
+    }
+    // the bloom swallows the letters next to the record: they go grey (measured #a8 at frame 411)
+    const lo = mixHex(CREAM, '#8a8888', clamp(bloom * 1.4));
+    letter(ctx, 'L', LX[0], LY, LSIZE, CREAM);
     letter(ctx, 'O', LX[1], LY, LSIZE, lo);
-    letter(ctx, 'V', LX[2], LY, LSIZE, CREAM);
-    if (t > 16.86) letter(ctx, 'E', LX[3], LY, LSIZE, CREAM);
+    letter(ctx, 'V', LX[2], LY, LSIZE, lo);
+    if (t > 16.83) letter(ctx, 'E', LX[3], LY, LSIZE, CREAM);
     return;
   }
   ctx.fillStyle = '#dededd';
