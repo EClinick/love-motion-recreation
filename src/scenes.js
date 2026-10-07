@@ -1781,8 +1781,11 @@ function typed(ctx, word, t0, t, x, y, curX, hold = 0, soft = 0) {
   fx.text(ctx, word, x, y, CARD, CREAM, { blur: (p < 0.3 && !hold ? 2.5 : 0.8) + soft, glow: 'rgba(243,239,232,0.35)', glowBlur: 6 });
   // trailing block shrinks into the caret, which stays bright
   // block collapses to a fat caret, holds, then thins
-  const cw = lerp(lerp(120, 30, ease.outCubic(p)), 12, ease.inOutQuad(inv(t0 + 0.32 + hold, t0 + 0.55 + hold, t)));
-  const cx = lerp(x + wFull + (hold ? 30 : 70), curX - 6, ease.outCubic(p));
+  // measured on frames 201-207: the block narrows 120 -> 80 -> 56 -> 36 -> 20 px
+  const pb = inv(t0 + 0.05 + hold, t0 + 0.26 + hold, t);
+  const cw = lerp(lerp(120, 22, ease.outQuad(pb)), 18, ease.inOutQuad(inv(t0 + 0.32 + hold, t0 + 0.55 + hold, t)));
+  // the block starts over the end of the word (frame 201 shows "actio" + block), then slides to the caret
+  const cx = lerp(x + (hold ? wFull + 30 : wFull * 0.8), curX - 6, ease.outCubic(pb));
   ctx.fillStyle = CREAM;
   ctx.fillRect(cx, y - 45, cw, 90);
 }
@@ -1913,10 +1916,10 @@ function sceneAction(ctx, t, f) {
   if (t > 9.03 && t < 9.072) fx.strokePartial(ctx, [[924, 218], [1005, 214]], 0, 1, 5, CREAM);
   else if (t >= 9.072) fx.strokePartial(ctx, [[690, 228], [945, 222]], 0, 1, 6, CREAM);
   sparks(ctx, t, 2, 7);
-  const soft = kf(t, [[8.39, 0], [8.425, 6], [8.467, 5], [8.51, 0]]);
+  const soft = kf(t, [[8.39, 0], [8.425, 6], [8.467, 5], [8.51, 2.5], [8.55, 0]]);
   ctx.save();
   if (soft > 0.3) ctx.filter = `blur(${soft * S}px)`;
-  typed(ctx, 'action.', 8.32, t, 966, 530, 1300, 0, soft);
+  typed(ctx, 'action.', 8.32, t, 952, 530, 1268, 0, soft);
   ctx.restore();
 }
 
