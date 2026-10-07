@@ -94,6 +94,14 @@ class Grid {
 
 const OUT = '#141218';
 
+// Build a sprite from rows of palette letters ('.' = transparent), measured from the
+// source's own pixel grid (frame 292, where all twelve icons sit apart).
+function fromRows(pal, rows) {
+  const g = new Grid(rows[0].length, rows.length);
+  rows.forEach((r, y) => [...r].forEach((ch, x) => ch !== '.' && pal[ch] && g.px(x, y, pal[ch])));
+  return g;
+}
+
 const builders = {
   heart() {
     // chunky classic pixel heart: dark-red border, flat red, one-tone orange highlight block
@@ -112,19 +120,25 @@ const builders = {
     return g;
   },
   coin() {
-    // upright gold coin: thick stepped black rim, flat gold, white highlight strip, slot lit top-left
-    const g = new Grid(26, 30);
-    g.ellipse(13, 15, 12.6, 14.6, OUT);
-    g.ellipse(13, 15, 10.4, 12.5, '#e8b81c');
-    // highlight strip down the left side
-    g.tint((x, y) => x > 3.5 && x < 5.5 && y > 7 && y < 23, '#f6f2e6');
-    // slot: white top and left edges, black right and bottom edges, gold inside
-    g.rect(10, 6, 6, 18, '#e8b81c');
-    g.rect(10, 6, 5, 2, '#f6f2e6');
-    g.rect(10, 6, 2, 17, '#f6f2e6');
-    g.rect(14, 8, 2, 16, OUT);
-    g.rect(10, 22, 6, 2, OUT);
-    return g;
+    // chunky upright coin: stepped black rim, white left highlight, slot lit top-left
+    return fromRows({ K: '#201a1b', W: '#e6e8ea', Y: '#dcb51c' }, [
+      '....KKKKKK....',
+      '..KKKWWWKKKK..',
+      '.KKWWYYYYYKK..',
+      'KKWYYWWWKYYKK.',
+      'KKWYYWYYKYYKK.',
+      'KWYYYWYYKYYYKK',
+      'KWYYYWYYKYYYKK',
+      'KWYYYWYYKYYYKK',
+      'KWYYYWYYKYYYKK',
+      'KWYYYWYYKYYYKK',
+      'KWYYYWYYKYYYKK',
+      'KKWYYWYYKYYKK.',
+      '.KWYYKKKKYYKK.',
+      '.KKWYYYYYYKK..',
+      '..KKKYYYKKKK..',
+      '....KKKKKK....',
+    ]);
   },
   controller() {
     // chunky gamepad: two round lobes, grips hanging below, d-pad and a diamond of buttons
@@ -153,44 +167,60 @@ const builders = {
   },
 
   cap() {
-    // baseball cap, three-quarter view: domed crown on the right, brim reaching to the lower left
-    const g = new Grid(32, 22);
-    const c = '#f4f2ea';
-    g.fill((x, y) => y < 16 && ((x - 19) / 11.5) ** 2 + ((y - 15.5) / 14) ** 2 <= 1, c);
-    // brim, with a darker underside
-    g.poly([[17, 12], [8, 13], [1, 18], [2, 20], [15, 19.5], [24, 16]], c);
-    g.poly([[2, 19], [15, 18.5], [15, 20], [3, 21]], '#c9c5b6');
-    g.tint((x, y) => y > 15.5 && y < 18.5 && x < 20, '#e2dfd2');
-    g.tint((x, y) => x > 25 && y > 5, '#dedbcf');
-    g.outline(OUT);
-    // panel seams, crown button, sweatband line
-    g.line(19, 2, 13, 13, '#bdb8a6');
-    g.line(21, 2, 26, 13, '#bdb8a6');
-    g.line(13, 14, 26, 14, '#cfcabb');
-    g.rect(19, 1, 2, 1, OUT);
+    // baseball cap, three-quarter view: two crown panels split by a seam, brim to the lower left,
+    // shaded side panel; no logo
+    const g = new Grid(28, 27);
+    const O = '#3a1e16';
+    const front = [[16, 1], [11.8, 2.3], [8.5, 3.6], [6.6, 5.3], [4.9, 7.2], [3.6, 9.2], [2.6, 11.5], [2, 14], [6.6, 15.8], [11.8, 17.2], [16.4, 19], [17.6, 19.7], [17.4, 1.2]];
+    const side = [[17.4, 1.2], [18, 2], [21.7, 4], [24.3, 6.2], [26, 8.6], [26.8, 11.2], [27, 14.5], [27, 23], [26.3, 23], [22.4, 21.7], [19.7, 20.4], [17.6, 19.7]];
+    const brim = [[0.2, 15.5], [2, 14], [6.6, 15.8], [11.8, 17.2], [16.4, 19], [17.6, 19.7], [15.5, 21.7], [13.2, 23.7], [10.5, 26], [8.5, 26.8], [6.6, 26.5], [4.6, 24.7], [2.6, 21.7], [1, 18.4]];
+    g.poly(brim, '#eceee4');
+    g.tint((x, y) => y > 22, '#dfe2d4');
+    g.poly(front, '#eef0e8');
+    g.poly(side, '#e3e6d8');
+    g.tint((x, y) => x > 19.5 && x < 23 && y > 7 && y < 14, '#d9dfc8');
+    // soft shading along the bottom of the front panel and a speckled brim
+    g.tint((x, y) => x < 17 && y > 12.5 && y < 19 && g.get(Math.floor(x), Math.floor(y)) === '#eef0e8' && y > 12.5 + (x - 2) * 0.25, '#dfe3d0');
+    g.tint((x, y) => g.get(Math.floor(x), Math.floor(y)) === '#eceee4' && (Math.floor(x) * 3 + Math.floor(y) * 5) % 7 === 0, '#dde1cd');
+    g.tint((x, y) => x > 19 && y > 15.8 && g.get(Math.floor(x), Math.floor(y)) === '#e3e6d8', '#b4aca4');
+    g.tint((x, y) => x > 21 && y > 18 && g.get(Math.floor(x), Math.floor(y)) === '#b4aca4', '#8e8078');
+    const path = (pts, close) => pts.forEach((p, i) => (i || close) && g.line(...(i ? pts[i - 1] : pts[pts.length - 1]), ...p, O));
+    path(front.slice(0, 12), false);
+    path(side.slice(1), false);
+    path(brim.slice(6).concat([brim[0]]), false);
+    g.line(17.4, 1.2, 17.6, 19.7, O); // seam
+    g.rect(15, 0, 3, 1, O); // button
+    g.px(16, 1, '#f6f6f2');
     return g;
   },
 
   cat() {
-    // black cat: big square head with two ears and pale eye pixels, short body, legs, tail up behind
-    const g = new Grid(30, 27);
-    const k = '#121114';
-    g.rect(1, 5, 15, 13, k); // head
-    g.poly([[1, 6], [2, 0], [7, 5]], k); // ears
-    g.poly([[10, 5], [15, 0], [16, 6]], k);
-    g.rect(10, 11, 15, 9, k); // body
-    g.ellipse(22, 15, 5, 5, k);
-    g.rect(3, 17, 3, 9, k); // legs
-    g.rect(8, 18, 3, 7, k);
-    g.rect(17, 19, 3, 6, k);
-    g.rect(22, 18, 3, 8, k);
-    g.rect(25, 7, 2, 8, k); // tail up and over
-    g.rect(26, 4, 2, 4, k);
-    g.rect(27, 3, 2, 2, k);
-    g.tint((x, y) => y < 5 && x < 17, '#24222a');
-    g.rect(4, 9, 2, 2, '#b6b4bc'); // eyes
-    g.rect(11, 9, 2, 2, '#b6b4bc');
-    return g;
+    // pouncing black cat: head and ears up at the right, body and front legs reaching down-left
+    return fromRows({ K: '#1d1819', E: '#c4c8cc' }, [
+      '.............KK......KK.',
+      '............KKKK...KKKK.',
+      '............KKKKKKKKKKK.',
+      '............KKKKKKKKKKK.',
+      '...........KKKKKKKKKKKK.',
+      '...........KKKKKKKKKKKK.',
+      '.......KKKKKKKKKEEKKKEK.',
+      '......KKKKKKKKKKEEKKKEKK',
+      '......KKKKKKKKKKEEKKKEKK',
+      '.....KKKKKKKKKKKKKKKKKKK',
+      '....KKKKKKKKKKKKKKKKKKKK',
+      '....KKKKKKKKKKKKKKKKKKK.',
+      '...KKKKKKKKKKKKKKKKKKK..',
+      '...KKKKKKKKKKKKKKKKKKK..',
+      '...KKKKKKKKKKKKKKKKKKKK.',
+      '..KKKKKKKKKKKKKKKKKKKKK.',
+      '.KKKKK...KKKKKKKKKKKKKKK',
+      '.KKKKK....KKKKKKKKKKKK..',
+      'KKKKK.....KKKKKKKKKKKK..',
+      'KKKKK.....KKKKKKKK......',
+      '.KKK......KKKKKKKK......',
+      '.........KKKKKKK........',
+      '..........KKKKKK........',
+    ]);
   },
 
   camera() {
@@ -201,8 +231,8 @@ const builders = {
     g.rect(7, 1, 2, 1, '#cfcfd4');
     g.rect(15, 0, 7, 4, '#7c7c82');
     for (let i = 15; i < 22; i += 2) g.rect(i, 0, 1, 4, '#b8b8be');
-    // silver top plate
-    g.rect(2, 4, 50, 7, '#a9a9ae');
+    // silver top plate (taller, as in the source)
+    g.rect(2, 4, 50, 10, '#a9a9ae');
     g.rect(2, 4, 50, 1, '#cbcbd0');
     g.rect(3, 5, 1, 6, '#e2e2e6');
     g.rect(12, 5, 4, 6, '#8e8e94');
@@ -218,11 +248,11 @@ const builders = {
     g.rect(44, 8, 3, 1, '#f2e8d0');
     g.rect(49, 5, 2, 6, '#d0d0d6');
     // body
-    g.rect(2, 11, 50, 20, '#3d3d43');
-    g.fill((x, y) => x > 3 && x < 15 && y > 12 && y < 30 && (Math.floor(x) + Math.floor(y)) % 2 === 0, '#323237');
-    g.rect(2, 11, 50, 1, '#2a2a2f');
-    g.rect(3, 12, 1, 18, '#8c8c92');
-    g.rect(50, 12, 1, 18, '#7c7c82');
+    g.rect(2, 14, 50, 17, '#3d3d43');
+    g.fill((x, y) => x > 3 && x < 15 && y > 15 && y < 30 && (Math.floor(x) + Math.floor(y)) % 2 === 0, '#36363b');
+    g.rect(2, 14, 50, 1, '#2a2a2f');
+    g.rect(3, 15, 1, 15, '#8c8c92');
+    g.rect(50, 15, 1, 15, '#7c7c82');
     // bottom rail
     g.rect(2, 31, 50, 3, '#8e8e94');
     g.rect(3, 32, 48, 1, '#c6c6cc');
@@ -230,21 +260,19 @@ const builders = {
     g.rect(0, 6, 2, 3, '#6a6a70');
     g.rect(52, 6, 2, 3, '#6a6a70');
     g.outline(OUT);
-    // lens: solid concentric rings (light, dark, light), dark glass with an aperture glint and warm reflection
+    // lens: a broad light barrel ring, a dark band, one thin light ring, dark glass with a soft
+    // cross-shaped reflection (few rings, so it reads solid rather than stippled when small)
     const lx = 31;
-    const ly = 21.5;
-    g.circle(lx, ly, 13.4, '#2a2a30');
-    g.circle(lx, ly, 12.6, '#9a9aa2');
-    g.circle(lx, ly, 11.6, '#4a4a52');
-    g.circle(lx, ly, 9.6, '#b4b4bc');
-    g.circle(lx, ly, 8.8, '#2c2c33');
-    g.circle(lx, ly, 6.4, '#8e8e98');
-    g.circle(lx, ly, 5.6, '#1c1c22');
-    g.rect(lx - 2, ly - 3, 4, 1, '#6c6c78');
-    g.rect(lx - 3, ly - 2, 1, 3, '#55555f');
-    g.rect(lx + 2, ly - 2, 1, 3, '#55555f');
-    g.rect(lx - 2, ly + 2, 4, 2, '#b08a48');
-    g.rect(lx - 1, ly + 2, 2, 1, '#d8b060');
+    const ly = 22;
+    g.circle(lx, ly, 13.4, '#26262c');
+    g.circle(lx, ly, 12.5, '#9a9aa2');
+    g.circle(lx, ly, 11.6, '#5e5e66');
+    g.circle(lx, ly, 9.4, '#2a2a30');
+    g.circle(lx, ly, 8.0, '#8a8a94');
+    g.circle(lx, ly, 7.0, '#1c1c22');
+    g.line(lx - 4, ly - 4, lx + 4, ly + 4, '#3c3c46');
+    g.line(lx + 4, ly - 4, lx - 4, ly + 4, '#3c3c46');
+    g.rect(lx - 2, ly + 3, 3, 1, '#9a7a48');
     return g;
   },
   book() {
@@ -296,59 +324,95 @@ const builders = {
     return g;
   },
   skateboard() {
-    // deck seen from three-quarters above: dark grip with bolts, wooden side edge, red wheels
-    const g = new Grid(40, 17);
-    const grip = '#30343c';
-    g.ellipse(6, 6.5, 5.5, 5.5, grip);
-    g.ellipse(34, 6.5, 5.5, 5.5, grip);
-    g.rect(6, 1, 28, 11, grip);
-    g.tint((x, y) => y < 3.5, '#3c414b');
-    g.poly([[2, 10], [38, 10], [36, 13], [4, 13]], '#cbbd94');
-    g.tint((x, y) => y > 12, '#a8986e');
-    g.outline(OUT);
-    [[8, 4], [11, 6], [8, 8], [29, 4], [32, 6], [29, 8]].forEach(([x, y]) => g.rect(x, y, 2, 2, '#8e9098'));
-    g.rect(6, 14, 5, 3, '#d93a34');
-    g.rect(29, 14, 5, 3, '#d93a34');
-    return g;
+    // deck seen from above at an angle: dark grip with grey bolts, tan edge, red wheels
+    return fromRows({ b: '#948e80', c: '#b81c2a', d: '#3c3b3b', e: '#333030', f: '#2c1815' }, [
+      '...................ffeddddddbf',
+      '.................ffeddbddddebf',
+      '...............ffeddbedddddebf',
+      '.............ffeddddddddbedebf',
+      '...........ffeddddddddbddeeebf',
+      '.........ffeedddddddddddeeebbf',
+      '.......ffeeeedddddddddeeeebbf.',
+      '.....ffdeeeeeeddddddeeeebbfff.',
+      '.ffffeebeeeeeeeedddeeebbffccf.',
+      'fffffeeeebeeeedeeeeebbfffcccf.',
+      'fffffbfeeeeeeeeeeebbff..fcccf.',
+      'fbfffffbffeeeeeebbff.....fff..',
+      '.fbfffffffffeebbff............',
+      '..fddddddbbbbbff..............',
+      '...ffffffffffff...............',
+      '.....fff..fcccf...............',
+      '..........fcccf...............',
+    ]);
   },
 
   clapper() {
-    const g = new Grid(32, 30);
-    // board body
-    g.rect(2, 12, 28, 16, '#262c86');
-    g.rect(4, 15, 24, 1, '#5560c8');
-    g.rect(4, 20, 24, 1, '#5560c8');
-    g.rect(4, 15, 1, 11, '#5560c8');
-    g.rect(16, 21, 1, 5, '#5560c8');
-    // bottom stripe band
-    g.rect(2, 9, 28, 3, '#f2f2f6');
-    // hinged clapper stick (tilted)
-    g.poly([[2, 9], [27, 1], [28, 5], [3, 12]], '#f2f2f6');
-    g.outline(OUT);
-    // diagonal stripes on the hinged stick and the lower band
-    g.tint((x, y) => y < 12.5 && Math.floor((x + (12 - y) * 0.9) / 3) % 2 === 0, '#3a4ed6');
-    g.rect(5, 23, 3, 2, '#e8873a');
-    return g;
+    // striped hinged stick over a striped band and a navy slate ruled into cells
+    return fromRows(
+      { a: '#d3d5e1', b: '#4a46a3', d: '#8b8bc9', e: '#443867', f: '#28238b', g: '#272143', h: '#412422', O: '#e8a23a' },
+    [
+      '............aa.ahhhhabbbh.',
+      '........aaaahehgbba.abbbh.',
+      '....ahhheeed.adbbd.adbbbh.',
+      'hhhhh.adbbda.dbbbd.adbbbah',
+      'hbbdaadbbbda.dbbbd.adbbd.h',
+      'hbbdaadbbba.adbbdaadbbbdah',
+      'hfdaadbbbda.dbbbd..dbeeeeh',
+      '.gda.dbbbd.adbbdahhgghhhh.',
+      '.gbOOdbbbddeegghhdddd.....',
+      '.hOOOggggggghaaaaaaaaaaaa.',
+      '.hgggggggghhghhhhhhhhhhhhh',
+      '.gehgbbbba.abbbb.aabbbd..h',
+      '.gda.dbbbd.adbbbda.dbbbd.h',
+      '.gbaaabbbbaaabbbbaaabbbbah',
+      '.gfeaadfffeaadfffdaadfffah',
+      '.gggbddeggedddeggedddgggbh',
+      '.hggedddgggbddbgggdddggggh',
+      '.hgggggggggggggggggggggggh',
+      '.hgfffffffffffffffffffffgh',
+      '.hgbggggggfggggggegggggggh',
+      '.hgdggggggdggggggbgggggggh',
+      '.hgdggggggdggggggbgggggggh',
+      '.hgdggggggdgggggedgggggggh',
+      '.hgdddddddddddddddddddddgh',
+      '.hgdggggggggggggggggggggdh',
+      '.hgdddddddddddddddddddddgh',
+      '.hgggggggggggggggggggggggh',
+      '.hhhhghhhhhhhhhhhhhhhhhhhh',
+    ],
+    );
   },
   plant() {
-    // rounded leaf clumps (teal behind, green, lime in front) over a two-tone slate pot
-    const g = new Grid(30, 31);
-    [[15, 9, 6.5, 6.5], [7, 13, 6.5, 4.5], [23, 13, 6.5, 4.5]].forEach(([x, y, a, b]) => g.ellipse(x, y, a, b, '#1f7a64'));
-    [[15, 8, 4.8, 5], [7, 12, 4.6, 3.2], [23, 12, 4.6, 3.2], [11, 15, 3.5, 2.5], [19, 15, 3.5, 2.5]].forEach(([x, y, a, b]) => g.ellipse(x, y, a, b, '#3c9a44'));
-    [[14, 6, 3, 3], [6, 11, 3, 2], [22, 11, 3, 2]].forEach(([x, y, a, b]) => g.ellipse(x, y, a, b, '#6cc04a'));
-    [[13, 4], [16, 7], [4, 10], [20, 10], [9, 13], [24, 12]].forEach(([x, y]) => g.rect(x, y, 2, 2, '#c8e070'));
-    // dark gaps between the clumps, down to the stem
-    g.line(15, 17, 10, 12, '#141c3a');
-    g.line(15, 17, 20, 12, '#141c3a');
-    g.rect(14, 13, 2, 5, '#141c3a');
-    g.outline('#16503e');
-    // pot: thick dark rim, white lip highlight, light left, shaded right
-    g.poly([[7, 21], [23, 21], [21, 30], [9, 30]], '#c4d2ec');
-    g.tint((x, y) => x > 16 && y > 20.5, '#8ea2cc');
-    g.rect(6, 18, 18, 3, '#1c2040');
-    g.rect(8, 21, 9, 1, '#eef2fa');
-    g.outline('#14182e');
-    return g;
+    // pointed leaf clusters around a dark core, on a slate pot with a dark rim and white lip
+    return fromRows(
+      { b: '#bdd07e', c: '#93a778', d: '#a7b5be', e: '#c4d3d8', f: '#2d574f', g: '#5b9344', h: '#17192f', j: '#291b29', l: '#7380a6', m: '#39231f', w: '#e8ecf0' },
+    [
+      '..........gggggf...',
+      '.........gbgbcgf...',
+      '.......fbbgggggf...',
+      '......cfbgggggff...',
+      'ecccc..fcggfffge...',
+      'cgfgfecfcggfffgee..',
+      'gggbgffffgghhhhff..',
+      'ffggbgfhfgfhgcbbggg',
+      'efgggggfhfhgbcfggf.',
+      '..ffgfffhhffggffff.',
+      '...ffgfffhfgffff...',
+      '...cfffffhfffffc...',
+      '...cfhhffhfhhhhc...',
+      '...jhhhhhhhhhhhj...',
+      '..jjjjjjjjjjjhhhj..',
+      '..jwwwwwwwwwdlllj..',
+      '..jlllllllllllllj..',
+      '...jdeeeeeelllli...',
+      '...jdeeeeedllllm...',
+      '...jdeeeeelllllj...',
+      '...mdeeeellllllm...',
+      '....mdeeellllmm....',
+      '....mddllllllm.....',
+      '....mjjjjjjmm......',
+    ],
+    );
   },
 
   cash() {
