@@ -974,7 +974,7 @@ function sceneProfile(ctx, t, f) {
   x.save();
   x.translate(hx, hy);
   x.scale(hz, hz);
-  const heat = traced ? thermalImage(`head${traced.f}`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, hotMask: traced.hot, front: kf(t, [[5.5, 0.3], [5.85, 0.08]]), rimBack: 0.35, mottle: 0.04, floor: kf(t, [[5.6, 0.37], [5.92, 0.56]]), hotBlur: 10, hotGain: 0.27, hot: [[0.31, 0.6, 170, -0.14]], glow: [55, 0.12] }) : thermal('head', 'heat');
+  const heat = traced ? thermalImage(`head${traced.f}`, traced.mask, { depth: 34, base: 0.3, gain: 0.42, hotMask: traced.hot, front: kf(t, [[5.5, 0.3], [5.85, 0.08]]), rimBack: 0.35, mottle: 0.04, floor: kf(t, [[5.6, 0.37], [5.92, 0.56]]), hotBlur: 10, hotGain: 0.27 * (1 - inv(5.6, 5.8, t)), hot: [[0.31, 0.6, 170, -0.14]], glow: [55, 0.12 * (1 - inv(5.6, 5.8, t))] }) : thermal('head', 'heat');
   // traced images are screen-space: undo the head transform while drawing them
   const drawHead = (img, ox = 0) => {
     if (!traced) return x.drawImage(img, 0, 0);
@@ -1130,7 +1130,12 @@ function sceneProfile(ctx, t, f) {
     x.globalAlpha = t < 5.85 ? shc : 1;
     if (t >= 6.15) {
       // drawn after the silhouette below
-    } else drawHead(silhouette(traced.hot, t < 5.85 ? mixHex('#d8d4ca', '#7f7770', shc) : col));
+    } else {
+      // soft edge: the source blends ochre into the grey shirt over ~20 px
+      x.filter = `blur(${10 * S}px)`;
+      drawHead(silhouette(traced.hot, t < 5.85 ? mixHex('#d8d4ca', '#7f7770', shc) : col));
+      x.filter = 'none';
+    }
     x.globalAlpha = 1;
   }
   if (traced && t >= 4.03 && t < 4.12) {
