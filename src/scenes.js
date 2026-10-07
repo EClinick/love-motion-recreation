@@ -317,21 +317,55 @@ const SIGNATURE = (() => {
   return out;
 })();
 
+// Rotoscoped pen ink for the handwriting frames (scripts/trace-ink.js -> ref/derived/ink/i_####.bin,
+// zlib-compressed 8-bit alpha at 1440x1080). Loaded synchronously and cached per frame.
+const INK_DIR = require('path').join(__dirname, '..', 'ref', 'derived', 'ink');
+const inkCache = {};
+function inkMatte(fr, color) {
+  const key = fr + color;
+  if (key in inkCache) return inkCache[key];
+  const file = pathMod.join(INK_DIR, `i_${String(fr).padStart(4, '0')}.bin`);
+  if (process.env.NOSIG || !fsMod.existsSync(file)) return (inkCache[key] = null);
+  const a = require('zlib').gunzipSync(fsMod.readFileSync(file));
+  const c = createCanvas(W, H);
+  const x = c.getContext('2d');
+  const id = x.createImageData(W, H);
+  const [r, g, b] = [1, 3, 5].map((k) => parseInt(color.slice(k, k + 2), 16));
+  for (let i = 0; i < W * H; i++) {
+    id.data[i * 4] = r;
+    id.data[i * 4 + 1] = g;
+    id.data[i * 4 + 2] = b;
+    id.data[i * 4 + 3] = a[i];
+  }
+  x.putImageData(id, 0, 0);
+  return (inkCache[key] = c);
+}
+
 function sceneType(ctx, t, f) {
-  // neutral grey paper, shading darker toward the left edge
-  ctx.fillStyle = '#e8e8e8';
+  const frI = Math.round(t * C.FPS);
+  const matte = inkMatte(frI, '#2c2422');
+  const strokes = !matte && !process.env.NOSIG;
+  // neutral grey paper; the shade on the left (and a little at the bottom) deepens over the shot
+  ctx.fillStyle = '#e7e7e8';
   ctx.fillRect(0, 0, W, H);
-  const pg = ctx.createLinearGradient(0, 0, 760, 0);
-  pg.addColorStop(0, 'rgba(70,66,70,0.17)');
-  pg.addColorStop(1, 'rgba(70,66,70,0)');
+  const dk = lerp(14, 36, inv(0.8, 1.95, t)) / 224;
+  const pg = ctx.createLinearGradient(0, 0, 1080, 0);
+  pg.addColorStop(0, `rgba(0,0,0,${dk})`);
+  pg.addColorStop(0.65, `rgba(0,0,0,${dk * 0.55})`);
+  pg.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = pg;
   ctx.fillRect(0, 0, W, H);
+  const bg2 = ctx.createLinearGradient(0, 600, 0, H);
+  bg2.addColorStop(0, 'rgba(0,0,0,0)');
+  bg2.addColorStop(1, `rgba(0,0,0,${dk * 0.15})`);
+  ctx.fillStyle = bg2;
+  ctx.fillRect(0, 600, W, H - 600);
   const x0 = kf(t, [[0.68, 100], [0.8, 72, 'outCubic'], [1.96, 42, 'linear']]);
   const y0 = 540;
   const [sx, sy] = shake(t, 2.5, 1, 4);
 
   // ghost cursive, out of focus, drifting right across the top
-  if (t > 0.73 && t < 1.06) {
+  if (strokes && t > 0.73 && t < 1.06) {
     const [c, x] = off(1);
     const gx = lerp(280, 820, inv(0.79, 1.0, t));
     const pts = SIGNATURE.map(([a, b]) => [a * 1.75 + gx, b * 1.3 + 300]);
@@ -345,6 +379,7 @@ function sceneType(ctx, t, f) {
   ctx = lx;
   ctx.save();
   ctx.translate(sx, sy);
+  if (matte) ctx.globalAlpha = 0; // the traced frames carry the line and its box
   const end = fx.words(ctx, sentenceParts(t), x0, y0, BODY);
   const wordX = (i) => x0 + fx.measure(ctx, SENT.slice(0, i).join(' ') + (i ? ' ' : ''), BODY);
 
@@ -366,19 +401,20 @@ function sceneType(ctx, t, f) {
     });
     ctx.restore();
   }
+  ctx.globalAlpha = 1;
   // long pen stroke down the left edge
-  if (t > 0.77 && t < 0.815) fx.strokePartial(ctx, [[88, 380], [92, 600], [96, 850], [100, 1080]], 0, 1, 4, '#3a3634');
-  if (t > 0.815 && t < 0.855) fx.strokePartial(ctx, [[90, 980], [96, 1030], [104, 1080]], 0, 1, 4, '#3a3634');
+  if (strokes && t > 0.77 && t < 0.815) fx.strokePartial(ctx, [[88, 380], [92, 600], [96, 850], [100, 1080]], 0, 1, 4, '#3a3634');
+  if (strokes && t > 0.815 && t < 0.855) fx.strokePartial(ctx, [[90, 980], [96, 1030], [104, 1080]], 0, 1, 4, '#3a3634');
   // handwritten signature below the line
-  if (t > 0.74 && t < 1.06) {
+  if (strokes && t > 0.74 && t < 1.06) {
     const sh = inv(0.92, 1.0, t);
     const pts = SIGNATURE.map(([a, b]) => [a * 1.15 + 190 + sh * 100, b * 1.35 + 760 - sh * 40]);
     const col = mixHex('#5f5957', '#4a2a22', sh);
     fx.strokePartial(ctx, pts, Math.max(0, inv(1.0, 1.06, t)), inv(0.74, 0.79, t), 3.8, col);
   }
-  if (t > 0.81 && t < 0.855) fx.strokePartial(ctx, [[604, 206], [560, 360], [524, 500]], 0, 1, 4, '#2e2a28');
+  if (strokes && t > 0.81 && t < 0.855) fx.strokePartial(ctx, [[604, 206], [560, 360], [524, 500]], 0, 1, 4, '#2e2a28');
   // long brown arc on the right with a little tail (one frame), then a big J loop
-  if (t > 1.065 && t < 1.105) {
+  if (strokes && t > 1.065 && t < 1.105) {
     const arc = [];
     for (let i = 0; i <= 40; i++) {
       const u = i / 40;
@@ -387,7 +423,7 @@ function sceneType(ctx, t, f) {
     fx.strokePartial(ctx, [...arc, ...smoothPts([[930, 715], [880, 722], [850, 735], [820, 724], [790, 745], [770, 760]], 6)], 0, 1, 3.6, PEN);
     penPath(ctx, [[722, 60], [716, 140], [730, 220], [748, 250]], 3.4, PEN);
   }
-  if (t > 1.105 && t < 1.147) {
+  if (strokes && t > 1.105 && t < 1.147) {
     const loop = [[750, 230], [800, 300], [930, 345], [1100, 410], [1230, 500], [1272, 620], [1240, 760], [1150, 840], [1060, 790], [990, 690], [900, 610], [840, 570], [800, 548], [758, 556]];
     penPath(ctx, loop, 3.6, PEN);
   }
@@ -402,7 +438,7 @@ function sceneType(ctx, t, f) {
     fx.strokePartial(ctx, [[735, 240], [728, 290], [745, 330], [760, 310]], 0, inv(0.95, 1.0, t), 3.4, PEN);
   }
   // strike + loop round "that you're", then a tail flick
-  if (t > 1.2 && t < 1.42) {
+  if (strokes && t > 1.2 && t < 1.42) {
     const xa = wordX(4);
     const xb = wordX(6) - 12;
     const fade = inv(1.36, 1.42, t);
@@ -411,12 +447,14 @@ function sceneType(ctx, t, f) {
     fx.strokePartial(ctx, [[xb + 30, 560], [xb - 20, 640], [xb - 70, 720]], fade, inv(1.28, 1.36, t), 3.4, PEN);
   }
   // single-frame pen gestures: open loop round "you're", a long rule over the line, a drop, a tick
-  if (t > 1.4 && t < 1.44) penPath(ctx, [[675, 472], [760, 462], [880, 470], [967, 520], [940, 575], [820, 580], [720, 560]], 4, PEN);
-  if (t > 1.44 && t < 1.48) penPath(ctx, [[112, 500], [104, 480], [118, 470], [300, 468], [520, 466], [742, 472]], 4, PEN);
-  if (t > 1.48 && t < 1.52) penPath(ctx, [[121, 0], [121, 200], [122, 400], [124, 468], [136, 478]], 4.5, PEN);
-  if (t > 1.52 && t < 1.56) penPath(ctx, [[112, 22], [114, 60], [116, 92]], 4, PEN);
+  if (strokes && t > 1.4 && t < 1.44) penPath(ctx, [[675, 472], [760, 462], [880, 470], [967, 520], [940, 575], [820, 580], [720, 560]], 4, PEN);
+  if (strokes && t > 1.44 && t < 1.48) penPath(ctx, [[112, 500], [104, 480], [118, 470], [300, 468], [520, 466], [742, 472]], 4, PEN);
+  if (strokes && t > 1.48 && t < 1.52) penPath(ctx, [[121, 0], [121, 200], [122, 400], [124, 468], [136, 478]], 4.5, PEN);
+  if (strokes && t > 1.52 && t < 1.56) penPath(ctx, [[112, 22], [114, 60], [116, 92]], 4, PEN);
   ctx.restore();
   composite(ctx0, lc, { blur: defocus });
+  // traced ink already carries the source's focus blur
+  if (matte) ctx0.drawImage(matte, 0, 0, W, H);
 }
 
 function speedStreaks(ctx, a, seed) {
