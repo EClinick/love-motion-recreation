@@ -1397,14 +1397,14 @@ function inkBall(ctx, x, y, r, trail = [], soft = 2.5) {
 }
 
 // Perspective ring fitted to the source (frame 167): centre, radii, depth k; icons scale with depth.
-// sizes re-fitted to the v17 sprites from the source widths at 8.008 s
-const RING_BASE = { clapper: 156, skateboard: 162, vinyl: 157, book: 165, camera: 184, cat: 176, coin: 161, controller: 176, cap: 198, heart: 188, cash: 191, plant: 131 };
+// sizes re-fitted to the v17 sprites from source widths at 8.008 s and 6.673 s (front items)
+const RING_BASE = { clapper: 168, skateboard: 181, vinyl: 157, book: 165, camera: 184, cat: 176, coin: 161, controller: 176, cap: 198, heart: 199, cash: 204, plant: 155 };
 const RING_ROT = { skateboard: -0.45, cash: 0 };
 const ringSpin = (t) =>
   kf(t, [
     [6.38, -0.6],
     [6.548, 0.55, 'linear'],
-    [6.673, 1.571, 'linear'],
+    [6.673, 1.72, 'linear'],
     [6.756, 2.23, 'linear'],
     [6.84, 2.62, 'outQuad'],
     [6.965, 2.788, 'linear'],
@@ -1423,10 +1423,11 @@ function ring2(t) {
   const base = ringSpin(t) + RING_LATE[0] * late;
   const cx = kf(t, [[6.548, 700], [6.965, 709]]);
   const cy = kf(t, [[6.548, 470], [6.756, 425], [6.965, 402], [7.76, 402], [8.13, 400], [8.217, 440], [8.3, 465]]) + RING_LATE[1] * late;
-  const R = kf(t, [[6.548, 470], [6.965, 433], [8.05, 433], [8.13, 455]]) + (RING_LATE[2] || 0) * late;
+  const R = kf(t, [[6.548, 400], [6.673, 440], [6.965, 433], [8.05, 433], [8.13, 455]]) + (RING_LATE[2] || 0) * late;
   // the ring keeps its height until ~8.05 s, then flattens quickly (measured frames 184-195)
   const Ry = kf(t, [[6.965, 190], [7.5, 205], [7.76, 212], [8.05, 212], [8.13, 140], [8.217, 72], [8.3, 50]]);
-  const grow = kf(t, [[8.13, 1], [8.258, 1.12]]);
+  // icons arrive large and settle (front skateboard ~675 px wide at 6.59 s in the source)
+  const grow = kf(t, [[8.13, 1], [8.258, 1.12]]) * kf(t, [[6.548, 1.1], [6.59, 1.25], [6.673, 1.05], [6.756, 1]]);
   const k = 0.495;
   return RING.map((name, i) => {
     const a = base + (i * Math.PI) / 6;
