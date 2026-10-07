@@ -2264,7 +2264,7 @@ function sceneCuriosity(ctx, t, f) {
   if (t > 11.57) note(ctx, 'eighth', 630 - 140 * nd, 790, pop(11.57) * 1.9, 0.15 + 0.1 * nd + noise1(t, 3) * 0.08);
   ctx.restore();
   sparks(ctx, t, 6, 5);
-  typed(ctx, 'curiosity.', 10.9, t, 804 + pan, 526, 1323 + pan, 0.17);
+  typed(ctx, 'curiosity.', 10.9, t, 816 + pan, 526, 1323 + pan, 0.17);
 }
 
 // =====================================================================
