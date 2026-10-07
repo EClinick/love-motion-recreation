@@ -3307,14 +3307,41 @@ function finaleCollapse(ctx) {
   });
 }
 
+// paper texture of the finale: sparse, slightly clustered dark specks (measured high-pass look)
+let paperSpecks = null;
+function paperTexture() {
+  if (paperSpecks) return paperSpecks;
+  const c = createCanvas(W * S, H * S);
+  const x = c.getContext('2d');
+  x.scale(S, S);
+  const r = rng(515);
+  for (let i = 0; i < 17000; i++) {
+    const px = r() * W;
+    const py = r() * H;
+    const cl = 0.5 + 0.5 * noise1(px * 0.01 + py * 0.007, 9);
+    if (r() > cl) continue;
+    x.fillStyle = `rgba(70,62,66,${0.035 + r() * 0.035})`;
+    x.beginPath();
+    x.ellipse(px, py, 1.8 + r() * 1.8, 1.5 + r() * 1.4, r() * 3, 0, 7);
+    x.fill();
+  }
+  const b = createCanvas(W * S, H * S);
+  const bx = b.getContext('2d');
+  bx.filter = `blur(${1.2 * S}px)`;
+  bx.drawImage(c, 0, 0);
+  return (paperSpecks = b);
+}
 function sceneFinale(ctx, t, f) {
-  ctx.fillStyle = '#dededd';
+  // measured: light at the top edge (#de), falling off toward the bottom (#c5-#c8)
+  ctx.fillStyle = '#d9d8d9';
   ctx.fillRect(0, 0, W, H);
-  const gg = ctx.createLinearGradient(0, 0, W, H);
-  gg.addColorStop(0, 'rgba(255,255,255,0.2)');
-  gg.addColorStop(1, 'rgba(120,120,135,0.18)');
+  const gg = ctx.createLinearGradient(0, 0, 0, H);
+  gg.addColorStop(0, 'rgba(255,255,255,0.42)');
+  gg.addColorStop(0.5, 'rgba(255,255,255,0)');
+  gg.addColorStop(1, 'rgba(50,45,52,0.1)');
   ctx.fillStyle = gg;
   ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(paperTexture(), 0, 0, W, H);
   // ink-brush strokes at the cut to paper (frames 413-416, measured): huge and blurred, then
   // sharpening and shrinking into small hooks as the letters scatter in
   if (t < 17.372) brushCut(ctx, t);
