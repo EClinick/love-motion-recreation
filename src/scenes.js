@@ -3855,7 +3855,8 @@ function penMatte(fr, kind = 'p') {
   const key = kind + fr;
   if (penCache.has(key)) return penCache.get(key);
   const file = pathMod.join(PEN_DIR, `${kind}_${String(fr).padStart(4, '0')}.bin`);
-  const [cr, cg, cb] = kind === 'k' ? [26, 18, 17] : [214, 72, 56];
+  // measured solid ink: neutral brush strokes (413-415), brown letters (416-431), near-black block (487)
+  const [cr, cg, cb] = kind === 'k' ? (fr <= 415 ? [27, 26, 27] : fr <= 431 ? [59, 27, 24] : [31, 21, 21]) : [214, 72, 56];
   let c = null;
   if (fsMod.existsSync(file)) {
     const a = require('zlib').gunzipSync(fsMod.readFileSync(file));
@@ -3938,13 +3939,21 @@ function sceneFinale(ctx, t, f) {
   ctx.fillStyle = gg;
   ctx.fillRect(0, 0, W, H);
   ctx.drawImage(paperTexture(), 0, 0, W, H);
+  const fr = Math.round(t * C.FPS);
+  const pen = penMatte(fr);
+  // brush cut and whip (frames 413-431): the defocused ink strokes, tumbling letter fragments and
+  // dots are traced from the source (dark key over the fitted paper), with the traced pen on top
+  const whipInk = fr <= 431 ? penMatte(fr, 'k') : null;
+  if (whipInk) {
+    ctx.drawImage(whipInk, 0, 0, W, H);
+    if (pen) ctx.drawImage(pen, 0, 0, W, H);
+    return;
+  }
   // ink-brush strokes at the cut to paper (frames 413-416, measured): huge and blurred, then
   // sharpening and shrinking into small hooks as the letters scatter in
   if (t < 17.372) brushCut(ctx, t);
   const grow = ease.inOutCubic(inv(19.75, 20.05, t));
   const size = t < 20.15 ? kf(t, [[19.52, 56], [19.853, 62], [20.02, 68], [20.145, 85]]) : kf(t, [[20.15, 85], [20.187, 97], [20.229, 111], [20.27, 128], [20.3, 190]]);
-  const fr = Math.round(t * C.FPS);
-  const pen = penMatte(fr);
   if (t >= 20.29) {
     // last frame: the collapsed black letter block and ink hooks are traced from the source
     const ink = penMatte(fr, 'k');
